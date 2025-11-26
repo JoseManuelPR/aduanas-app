@@ -1,0 +1,2 @@
+export { SeguimientoList } from './SeguimientoList';
+

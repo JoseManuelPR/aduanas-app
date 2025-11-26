@@ -1,0 +1,2 @@
+export { NotificacionesList } from './NotificacionesList';
+

@@ -1,0 +1,2 @@
+export { ReclamosList } from './ReclamosList';
+

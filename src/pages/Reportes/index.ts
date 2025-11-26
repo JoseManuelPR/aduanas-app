@@ -1,0 +1,2 @@
+export { ReportesDashboard } from './ReportesDashboard';
+

@@ -1,0 +1,2 @@
+export { GirosList } from './GirosList';
+
