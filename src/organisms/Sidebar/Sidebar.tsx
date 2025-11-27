@@ -55,7 +55,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
         </button>
 
         {/* Logo/Platform name */}
-        <div className={`px-4 py-4 border-b border-gray-100 ${isOpen ? '' : 'hidden md:flex justify-center'}`}>
+        <div className={`border-b border-gray-100 ${isOpen ? 'px-4 py-4' : 'hidden md:flex justify-center items-center py-4 px-2'}`}>
           {platformLogo ? (
             <img
               src={platformLogo}
@@ -85,7 +85,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
                   key={index}
                   to={item.to}
                   className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+                    relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
                     ${isActive 
                       ? 'bg-aduana-azul-50 text-aduana-azul font-medium border-l-4 border-aduana-azul -ml-1 pl-[calc(0.75rem-4px)]' 
                       : 'text-gray-600 hover:bg-gray-100'}
@@ -115,7 +115,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
                   {!isOpen && item.badge !== undefined && item.badge > 0 && (
                     <span
                       className={`
-                        absolute right-2 top-1 w-2 h-2 rounded-full
+                        absolute right-2 top-2 w-2 h-2 rounded-full pointer-events-none
                         ${item.badgeType === 'danger' ? 'bg-aduana-rojo animate-pulse' : 'bg-aduana-azul'}
                       `}
                     />

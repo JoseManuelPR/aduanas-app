@@ -24,11 +24,15 @@ export {
 export {
   hallazgos,
   getHallazgoPorNumero,
+  getHallazgoPorId,
   getHallazgosPorEstado,
   getHallazgosPorTipo,
   getHallazgosVencidos,
   getHallazgosPorVencer,
+  getHallazgosGestionables,
   getConteoHallazgos,
+  generarNumeroDenuncia,
+  prepararDatosFormularioDenuncia,
 } from './hallazgos';
 
 // Denuncias

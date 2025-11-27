@@ -1,0 +1,2 @@
+export { HallazgosList } from './HallazgosList';
+

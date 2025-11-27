@@ -18,6 +18,7 @@ import {
   getTodasLasNotificaciones,
   getConteoNotificaciones,
   usuarioActual,
+  getHallazgoPorNumero,
 } from '../../data';
 
 import type { 
@@ -224,7 +225,14 @@ export const NotificacionesList: React.FC = () => {
   const handleGestionar = (tipo: TabType, id: string, referencia: string) => {
     switch (tipo) {
       case 'hallazgos':
-        navigate(`/expediente/${referencia}`);
+        // Buscar el hallazgo por su número (ej: PFI-123) y navegar a gestionar denuncia
+        const hallazgo = getHallazgoPorNumero(referencia);
+        if (hallazgo) {
+          navigate(`/hallazgos/${hallazgo.id}/gestionar`);
+        } else {
+          // Fallback: navegar a la lista de hallazgos
+          navigate(ERoutePaths.HALLAZGOS);
+        }
         break;
       case 'denuncias':
         navigate(ERoutePaths.DENUNCIAS);
@@ -240,20 +248,22 @@ export const NotificacionesList: React.FC = () => {
 
   const getActions = (tipo: TabType) => {
     return (row: NotificacionHallazgo | NotificacionDenuncia | NotificacionReclamo | NotificacionCargo) => (
-      <CustomButton
-        variant="primary"
-        className="text-xs"
-        onClick={() => {
-          const referencia = 
-            'numeroHallazgo' in row ? row.numeroHallazgo :
-            'numeroDenuncia' in row ? row.numeroDenuncia :
-            'numeroReclamo' in row ? row.numeroReclamo :
-            'numeroCargo' in row ? row.numeroCargo : '';
-          handleGestionar(tipo, row.id, referencia);
-        }}
-      >
-        Gestionar
-      </CustomButton>
+      <div className="flex justify-center items-center w-full">
+        <CustomButton
+          variant="primary"
+          className="text-xs"
+          onClick={() => {
+            const referencia = 
+              'numeroHallazgo' in row ? row.numeroHallazgo :
+              'numeroDenuncia' in row ? row.numeroDenuncia :
+              'numeroReclamo' in row ? row.numeroReclamo :
+              'numeroCargo' in row ? row.numeroCargo : '';
+            handleGestionar(tipo, row.id, referencia);
+          }}
+        >
+          Gestionar
+        </CustomButton>
+      </div>
     );
   };
 

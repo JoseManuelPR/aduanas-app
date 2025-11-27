@@ -38,7 +38,7 @@ const CustomLayout = ({ children, user, options, sidebarItems, onLogout, platfor
           onLogout={onLogout}
         />
         {/* Notification dropdown positioned absolutely over header */}
-        <div className="absolute top-1/2 right-24 -translate-y-1/2 z-50">
+        <div className="absolute top-1/2 right-28 -translate-y-1/2 z-50">
           <NotificationDropdown 
             notifications={notifications} 
             unreadCount={unreadCount}

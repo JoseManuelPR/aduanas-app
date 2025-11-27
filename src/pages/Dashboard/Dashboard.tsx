@@ -2,15 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
 import CustomLayout from "../../Layout/Layout";
-import { StatCard, AlertCard, ProgressBar } from "../../components/UI";
+import { StatCard, ProgressBar } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
 import {
   getKPIDashboard,
-  alertas,
   getTodasLasNotificaciones,
-  getConteoNotificaciones,
   usuarioActual,
 } from '../../data';
 
@@ -19,9 +17,7 @@ export const Dashboard: React.FC = () => {
   
   // Obtener KPIs desde los datos centralizados
   const KPI_DASHBOARD = getKPIDashboard();
-  const ALERTAS_PLAZOS = alertas;
   const allNotifications = getTodasLasNotificaciones();
-  const conteoNotificaciones = getConteoNotificaciones();
 
   return (
     <CustomLayout
@@ -56,32 +52,6 @@ export const Dashboard: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Alertas de Plazos Críticos */}
-        {ALERTAS_PLAZOS.filter(a => a.tipo === 'vencido' || a.tipo === 'critico').length > 0 && (
-          <section className="space-y-3">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-aduana-rojo">
-              <Icon name="AlertTriangle" size={20} />
-              Alertas Críticas de Plazos
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {ALERTAS_PLAZOS.filter(a => a.tipo === 'vencido' || a.tipo === 'critico').map((alerta) => (
-                <AlertCard
-                  key={alerta.id}
-                  variant={alerta.tipo as 'vencido' | 'critico'}
-                  title={alerta.titulo}
-                  description={alerta.descripcion}
-                  expediente={alerta.expediente}
-                  fechaVencimiento={alerta.fechaVencimiento}
-                  diasVencidos={alerta.diasVencidos}
-                  diasRestantes={alerta.diasRestantes}
-                  onAction={() => navigate(`/expediente/${alerta.expediente}`)}
-                  actionLabel="Ver expediente"
-                />
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* KPIs Principales */}
         <section className="space-y-4">
@@ -259,75 +229,8 @@ export const Dashboard: React.FC = () => {
             </section>
           </div>
 
-          {/* Columna derecha - Alertas y accesos rápidos */}
+          {/* Columna derecha - Accesos rápidos */}
           <div className="space-y-6">
-            {/* Alertas pendientes */}
-            <section className="card p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Alertas de Plazos
-              </h3>
-              <div className="space-y-3">
-                {ALERTAS_PLAZOS.slice(0, 4).map((alerta, index) => (
-                  <AlertCard
-                    key={alerta.id}
-                    variant={alerta.tipo as 'vencido' | 'critico' | 'advertencia' | 'informativo'}
-                    title={alerta.titulo}
-                    description={alerta.descripcion}
-                    onAction={() => navigate(`/expediente/${alerta.expediente}`)}
-                    actionLabel="Ver"
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* Notificaciones Electrónicas */}
-            <section className="card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Notificaciones
-                </h3>
-                <span className="badge bg-aduana-azul-50 text-aduana-azul">
-                  {conteoNotificaciones.totalNoLeidas} sin leer
-                </span>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Total</span>
-                  <span className="font-semibold text-gray-900">{conteoNotificaciones.totalGeneral}</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Hallazgos</span>
-                  <span className="font-semibold text-blue-600">
-                    {conteoNotificaciones.hallazgos.total} ({conteoNotificaciones.hallazgos.noLeidas} sin leer)
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Denuncias</span>
-                  <span className="font-semibold text-amber-600">
-                    {conteoNotificaciones.denuncias.total} ({conteoNotificaciones.denuncias.noLeidas} sin leer)
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Reclamos</span>
-                  <span className="font-semibold text-emerald-600">
-                    {conteoNotificaciones.reclamos.total} ({conteoNotificaciones.reclamos.noLeidas} sin leer)
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-gray-600">Cargos</span>
-                  <span className="font-semibold text-purple-600">
-                    {conteoNotificaciones.cargos.total} ({conteoNotificaciones.cargos.noLeidas} sin leer)
-                  </span>
-                </div>
-              </div>
-              <button 
-                onClick={() => navigate(ERoutePaths.NOTIFICACIONES)}
-                className="w-full mt-4 btn-secondary text-sm"
-              >
-                Ver todas las notificaciones
-              </button>
-            </section>
-
             {/* Accesos Rápidos */}
             <section className="card p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">

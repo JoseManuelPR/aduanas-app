@@ -10,9 +10,14 @@ enum ERoutePaths {
   // Dashboard Principal
   DASHBOARD = '/dashboard',
   
+  // Módulo de Hallazgos
+  HALLAZGOS = '/hallazgos',
+  HALLAZGOS_GESTIONAR = '/hallazgos/:hallazgoId/gestionar', // Convertir hallazgo a denuncia
+  
   // Módulo de Denuncias
   DENUNCIAS = '/denuncias',
   DENUNCIAS_NUEVA = '/denuncias/nueva',
+  DENUNCIAS_DESDE_HALLAZGO = '/denuncias/desde-hallazgo/:hallazgoId', // Crear denuncia desde hallazgo
   DENUNCIAS_DETALLE = '/denuncias/:id',
   DENUNCIAS_EDITAR = '/denuncias/:id/editar',
   

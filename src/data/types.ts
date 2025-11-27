@@ -64,7 +64,8 @@ export type EstadoHallazgo =
   | 'En Análisis' 
   | 'Notificar Denuncia' 
   | 'Derivado' 
-  | 'Cerrado';
+  | 'Cerrado'
+  | 'Convertido a Denuncia';
 
 export interface Hallazgo {
   id: string;
@@ -79,6 +80,41 @@ export interface Hallazgo {
   montoEstimado: string;
   diasVencimiento: number;
   funcionarioAsignado: string;
+  // Datos extendidos para formulario de denuncia (pre-rellenado)
+  datosDenuncia?: HallazgoDenunciaData;
+}
+
+// Datos adicionales del hallazgo necesarios para crear una denuncia
+export interface HallazgoDenunciaData {
+  // Datos Generales
+  seccion: string;
+  tipoInfraccion: string;
+  normaInfringida: string;
+  fundamentoLegal: string;
+  mercanciaInvolucrada: string;
+  
+  // Datos del Involucrado/Denunciado
+  direccionInvolucrado: string;
+  emailInvolucrado: string;
+  telefonoInvolucrado: string;
+  representanteLegal?: string;
+  
+  // Datos del Agente de Aduanas (si aplica)
+  codigoAgente?: string;
+  nombreAgente?: string;
+  
+  // Documentos asociados
+  documentoAduanero?: string;
+  tipoDocumento?: string;
+  documentosAdjuntos: DocumentoAdjunto[];
+}
+
+export interface DocumentoAdjunto {
+  id: string;
+  nombre: string;
+  tipo: 'pdf' | 'doc' | 'xls' | 'jpg' | 'png';
+  tamanio: string;
+  fechaSubida: string;
 }
 
 // ============================================

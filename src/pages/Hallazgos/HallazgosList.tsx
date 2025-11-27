@@ -11,35 +11,73 @@ import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
 import {
-  denuncias,
-  getConteoDenuncias,
+  hallazgos,
+  getConteoHallazgos,
   getTodasLasNotificaciones,
   usuarioActual,
-  type Denuncia,
+  type Hallazgo,
+  type EstadoHallazgo,
 } from '../../data';
 
-export const DenunciasList: React.FC = () => {
+// Mapeo de variantes para estados de hallazgo
+const getEstadoHallazgoBadgeVariant = (estado: EstadoHallazgo): "default" | "success" | "warning" | "error" | "info" => {
+  switch (estado) {
+    case 'Ingresado':
+      return 'info';
+    case 'En Análisis':
+      return 'warning';
+    case 'Notificar Denuncia':
+      return 'error';
+    case 'Derivado':
+      return 'default';
+    case 'Cerrado':
+      return 'success';
+    case 'Convertido a Denuncia':
+      return 'success';
+    default:
+      return 'default';
+  }
+};
+
+export const HallazgosList: React.FC = () => {
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // Obtener conteos desde datos centralizados
-  const conteoDenuncias = getConteoDenuncias();
+  const conteoHallazgos = getConteoHallazgos();
   const allNotifications = getTodasLasNotificaciones();
 
-  const handleActions = (row: Denuncia) => (
+  // Verificar si el hallazgo puede ser gestionado (convertido a denuncia)
+  const puedeGestionar = (estado: EstadoHallazgo): boolean => {
+    return ['Ingresado', 'En Análisis', 'Notificar Denuncia'].includes(estado);
+  };
+
+  const handleActions = (row: Hallazgo) => (
     <div className="flex flex-col w-full gap-1">
-      <CustomButton 
-        variant="primary" 
-        className="w-full text-xs"
-        onClick={() => navigate(`/expediente/${row.id}`)}
-      >
-        <Icon name="FileText" className="hidden md:block" size={14} />
-        Expediente
-      </CustomButton>
+      {puedeGestionar(row.estado) ? (
+        <CustomButton 
+          variant="primary" 
+          className="w-full text-xs bg-emerald-600 hover:bg-emerald-700"
+          onClick={() => navigate(`/hallazgos/${row.id}/gestionar`)}
+        >
+          <Icon name="FileCheck" className="hidden md:block" size={14} />
+          Gestionar
+        </CustomButton>
+      ) : (
+        <CustomButton 
+          variant="secondary" 
+          className="w-full text-xs"
+          disabled={row.estado === 'Cerrado' || row.estado === 'Convertido a Denuncia'}
+          onClick={() => navigate(`/expediente/${row.id}`)}
+        >
+          <Icon name="FileText" className="hidden md:block" size={14} />
+          Ver Expediente
+        </CustomButton>
+      )}
       <CustomButton 
         variant="secondary" 
         className="w-full text-xs"
-        onClick={() => navigate(`/denuncias/${row.id}`)}
+        onClick={() => {/* Ver detalle del hallazgo */}}
       >
         <Icon name="Eye" className="hidden md:block" size={14} />
         Ver Detalle
@@ -47,29 +85,39 @@ export const DenunciasList: React.FC = () => {
     </div>
   );
 
-  // Columnas para la tabla de denuncias
-  const columnasDenuncias = [
-    { key: 'numeroDenuncia' as const, label: 'N° Denuncia', sortable: true },
+  // Columnas para la tabla de hallazgos
+  const columnasHallazgos = [
+    { key: 'numeroHallazgo' as const, label: 'N° Hallazgo', sortable: true },
     { key: 'fechaIngreso' as const, label: 'Fecha Ingreso', sortable: true },
     { 
       key: 'estado' as const, 
       label: 'Estado', 
       sortable: true,
-      render: (row: Denuncia) => (
-        <Badge variant={getEstadoBadgeVariant(row.estado)} dot>
+      render: (row: Hallazgo) => (
+        <Badge variant={getEstadoHallazgoBadgeVariant(row.estado)} dot>
           {row.estado}
         </Badge>
       )
     },
+    { 
+      key: 'tipoHallazgo' as const, 
+      label: 'Tipo', 
+      sortable: true,
+      render: (row: Hallazgo) => (
+        <Badge variant={row.tipoHallazgo === 'Penal' ? 'error' : 'info'}>
+          {row.tipoHallazgo}
+        </Badge>
+      )
+    },
     { key: 'aduana' as const, label: 'Aduana', sortable: true },
-    { key: 'rutDeudor' as const, label: 'RUT Deudor', sortable: true },
-    { key: 'nombreDeudor' as const, label: 'Nombre Deudor', sortable: true },
-    { key: 'tipoInfraccion' as const, label: 'Tipo Infracción', sortable: true },
+    { key: 'rutInvolucrado' as const, label: 'RUT Involucrado', sortable: true },
+    { key: 'nombreInvolucrado' as const, label: 'Nombre Involucrado', sortable: true },
+    { key: 'montoEstimado' as const, label: 'Monto Estimado', sortable: true },
     { 
       key: 'diasVencimiento' as const, 
       label: 'Días Plazo', 
       sortable: true,
-      render: (row: Denuncia) => {
+      render: (row: Hallazgo) => {
         const dias = row.diasVencimiento;
         const variant = getDiasVencimientoBadgeVariant(dias);
         return (
@@ -79,6 +127,16 @@ export const DenunciasList: React.FC = () => {
         );
       }
     },
+  ];
+
+  // Filtros de hallazgos
+  const filtrosHallazgos = [
+    { id: "numeroHallazgo", label: "N° Hallazgo", type: "text" as const, placeholder: "PFI-XXX", labelClassName: "text-xs font-medium text-gray-700" },
+    { id: "fechaDesde", label: "Fecha Desde", type: "date" as const, labelClassName: "text-xs font-medium text-gray-700", icon: "CalendarDays" },
+    { id: "fechaHasta", label: "Fecha Hasta", type: "date" as const, labelClassName: "text-xs font-medium text-gray-700", icon: "CalendarDays" },
+    { id: "estado", label: "Estado", type: "text" as const, placeholder: "Todos los estados", labelClassName: "text-xs font-medium text-gray-700" },
+    { id: "tipoHallazgo", label: "Tipo", type: "text" as const, placeholder: "Todos los tipos", labelClassName: "text-xs font-medium text-gray-700" },
+    { id: "rutInvolucrado", label: "RUT Involucrado", type: "text" as const, placeholder: "12.345.678-9", labelClassName: "text-xs font-medium text-gray-700" },
   ];
 
   return (
@@ -106,63 +164,59 @@ export const DenunciasList: React.FC = () => {
               >
                 <Icon name="ArrowLeft" size={20} />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Listado de Denuncias</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Listado de Hallazgos (PFI)</h1>
             </div>
             <p className="text-gray-600 mt-1 ml-7">
-              Registro y seguimiento de denuncias aduaneras
+              Gestión y seguimiento de hallazgos de fiscalización
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <CustomButton 
-              variant="secondary"
-              className="flex items-center gap-2"
-              onClick={() => navigate('/hallazgos')}
-            >
-              <Icon name="FileSearch" size={18} />
-              Ver Hallazgos
-            </CustomButton>
-          </div>
         </div>
-        
-        {/* Banner informativo */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+
+        {/* Alerta informativa */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <Icon name="Info" size={20} className="text-blue-600 mt-0.5" />
+            <Icon name="Info" size={20} className="text-amber-600 mt-0.5" />
             <div>
-              <p className="font-medium text-blue-900">Las denuncias se crean desde Hallazgos</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Para crear una nueva denuncia, diríjase a <strong>Hallazgos (PFI)</strong> y seleccione 
-                <strong> "Gestionar"</strong> en el hallazgo correspondiente. El formulario de denuncia 
-                se pre-rellenará con los datos del hallazgo.
+              <p className="font-medium text-amber-900">Proceso de Gestión de Hallazgos</p>
+              <p className="text-sm text-amber-700 mt-1">
+                Los hallazgos en estado <strong>"Notificar Denuncia"</strong>, <strong>"En Análisis"</strong> o <strong>"Ingresado"</strong> pueden 
+                ser gestionados para convertirse en denuncias formales. Haga clic en <strong>"Gestionar"</strong> para 
+                revisar y completar el formulario de denuncia con los datos pre-rellenados del hallazgo.
               </p>
             </div>
           </div>
         </div>
 
         {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="card p-4 border-l-4 border-l-amber-500">
-            <p className="text-sm text-gray-600">Pendientes</p>
-            <p className="text-2xl font-bold text-amber-600">
-              {conteoDenuncias.pendientes}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="card p-4 border-l-4 border-l-blue-500">
+            <p className="text-sm text-gray-600">Ingresados</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {conteoHallazgos.porEstado.ingresado}
             </p>
           </div>
-          <div className="card p-4 border-l-4 border-l-blue-500">
-            <p className="text-sm text-gray-600">En Proceso</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {conteoDenuncias.enProceso}
+          <div className="card p-4 border-l-4 border-l-amber-500">
+            <p className="text-sm text-gray-600">En Análisis</p>
+            <p className="text-2xl font-bold text-amber-600">
+              {conteoHallazgos.porEstado.enAnalisis}
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-red-500">
-            <p className="text-sm text-gray-600">Vencidas</p>
+            <p className="text-sm text-gray-600">Por Notificar</p>
             <p className="text-2xl font-bold text-red-600">
-              {conteoDenuncias.vencidas}
+              {conteoHallazgos.porEstado.notificarDenuncia}
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-emerald-500">
+            <p className="text-sm text-gray-600">Gestionables</p>
+            <p className="text-2xl font-bold text-emerald-600">
+              {conteoHallazgos.gestionables}
+            </p>
+          </div>
+          <div className="card p-4 border-l-4 border-l-gray-500">
             <p className="text-sm text-gray-600">Total</p>
             <p className="text-2xl font-bold text-gray-900">
-              {conteoDenuncias.total}
+              {conteoHallazgos.total}
             </p>
           </div>
         </div>
@@ -173,16 +227,16 @@ export const DenunciasList: React.FC = () => {
           <div className="bg-aduana-azul py-3 px-6 flex items-center justify-between">
             <span className="text-white font-medium flex items-center gap-2">
               <Icon name="FileSearch" size={18} />
-              Búsqueda de Denuncias
+              Búsqueda de Hallazgos
             </span>
             <span className="text-white/80 text-sm">
-              {denuncias.length} registros encontrados
+              {hallazgos.length} registros encontrados
             </span>
           </div>
 
           {/* Filtros */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
-            {CONSTANTS_APP.FILTERS_DENUNCIAS.map((filter) => (
+            {filtrosHallazgos.map((filter) => (
               <InputField
                 key={filter.id}
                 label={filter.label}
@@ -224,8 +278,8 @@ export const DenunciasList: React.FC = () => {
           <div className="p-4">
             <Table
               classHeader="bg-aduana-azul text-white text-xs"
-              headers={columnasDenuncias}
-              data={denuncias}
+              headers={columnasHallazgos}
+              data={hallazgos}
               actions={handleActions}
             />
           </div>
@@ -233,7 +287,7 @@ export const DenunciasList: React.FC = () => {
           {/* Paginación */}
           <div className="flex flex-col md:flex-row items-center justify-between px-5 py-4 border-t border-gray-200 bg-gray-50">
             <p className="text-sm text-gray-600">
-              Mostrando 1 a {denuncias.length} de {denuncias.length} registros
+              Mostrando 1 a {hallazgos.length} de {hallazgos.length} registros
             </p>
             <div className="flex items-center gap-2 mt-3 md:mt-0">
               <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>
@@ -256,5 +310,5 @@ export const DenunciasList: React.FC = () => {
   );
 };
 
-export default DenunciasList;
+export default HallazgosList;
 

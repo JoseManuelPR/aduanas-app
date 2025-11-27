@@ -122,7 +122,7 @@ export function Table<T extends Record<string, unknown>>({
                     {header.render ? header.render(row) : String(row[header.key])}
                   </td>
                 ))}
-              {actions && <td className="px-4 py-2 flex gap-2">{actions(row)}</td>}
+              {actions && <td className="px-4 py-2 flex gap-2 justify-center items-center">{actions(row)}</td>}
             </tr>
           ))}
         </tbody>
