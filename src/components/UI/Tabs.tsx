@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
-interface Tab {
+export interface Tab {
   id: string;
   label: string;
   icon?: React.ReactNode;
   badge?: number | string;
-  badgeVariant?: 'default' | 'danger';
+  badgeVariant?: 'default' | 'danger' | 'info' | 'warning' | 'success';
   content: React.ReactNode;
 }
 
@@ -74,13 +74,19 @@ export const Tabs: React.FC<TabsProps> = ({
               <span
                 className={`
                   ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full
-                  ${tab.badgeVariant === 'danger'
-                    ? 'bg-aduana-rojo text-white'
-                    : activeTab === tab.id
-                      ? variant === 'pills'
-                        ? 'bg-white/20 text-white'
-                        : 'bg-aduana-azul-50 text-aduana-azul'
-                      : 'bg-gray-200 text-gray-600'
+                  ${tab.badgeVariant === 'danger' || tab.badgeVariant === 'warning'
+                    ? tab.badgeVariant === 'danger' 
+                      ? 'bg-aduana-rojo text-white'
+                      : 'bg-amber-500 text-white'
+                    : tab.badgeVariant === 'info'
+                      ? 'bg-blue-500 text-white'
+                      : tab.badgeVariant === 'success'
+                        ? 'bg-emerald-500 text-white'
+                        : activeTab === tab.id
+                          ? variant === 'pills'
+                            ? 'bg-white/20 text-white'
+                            : 'bg-aduana-azul-50 text-aduana-azul'
+                          : 'bg-gray-200 text-gray-600'
                   }
                 `}
               >

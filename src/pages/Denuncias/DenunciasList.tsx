@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
@@ -7,6 +7,7 @@ import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
 import { Badge, getEstadoBadgeVariant, getDiasVencimientoBadgeVariant } from "../../components/UI";
+import type { BadgeVariant } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -15,34 +16,95 @@ import {
   getConteoDenuncias,
   getTodasLasNotificaciones,
   usuarioActual,
+  aduanas,
+  estadosDenuncia,
+  tiposInfraccion,
   type Denuncia,
 } from '../../data';
 
+// Tipos de filtros
+interface FiltrosDenuncia {
+  numeroDenuncia: string;
+  numeroInterno: string;
+  tipoDenuncia: string;
+  estado: string;
+  aduana: string;
+  tipoInfraccion: string;
+  rutDeudor: string;
+  fechaDesde: string;
+  fechaHasta: string;
+  montoMinimo: string;
+  montoMaximo: string;
+  mercanciaAfecta: string;
+}
+
+const initialFiltros: FiltrosDenuncia = {
+  numeroDenuncia: '',
+  numeroInterno: '',
+  tipoDenuncia: '',
+  estado: '',
+  aduana: '',
+  tipoInfraccion: '',
+  rutDeudor: '',
+  fechaDesde: '',
+  fechaHasta: '',
+  montoMinimo: '',
+  montoMaximo: '',
+  mercanciaAfecta: '',
+};
+
 export const DenunciasList: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [selectedRows, _setSelectedRows] = useState<string[]>([]);
+  void _setSelectedRows; // For future use with bulk actions
+  const [filtros, setFiltros] = useState<FiltrosDenuncia>(initialFiltros);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Obtener conteos desde datos centralizados
   const conteoDenuncias = getConteoDenuncias();
   const allNotifications = getTodasLasNotificaciones();
+
+  // Filtrar denuncias
+  const denunciasFiltradas = useMemo(() => {
+    return denuncias.filter(d => {
+      if (filtros.numeroDenuncia && !d.numeroDenuncia.includes(filtros.numeroDenuncia)) return false;
+      if (filtros.numeroInterno && !d.numeroInterno?.includes(filtros.numeroInterno)) return false;
+      if (filtros.tipoDenuncia && d.tipoDenuncia !== filtros.tipoDenuncia) return false;
+      if (filtros.estado && d.estado !== filtros.estado) return false;
+      if (filtros.aduana && d.aduana !== filtros.aduana) return false;
+      if (filtros.tipoInfraccion && d.tipoInfraccion !== filtros.tipoInfraccion) return false;
+      if (filtros.rutDeudor && !d.rutDeudor.includes(filtros.rutDeudor)) return false;
+      if (filtros.mercanciaAfecta === 'si' && !d.mercanciaAfecta) return false;
+      if (filtros.mercanciaAfecta === 'no' && d.mercanciaAfecta) return false;
+      return true;
+    });
+  }, [filtros]);
+
+  const handleFiltroChange = (campo: keyof FiltrosDenuncia, valor: string) => {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+  };
+
+  const limpiarFiltros = () => {
+    setFiltros(initialFiltros);
+  };
 
   const handleActions = (row: Denuncia) => (
     <div className="flex flex-col w-full gap-1">
       <CustomButton 
         variant="primary" 
         className="w-full text-xs"
-        onClick={() => navigate(`/expediente/${row.id}`)}
-      >
-        <Icon name="FileText" className="hidden md:block" size={14} />
-        Expediente
-      </CustomButton>
-      <CustomButton 
-        variant="secondary" 
-        className="w-full text-xs"
         onClick={() => navigate(`/denuncias/${row.id}`)}
       >
         <Icon name="Eye" className="hidden md:block" size={14} />
         Ver Detalle
+      </CustomButton>
+      <CustomButton 
+        variant="secondary" 
+        className="w-full text-xs"
+        onClick={() => navigate(`/expediente/${row.id}`)}
+      >
+        <Icon name="FileText" className="hidden md:block" size={14} />
+        Expediente
       </CustomButton>
     </div>
   );
@@ -50,34 +112,54 @@ export const DenunciasList: React.FC = () => {
   // Columnas para la tabla de denuncias
   const columnasDenuncias = [
     { key: 'numeroDenuncia' as const, label: 'N° Denuncia', sortable: true },
-    { key: 'fechaIngreso' as const, label: 'Fecha Ingreso', sortable: true },
+    { 
+      key: 'tipoDenuncia' as const, 
+      label: 'Tipo', 
+      sortable: true,
+      render: (row: Denuncia) => (
+        <Badge variant={(row.tipoDenuncia === 'Penal' ? 'error' : 'info') as BadgeVariant} size="sm">
+          {row.tipoDenuncia}
+        </Badge>
+      )
+    },
+    { key: 'fechaIngreso' as const, label: 'Fecha', sortable: true },
     { 
       key: 'estado' as const, 
       label: 'Estado', 
       sortable: true,
       render: (row: Denuncia) => (
-        <Badge variant={getEstadoBadgeVariant(row.estado)} dot>
+        <Badge variant={getEstadoBadgeVariant(row.estado)} dot size="sm">
           {row.estado}
         </Badge>
       )
     },
     { key: 'aduana' as const, label: 'Aduana', sortable: true },
-    { key: 'rutDeudor' as const, label: 'RUT Deudor', sortable: true },
-    { key: 'nombreDeudor' as const, label: 'Nombre Deudor', sortable: true },
-    { key: 'tipoInfraccion' as const, label: 'Tipo Infracción', sortable: true },
+    { key: 'rutDeudor' as const, label: 'RUT', sortable: true },
+    { key: 'nombreDeudor' as const, label: 'Infractor', sortable: true },
+    { key: 'tipoInfraccion' as const, label: 'Infracción', sortable: true },
+    { key: 'montoEstimado' as const, label: 'Monto', sortable: true },
     { 
       key: 'diasVencimiento' as const, 
-      label: 'Días Plazo', 
+      label: 'Plazo', 
       sortable: true,
       render: (row: Denuncia) => {
         const dias = row.diasVencimiento;
         const variant = getDiasVencimientoBadgeVariant(dias);
         return (
-          <Badge variant={variant} pulse={dias < 0}>
-            {dias < 0 ? `${Math.abs(dias)}d vencido` : dias === 0 ? 'Hoy' : `${dias} días`}
+          <Badge variant={variant} pulse={dias < 0} size="sm">
+            {dias < 0 ? `${Math.abs(dias)}d venc.` : dias === 0 ? 'Hoy' : `${dias}d`}
           </Badge>
         );
       }
+    },
+    {
+      key: 'mercanciaAfecta' as const,
+      label: '',
+      render: (row: Denuncia) => row.mercanciaAfecta ? (
+        <span title="Mercancía Afecta">
+          <Icon name="Package" size={16} className="text-amber-500" />
+        </span>
+      ) : null
     },
   ];
 
@@ -109,7 +191,7 @@ export const DenunciasList: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900">Listado de Denuncias</h1>
             </div>
             <p className="text-gray-600 mt-1 ml-7">
-              Registro y seguimiento de denuncias aduaneras
+              Gestión y seguimiento de denuncias aduaneras
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -132,25 +214,36 @@ export const DenunciasList: React.FC = () => {
               <p className="font-medium text-blue-900">Las denuncias se crean desde Hallazgos</p>
               <p className="text-sm text-blue-700 mt-1">
                 Para crear una nueva denuncia, diríjase a <strong>Hallazgos (PFI)</strong> y seleccione 
-                <strong> "Gestionar"</strong> en el hallazgo correspondiente. El formulario de denuncia 
-                se pre-rellenará con los datos del hallazgo.
+                <strong> "Gestionar"</strong> en el hallazgo correspondiente.
               </p>
             </div>
           </div>
         </div>
 
         {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="card p-4 border-l-4 border-l-amber-500">
-            <p className="text-sm text-gray-600">Pendientes</p>
-            <p className="text-2xl font-bold text-amber-600">
-              {conteoDenuncias.pendientes}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <div className="card p-4 border-l-4 border-l-gray-400">
+            <p className="text-sm text-gray-600">Borrador</p>
+            <p className="text-2xl font-bold text-gray-600">
+              {conteoDenuncias.porEstado.borrador}
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-blue-500">
-            <p className="text-sm text-gray-600">En Proceso</p>
+            <p className="text-sm text-gray-600">Ingresadas</p>
             <p className="text-2xl font-bold text-blue-600">
+              {conteoDenuncias.porEstado.ingresada + conteoDenuncias.porEstado.enRevision}
+            </p>
+          </div>
+          <div className="card p-4 border-l-4 border-l-indigo-500">
+            <p className="text-sm text-gray-600">En Proceso</p>
+            <p className="text-2xl font-bold text-indigo-600">
               {conteoDenuncias.enProceso}
+            </p>
+          </div>
+          <div className="card p-4 border-l-4 border-l-amber-500">
+            <p className="text-sm text-gray-600">Por Vencer</p>
+            <p className="text-2xl font-bold text-amber-600">
+              {conteoDenuncias.porVencer}
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-red-500">
@@ -160,9 +253,9 @@ export const DenunciasList: React.FC = () => {
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-emerald-500">
-            <p className="text-sm text-gray-600">Total</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {conteoDenuncias.total}
+            <p className="text-sm text-gray-600">Cerradas</p>
+            <p className="text-2xl font-bold text-emerald-600">
+              {conteoDenuncias.resueltas}
             </p>
           </div>
         </div>
@@ -176,36 +269,166 @@ export const DenunciasList: React.FC = () => {
               Búsqueda de Denuncias
             </span>
             <span className="text-white/80 text-sm">
-              {denuncias.length} registros encontrados
+              {denunciasFiltradas.length} de {denuncias.length} registros
             </span>
           </div>
 
-          {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
-            {CONSTANTS_APP.FILTERS_DENUNCIAS.map((filter) => (
-              <InputField
-                key={filter.id}
-                label={filter.label}
-                id={filter.id}
-                type={filter.type}
-                placeholder={filter.placeholder}
-                labelClassName={filter.labelClassName}
-                icon={filter.icon === "CalendarDays" ? <Icon name="CalendarDays" size={18} color="#6B7280" /> : undefined}
-              />
-            ))}
+          {/* Filtros básicos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+            <InputField
+              label="N° Denuncia"
+              id="numeroDenuncia"
+              type="text"
+              placeholder="Ej: 993519"
+              labelClassName="font-medium text-sm text-gray-700"
+              value={filtros.numeroDenuncia}
+              onChange={(e) => handleFiltroChange('numeroDenuncia', e.target.value)}
+            />
+            <div>
+              <label className="block font-medium text-sm text-gray-700 mb-1">Tipo</label>
+              <select
+                className="form-input"
+                value={filtros.tipoDenuncia}
+                onChange={(e) => handleFiltroChange('tipoDenuncia', e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="Infraccional">Infraccional</option>
+                <option value="Penal">Penal</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium text-sm text-gray-700 mb-1">Estado</label>
+              <select
+                className="form-input"
+                value={filtros.estado}
+                onChange={(e) => handleFiltroChange('estado', e.target.value)}
+              >
+                <option value="">Todos</option>
+                {estadosDenuncia.map(estado => (
+                  <option key={estado.value} value={estado.value}>{estado.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium text-sm text-gray-700 mb-1">Aduana</label>
+              <select
+                className="form-input"
+                value={filtros.aduana}
+                onChange={(e) => handleFiltroChange('aduana', e.target.value)}
+              >
+                <option value="">Todas</option>
+                {aduanas.map(aduana => (
+                  <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {/* Filtros avanzados */}
+          {showAdvancedFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-100 border-b border-gray-200">
+              <InputField
+                label="N° Interno"
+                id="numeroInterno"
+                type="text"
+                placeholder="INT-2025-XXXXXX"
+                labelClassName="font-medium text-sm text-gray-700"
+                value={filtros.numeroInterno}
+                onChange={(e) => handleFiltroChange('numeroInterno', e.target.value)}
+              />
+              <InputField
+                label="RUT Infractor"
+                id="rutDeudor"
+                type="text"
+                placeholder="12.345.678-9"
+                labelClassName="font-medium text-sm text-gray-700"
+                value={filtros.rutDeudor}
+                onChange={(e) => handleFiltroChange('rutDeudor', e.target.value)}
+              />
+              <div>
+                <label className="block font-medium text-sm text-gray-700 mb-1">Tipo Infracción</label>
+                <select
+                  className="form-input"
+                  value={filtros.tipoInfraccion}
+                  onChange={(e) => handleFiltroChange('tipoInfraccion', e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {tiposInfraccion.map(tipo => (
+                    <option key={tipo.id} value={tipo.nombre}>{tipo.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block font-medium text-sm text-gray-700 mb-1">Mercancía Afecta</label>
+                <select
+                  className="form-input"
+                  value={filtros.mercanciaAfecta}
+                  onChange={(e) => handleFiltroChange('mercanciaAfecta', e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  <option value="si">Sí</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <InputField
+                label="Fecha Desde"
+                id="fechaDesde"
+                type="date"
+                labelClassName="font-medium text-sm text-gray-700"
+                value={filtros.fechaDesde}
+                onChange={(e) => handleFiltroChange('fechaDesde', e.target.value)}
+              />
+              <InputField
+                label="Fecha Hasta"
+                id="fechaHasta"
+                type="date"
+                labelClassName="font-medium text-sm text-gray-700"
+                value={filtros.fechaHasta}
+                onChange={(e) => handleFiltroChange('fechaHasta', e.target.value)}
+              />
+              <InputField
+                label="Monto Mínimo ($)"
+                id="montoMinimo"
+                type="number"
+                placeholder="0"
+                labelClassName="font-medium text-sm text-gray-700"
+                value={filtros.montoMinimo}
+                onChange={(e) => handleFiltroChange('montoMinimo', e.target.value)}
+              />
+              <InputField
+                label="Monto Máximo ($)"
+                id="montoMaximo"
+                type="number"
+                placeholder="999.999.999"
+                labelClassName="font-medium text-sm text-gray-700"
+                value={filtros.montoMaximo}
+                onChange={(e) => handleFiltroChange('montoMaximo', e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Acciones */}
           <div className="flex flex-col md:flex-row justify-between items-center px-5 py-3 gap-3 border-b border-gray-200">
             <div className="flex items-center gap-2 text-sm text-gray-600">
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="flex items-center gap-1 text-aduana-azul hover:underline"
+              >
+                <Icon name={showAdvancedFilters ? "ChevronUp" : "ChevronDown"} size={16} />
+                {showAdvancedFilters ? 'Ocultar filtros avanzados' : 'Mostrar filtros avanzados'}
+              </button>
               {selectedRows.length > 0 && (
-                <span className="bg-aduana-azul-50 text-aduana-azul px-2 py-1 rounded">
+                <span className="bg-aduana-azul-50 text-aduana-azul px-2 py-1 rounded ml-4">
                   {selectedRows.length} seleccionados
                 </span>
               )}
             </div>
             <div className="flex flex-wrap justify-end gap-2">
-              <CustomButton variant="secondary" className="flex items-center gap-1 text-sm">
+              <CustomButton 
+                variant="secondary" 
+                className="flex items-center gap-1 text-sm"
+                onClick={limpiarFiltros}
+              >
                 <Icon name="Eraser" size={16} />
                 Limpiar
               </CustomButton>
@@ -225,7 +448,7 @@ export const DenunciasList: React.FC = () => {
             <Table
               classHeader="bg-aduana-azul text-white text-xs"
               headers={columnasDenuncias}
-              data={denuncias}
+              data={denunciasFiltradas}
               actions={handleActions}
             />
           </div>
@@ -233,7 +456,7 @@ export const DenunciasList: React.FC = () => {
           {/* Paginación */}
           <div className="flex flex-col md:flex-row items-center justify-between px-5 py-4 border-t border-gray-200 bg-gray-50">
             <p className="text-sm text-gray-600">
-              Mostrando 1 a {denuncias.length} de {denuncias.length} registros
+              Mostrando 1 a {Math.min(denunciasFiltradas.length, 20)} de {denunciasFiltradas.length} registros
             </p>
             <div className="flex items-center gap-2 mt-3 md:mt-0">
               <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>
@@ -257,4 +480,3 @@ export const DenunciasList: React.FC = () => {
 };
 
 export default DenunciasList;
-

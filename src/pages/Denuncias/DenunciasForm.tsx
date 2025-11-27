@@ -6,6 +6,7 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Badge, useToast } from "../../components/UI";
+import type { BadgeVariant } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -15,9 +16,21 @@ import {
   getHallazgoPorId,
   prepararDatosFormularioDenuncia,
   generarNumeroDenuncia,
+  generarNumeroInterno,
+  aduanas,
+  secciones,
+  articulos,
+  tiposInfraccion,
+  denunciantes,
+  monedas,
+  getArticulosPorTipo,
   type Hallazgo,
   type DocumentoAdjunto,
+  type DenunciaInvolucrado,
 } from '../../data';
+
+// Modal de confirmación
+import { ModalConfirmacion } from './components/ModalConfirmacion';
 
 // Tipo para los datos del formulario
 interface FormularioDenunciaData {
@@ -27,17 +40,40 @@ interface FormularioDenunciaData {
   
   // Datos Generales
   aduanaOrigen: string;
+  aduanaEmision: string;
   seccion: string;
   fechaIngreso: string;
+  fechaOcurrencia: string;
+  fechaEmision: string;
   tipoInfraccion: string;
-  tipoDenuncia: string;
+  tipoDenuncia: 'Infraccional' | 'Penal' | '';
   normaInfringida: string;
   fundamentoLegal: string;
   descripcionHechos: string;
   montoEstimado: string;
   mercanciaInvolucrada: string;
   
-  // Denunciado
+  // Tipificación Infraccional
+  codigoArticulo: string;
+  multa: number | '';
+  multaAllanamiento: number | '';
+  montoDerechos: number | '';
+  montoRetencion: number | '';
+  montoNoDeclarado: number | '';
+  codigoMoneda: string;
+  autodenuncio: boolean;
+  retencion: boolean;
+  mercanciaAfecta: boolean;
+  
+  // Tipificación Penal
+  codigoDenunciante: string;
+  numeroOficio: string;
+  fechaOficio: string;
+  
+  // Involucrados
+  involucrados: DenunciaInvolucrado[];
+  
+  // Datos del denunciado principal (legacy)
   rutDenunciado: string;
   nombreDenunciado: string;
   direccionDenunciado: string;
@@ -57,8 +93,11 @@ interface FormularioDenunciaData {
 
 const initialFormData: FormularioDenunciaData = {
   aduanaOrigen: '',
+  aduanaEmision: '',
   seccion: '',
-  fechaIngreso: '',
+  fechaIngreso: new Date().toLocaleDateString('es-CL').split('/').reverse().join('-'),
+  fechaOcurrencia: '',
+  fechaEmision: new Date().toLocaleDateString('es-CL').split('/').reverse().join('-'),
   tipoInfraccion: '',
   tipoDenuncia: '',
   normaInfringida: '',
@@ -66,6 +105,20 @@ const initialFormData: FormularioDenunciaData = {
   descripcionHechos: '',
   montoEstimado: '',
   mercanciaInvolucrada: '',
+  codigoArticulo: '',
+  multa: '',
+  multaAllanamiento: '',
+  montoDerechos: '',
+  montoRetencion: '',
+  montoNoDeclarado: '',
+  codigoMoneda: 'CLP',
+  autodenuncio: false,
+  retencion: false,
+  mercanciaAfecta: false,
+  codigoDenunciante: '',
+  numeroOficio: '',
+  fechaOficio: '',
+  involucrados: [],
   rutDenunciado: '',
   nombreDenunciado: '',
   direccionDenunciado: '',
@@ -81,16 +134,24 @@ const initialFormData: FormularioDenunciaData = {
 
 export const DenunciasForm: React.FC = () => {
   const navigate = useNavigate();
-  const { hallazgoId } = useParams<{ hallazgoId: string }>();
+  const { hallazgoId, id } = useParams<{ hallazgoId?: string; id?: string }>();
   const location = useLocation();
   const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5;
   
   // Estado del formulario
   const [formData, setFormData] = useState<FormularioDenunciaData>(initialFormData);
   const [hallazgoOrigen, setHallazgoOrigen] = useState<Hallazgo | null>(null);
   const [isLoadingHallazgo, setIsLoadingHallazgo] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showModalFormalizar, setShowModalFormalizar] = useState(false);
+  
+  // Artículo seleccionado
+  const articuloSeleccionado = useMemo(() => {
+    if (!formData.codigoArticulo) return null;
+    return articulos.find(a => a.codigo === formData.codigoArticulo) || null;
+  }, [formData.codigoArticulo]);
   
   // Determinar si estamos creando desde un hallazgo
   const isDesdeHallazgo = useMemo(() => {
@@ -98,6 +159,11 @@ export const DenunciasForm: React.FC = () => {
            location.pathname.includes('gestionar') ||
            !!hallazgoId;
   }, [location.pathname, hallazgoId]);
+  
+  // Determinar si es edición
+  const isEditing = useMemo(() => {
+    return location.pathname.includes('/editar') && !!id;
+  }, [location.pathname, id]);
   
   // Obtener notificaciones para el header
   const allNotifications = getTodasLasNotificaciones();
@@ -119,6 +185,19 @@ export const DenunciasForm: React.FC = () => {
             setFormData({
               ...initialFormData,
               ...datosFormulario,
+              tipoDenuncia: hallazgo.tipoHallazgo,
+              involucrados: [{
+                id: 'inv-new-1',
+                tipoInvolucrado: 'Infractor Principal',
+                rut: hallazgo.rutInvolucrado,
+                nombre: hallazgo.nombreInvolucrado,
+                direccion: datosFormulario.direccionDenunciado,
+                email: datosFormulario.emailDenunciado,
+                telefono: datosFormulario.telefonoDenunciado,
+                representanteLegal: datosFormulario.representanteLegal,
+                orden: 1,
+                esPrincipal: true,
+              }],
             });
           }
         }
@@ -129,16 +208,103 @@ export const DenunciasForm: React.FC = () => {
   }, [hallazgoId, isDesdeHallazgo]);
 
   // Handler para actualizar campos del formulario
-  const handleInputChange = (field: keyof FormularioDenunciaData, value: string) => {
+  const handleInputChange = (field: keyof FormularioDenunciaData, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
+    
+    // Limpiar error del campo
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+    
+    // Si cambia el tipo de denuncia, limpiar artículo
+    if (field === 'tipoDenuncia') {
+      setFormData(prev => ({
+        ...prev,
+        tipoDenuncia: value,
+        codigoArticulo: '',
+        multa: '',
+        multaAllanamiento: '',
+      }));
+    }
+    
+    // Si cambia el artículo, actualizar multa máxima
+    if (field === 'codigoArticulo') {
+      const articulo = articulos.find(a => a.codigo === value);
+      if (articulo && articulo.multaMinima) {
+        setFormData(prev => ({
+          ...prev,
+          codigoArticulo: value,
+          multa: articulo.multaMinima || '',
+        }));
+      }
+    }
+  };
+
+  // Validar paso actual
+  const validateCurrentStep = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    switch (currentStep) {
+      case 1: // Datos Generales
+        if (!formData.tipoDenuncia) newErrors.tipoDenuncia = 'Seleccione el tipo de denuncia';
+        if (!formData.aduanaOrigen) newErrors.aduanaOrigen = 'Seleccione la aduana';
+        if (!formData.fechaOcurrencia) newErrors.fechaOcurrencia = 'Ingrese la fecha de ocurrencia';
+        break;
+        
+      case 2: // Tipificación
+        if (!formData.tipoInfraccion) newErrors.tipoInfraccion = 'Seleccione el tipo de infracción';
+        if (formData.tipoDenuncia === 'Infraccional' && !formData.codigoArticulo) {
+          newErrors.codigoArticulo = 'Seleccione un artículo';
+        }
+        if (formData.tipoDenuncia === 'Penal' && !formData.codigoDenunciante) {
+          newErrors.codigoDenunciante = 'Seleccione el denunciante';
+        }
+        break;
+        
+      case 3: // Involucrados
+        if (formData.involucrados.length === 0 && !formData.rutDenunciado) {
+          newErrors.rutDenunciado = 'Debe agregar al menos un involucrado';
+        }
+        break;
+        
+      case 4: // Documentos
+        // Documentos son opcionales en esta etapa
+        break;
+        
+      case 5: // Revisión
+        if (!formData.descripcionHechos || formData.descripcionHechos.length < 50) {
+          newErrors.descripcionHechos = 'La descripción debe tener al menos 50 caracteres';
+        }
+        break;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (validateCurrentStep()) {
+      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Campos requeridos',
+        message: 'Complete los campos obligatorios antes de continuar.',
+        duration: 3000,
+      });
+    }
   };
 
   const StepIndicator = () => (
     <div className="flex items-center justify-center mb-6">
-      {[1, 2, 3, 4].map((step) => (
+      {[1, 2, 3, 4, 5].map((step) => (
         <div key={step} className="flex items-center">
           <div
             className={`
@@ -158,7 +324,7 @@ export const DenunciasForm: React.FC = () => {
           </div>
           {step < totalSteps && (
             <div
-              className={`w-16 h-1 mx-2 rounded ${
+              className={`w-12 h-1 mx-2 rounded ${
                 currentStep > step ? 'bg-emerald-500' : 'bg-gray-200'
               }`}
             />
@@ -170,9 +336,10 @@ export const DenunciasForm: React.FC = () => {
 
   const stepLabels = [
     'Datos Generales',
+    'Tipificación',
     'Involucrados',
     'Documentos',
-    'Revisión y Envío'
+    'Revisión'
   ];
 
   // Banner de hallazgo origen
@@ -189,117 +356,172 @@ export const DenunciasForm: React.FC = () => {
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-amber-900">Denuncia desde Hallazgo</h3>
               <Badge variant="warning">{hallazgoOrigen.numeroHallazgo}</Badge>
-              <Badge variant={hallazgoOrigen.tipoHallazgo === 'Penal' ? 'error' : 'info'}>
+              <Badge variant={(hallazgoOrigen.tipoHallazgo === 'Penal' ? 'error' : 'info') as BadgeVariant}>
                 {hallazgoOrigen.tipoHallazgo}
               </Badge>
             </div>
             <p className="text-sm text-amber-700 mb-2">
-              Los datos han sido pre-rellenados con la información del hallazgo. 
-              Revise y complete la información necesaria para formalizar la denuncia.
+              Los datos han sido pre-rellenados con la información del hallazgo.
             </p>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <span className="text-amber-800">
-                <strong>Aduana:</strong> {hallazgoOrigen.aduana}
-              </span>
-              <span className="text-amber-800">
-                <strong>Monto:</strong> {hallazgoOrigen.montoEstimado}
-              </span>
-              <span className="text-amber-800">
-                <strong>Funcionario:</strong> {hallazgoOrigen.funcionarioAsignado}
-              </span>
-            </div>
           </div>
         </div>
       </div>
     );
   };
 
+  // Paso 1: Datos Generales
   const DatosGenerales = () => (
     <div className="space-y-6">
+      {/* Tipo de denuncia */}
+      <div className="card p-5 border-l-4 border-l-aduana-azul">
+        <h4 className="font-semibold text-gray-900 mb-4">Tipo de Denuncia *</h4>
+        <div className="flex gap-4">
+          <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+            formData.tipoDenuncia === 'Infraccional' 
+              ? 'border-blue-500 bg-blue-50' 
+              : 'border-gray-200 hover:border-gray-300'
+          }`}>
+            <input
+              type="radio"
+              name="tipoDenuncia"
+              value="Infraccional"
+              checked={formData.tipoDenuncia === 'Infraccional'}
+              onChange={(e) => handleInputChange('tipoDenuncia', e.target.value)}
+              className="sr-only"
+            />
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                formData.tipoDenuncia === 'Infraccional' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+              }`}>
+                <Icon name="FileText" size={20} />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Infraccional</p>
+                <p className="text-sm text-gray-500">Multas y sanciones administrativas</p>
+              </div>
+            </div>
+          </label>
+          <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+            formData.tipoDenuncia === 'Penal' 
+              ? 'border-red-500 bg-red-50' 
+              : 'border-gray-200 hover:border-gray-300'
+          }`}>
+            <input
+              type="radio"
+              name="tipoDenuncia"
+              value="Penal"
+              checked={formData.tipoDenuncia === 'Penal'}
+              onChange={(e) => handleInputChange('tipoDenuncia', e.target.value)}
+              className="sr-only"
+            />
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                formData.tipoDenuncia === 'Penal' ? 'bg-red-500 text-white' : 'bg-gray-200'
+              }`}>
+                <Icon name="Scale" size={20} />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Penal</p>
+                <p className="text-sm text-gray-500">Delitos aduaneros</p>
+              </div>
+            </div>
+          </label>
+        </div>
+        {errors.tipoDenuncia && (
+          <p className="text-red-500 text-sm mt-2">{errors.tipoDenuncia}</p>
+        )}
+      </div>
+
+      {/* Datos de ubicación */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <InputField
-          label="Aduana de Origen"
-          id="aduanaOrigen"
-          type="text"
-          placeholder="Seleccione aduana"
-          value={formData.aduanaOrigen}
-          onChange={(e) => handleInputChange('aduanaOrigen', e.target.value)}
-          required
-        />
-        <InputField
-          label="Sección"
-          id="seccion"
-          type="text"
-          placeholder="Seleccione sección"
-          value={formData.seccion}
-          onChange={(e) => handleInputChange('seccion', e.target.value)}
-          required
-        />
+        <div>
+          <label className="form-label">Aduana *</label>
+          <select
+            className={`form-input ${errors.aduanaOrigen ? 'border-red-500' : ''}`}
+            value={formData.aduanaOrigen}
+            onChange={(e) => handleInputChange('aduanaOrigen', e.target.value)}
+          >
+            <option value="">Seleccione aduana</option>
+            {aduanas.map(aduana => (
+              <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
+            ))}
+          </select>
+          {errors.aduanaOrigen && <p className="text-red-500 text-sm mt-1">{errors.aduanaOrigen}</p>}
+        </div>
+        <div>
+          <label className="form-label">Aduana de Emisión</label>
+          <select
+            className="form-input"
+            value={formData.aduanaEmision || formData.aduanaOrigen}
+            onChange={(e) => handleInputChange('aduanaEmision', e.target.value)}
+          >
+            <option value="">Seleccione aduana</option>
+            {aduanas.map(aduana => (
+              <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="form-label">Sección</label>
+          <select
+            className="form-input"
+            value={formData.seccion}
+            onChange={(e) => handleInputChange('seccion', e.target.value)}
+          >
+            <option value="">Seleccione sección</option>
+            {secciones.map(seccion => (
+              <option key={seccion.id} value={seccion.nombre}>{seccion.nombre}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="form-label">Moneda</label>
+          <select
+            className="form-input"
+            value={formData.codigoMoneda}
+            onChange={(e) => handleInputChange('codigoMoneda', e.target.value)}
+          >
+            {monedas.map(moneda => (
+              <option key={moneda.id} value={moneda.codigo}>{moneda.nombre} ({moneda.simbolo})</option>
+            ))}
+          </select>
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <InputField
-          label="Fecha de Ingreso"
-          id="fechaIngreso"
-          type="text"
-          placeholder="dd-mm-aaaa"
-          value={formData.fechaIngreso}
-          onChange={(e) => handleInputChange('fechaIngreso', e.target.value)}
-          required
-          icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
-        />
-        <InputField
-          label="Tipo de Infracción"
-          id="tipoInfraccion"
-          type="text"
-          placeholder="Seleccione tipo"
-          value={formData.tipoInfraccion}
-          onChange={(e) => handleInputChange('tipoInfraccion', e.target.value)}
-          required
-        />
+      {/* Fechas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label className="form-label">Fecha de Emisión</label>
+          <input
+            type="date"
+            className="form-input"
+            value={formData.fechaEmision}
+            onChange={(e) => handleInputChange('fechaEmision', e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="form-label">Fecha de Ocurrencia *</label>
+          <input
+            type="date"
+            className={`form-input ${errors.fechaOcurrencia ? 'border-red-500' : ''}`}
+            value={formData.fechaOcurrencia}
+            onChange={(e) => handleInputChange('fechaOcurrencia', e.target.value)}
+          />
+          {errors.fechaOcurrencia && <p className="text-red-500 text-sm mt-1">{errors.fechaOcurrencia}</p>}
+        </div>
+        <div>
+          <label className="form-label">Fecha de Ingreso</label>
+          <input
+            type="date"
+            className="form-input"
+            value={formData.fechaIngreso}
+            disabled
+          />
+        </div>
       </div>
 
+      {/* Mercancía */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <InputField
-          label="Norma Infringida"
-          id="normaInfringida"
-          type="text"
-          placeholder="Ej: Art. 174 Ordenanza de Aduanas"
-          value={formData.normaInfringida}
-          onChange={(e) => handleInputChange('normaInfringida', e.target.value)}
-          required
-        />
-        <InputField
-          label="Fundamento Legal"
-          id="fundamentoLegal"
-          type="text"
-          placeholder="Seleccione fundamento"
-          value={formData.fundamentoLegal}
-          onChange={(e) => handleInputChange('fundamentoLegal', e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="col-span-2">
-        <label className="form-label">Descripción de los Hechos</label>
-        <textarea
-          className="form-input min-h-[120px]"
-          placeholder="Describa detalladamente los hechos que motivan la denuncia..."
-          value={formData.descripcionHechos}
-          onChange={(e) => handleInputChange('descripcionHechos', e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <InputField
-          label="Monto Estimado (CLP)"
-          id="montoEstimado"
-          type="text"
-          placeholder="$0"
-          value={formData.montoEstimado}
-          onChange={(e) => handleInputChange('montoEstimado', e.target.value)}
-        />
         <InputField
           label="Mercancía Involucrada"
           id="mercancia"
@@ -308,16 +530,277 @@ export const DenunciasForm: React.FC = () => {
           value={formData.mercanciaInvolucrada}
           onChange={(e) => handleInputChange('mercanciaInvolucrada', e.target.value)}
         />
+        <InputField
+          label="Monto Estimado"
+          id="montoEstimado"
+          type="text"
+          placeholder="$0"
+          value={formData.montoEstimado}
+          onChange={(e) => handleInputChange('montoEstimado', e.target.value)}
+        />
+      </div>
+
+      {/* Flags */}
+      <div className="card p-4 bg-gray-50">
+        <h4 className="font-medium text-gray-900 mb-3">Indicadores</h4>
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.autodenuncio}
+              onChange={(e) => handleInputChange('autodenuncio', e.target.checked)}
+              className="rounded border-gray-300 text-aduana-azul focus:ring-aduana-azul"
+            />
+            <span className="text-sm text-gray-700">Autodenuncia</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.retencion}
+              onChange={(e) => handleInputChange('retencion', e.target.checked)}
+              className="rounded border-gray-300 text-aduana-azul focus:ring-aduana-azul"
+            />
+            <span className="text-sm text-gray-700">Con retención</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.mercanciaAfecta}
+              onChange={(e) => handleInputChange('mercanciaAfecta', e.target.checked)}
+              className="rounded border-gray-300 text-aduana-azul focus:ring-aduana-azul"
+            />
+            <span className="text-sm text-gray-700">Mercancía afecta</span>
+          </label>
+        </div>
       </div>
     </div>
   );
 
+  // Paso 2: Tipificación
+  const Tipificacion = () => (
+    <div className="space-y-6">
+      {/* Tipo de Infracción */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="form-label">Tipo de Infracción *</label>
+          <select
+            className={`form-input ${errors.tipoInfraccion ? 'border-red-500' : ''}`}
+            value={formData.tipoInfraccion}
+            onChange={(e) => handleInputChange('tipoInfraccion', e.target.value)}
+          >
+            <option value="">Seleccione tipo</option>
+            {tiposInfraccion.map(tipo => (
+              <option key={tipo.id} value={tipo.nombre}>{tipo.nombre}</option>
+            ))}
+          </select>
+          {errors.tipoInfraccion && <p className="text-red-500 text-sm mt-1">{errors.tipoInfraccion}</p>}
+        </div>
+        <div>
+          <label className="form-label">Norma Infringida</label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Ej: Art. 174 Ordenanza de Aduanas"
+            value={formData.normaInfringida}
+            onChange={(e) => handleInputChange('normaInfringida', e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="form-label">Fundamento Legal</label>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Ej: Ley 18.483 Art. 168"
+          value={formData.fundamentoLegal}
+          onChange={(e) => handleInputChange('fundamentoLegal', e.target.value)}
+        />
+      </div>
+
+      {/* Sección Infraccional */}
+      {formData.tipoDenuncia === 'Infraccional' && (
+        <div className="card p-5 border-l-4 border-l-blue-500">
+          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Icon name="FileText" size={18} />
+            Tipificación Infraccional
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="form-label">Artículo *</label>
+              <select
+                className={`form-input ${errors.codigoArticulo ? 'border-red-500' : ''}`}
+                value={formData.codigoArticulo}
+                onChange={(e) => handleInputChange('codigoArticulo', e.target.value)}
+              >
+                <option value="">Seleccione artículo</option>
+                {getArticulosPorTipo('Infraccional').map(art => (
+                  <option key={art.id} value={art.codigo}>
+                    {art.nombre}
+                  </option>
+                ))}
+              </select>
+              {errors.codigoArticulo && <p className="text-red-500 text-sm mt-1">{errors.codigoArticulo}</p>}
+            </div>
+            
+            {articuloSeleccionado && (
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">{articuloSeleccionado.nombre}</p>
+                <p className="text-xs text-blue-600 mt-1">{articuloSeleccionado.descripcion}</p>
+                {articuloSeleccionado.multaMinima && (
+                  <p className="text-xs text-blue-700 mt-2">
+                    Multa: ${articuloSeleccionado.multaMinima?.toLocaleString('es-CL')} - ${articuloSeleccionado.multaMaxima?.toLocaleString('es-CL')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <div>
+              <label className="form-label">Multa ($)</label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="0"
+                value={formData.multa}
+                onChange={(e) => handleInputChange('multa', e.target.value ? parseInt(e.target.value) : '')}
+              />
+              {articuloSeleccionado && articuloSeleccionado.multaMinima && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Rango: ${articuloSeleccionado.multaMinima?.toLocaleString('es-CL')} - ${articuloSeleccionado.multaMaxima?.toLocaleString('es-CL')}
+                </p>
+              )}
+            </div>
+            
+            {articuloSeleccionado?.permiteAllanamiento && (
+              <div>
+                <label className="form-label">Multa por Allanamiento ($)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="0"
+                  value={formData.multaAllanamiento}
+                  onChange={(e) => handleInputChange('multaAllanamiento', e.target.value ? parseInt(e.target.value) : '')}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {articuloSeleccionado.porcentajeAllanamiento}% de reducción aplicable
+                </p>
+              </div>
+            )}
+            
+            <div>
+              <label className="form-label">Monto Derechos ($)</label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="0"
+                value={formData.montoDerechos}
+                onChange={(e) => handleInputChange('montoDerechos', e.target.value ? parseInt(e.target.value) : '')}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div>
+              <label className="form-label">Monto Retención ($)</label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="0"
+                value={formData.montoRetencion}
+                onChange={(e) => handleInputChange('montoRetencion', e.target.value ? parseInt(e.target.value) : '')}
+              />
+            </div>
+            <div>
+              <label className="form-label">Monto No Declarado ($)</label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="0"
+                value={formData.montoNoDeclarado}
+                onChange={(e) => handleInputChange('montoNoDeclarado', e.target.value ? parseInt(e.target.value) : '')}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sección Penal */}
+      {formData.tipoDenuncia === 'Penal' && (
+        <div className="card p-5 border-l-4 border-l-red-500">
+          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Icon name="Scale" size={18} />
+            Tipificación Penal
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="form-label">Artículo Penal</label>
+              <select
+                className="form-input"
+                value={formData.codigoArticulo}
+                onChange={(e) => handleInputChange('codigoArticulo', e.target.value)}
+              >
+                <option value="">Seleccione artículo</option>
+                {getArticulosPorTipo('Penal').map(art => (
+                  <option key={art.id} value={art.codigo}>
+                    {art.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="form-label">Denunciante *</label>
+              <select
+                className={`form-input ${errors.codigoDenunciante ? 'border-red-500' : ''}`}
+                value={formData.codigoDenunciante}
+                onChange={(e) => handleInputChange('codigoDenunciante', e.target.value)}
+              >
+                <option value="">Seleccione denunciante</option>
+                {denunciantes.map(den => (
+                  <option key={den.id} value={den.codigo}>{den.nombre}</option>
+                ))}
+              </select>
+              {errors.codigoDenunciante && <p className="text-red-500 text-sm mt-1">{errors.codigoDenunciante}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div>
+              <label className="form-label">N° Oficio</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="OF-2025-XXXXX"
+                value={formData.numeroOficio}
+                onChange={(e) => handleInputChange('numeroOficio', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="form-label">Fecha Oficio</label>
+              <input
+                type="date"
+                className="form-input"
+                value={formData.fechaOficio}
+                onChange={(e) => handleInputChange('fechaOficio', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Paso 3: Involucrados
   const Involucrados = () => (
     <div className="space-y-6">
       <div className="card p-5 border-l-4 border-l-aduana-azul">
         <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Icon name="User" size={18} />
-          Denunciado Principal
+          Infractor Principal *
           {isDesdeHallazgo && (
             <Badge variant="info" className="ml-2">Pre-rellenado desde hallazgo</Badge>
           )}
@@ -374,6 +857,7 @@ export const DenunciasForm: React.FC = () => {
             onChange={(e) => handleInputChange('representanteLegal', e.target.value)}
           />
         </div>
+        {errors.rutDenunciado && <p className="text-red-500 text-sm mt-2">{errors.rutDenunciado}</p>}
       </div>
 
       <div className="card p-5 border-l-4 border-l-emerald-500">
@@ -408,6 +892,7 @@ export const DenunciasForm: React.FC = () => {
     </div>
   );
 
+  // Paso 4: Documentos
   const getIconForDocType = (tipo: DocumentoAdjunto['tipo']) => {
     switch (tipo) {
       case 'pdf':
@@ -424,7 +909,6 @@ export const DenunciasForm: React.FC = () => {
 
   const Documentos = () => (
     <div className="space-y-6">
-      {/* Documentos pre-cargados del hallazgo */}
       {formData.documentosAdjuntos.length > 0 && (
         <div className="card p-5 border-l-4 border-l-amber-500">
           <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -445,9 +929,6 @@ export const DenunciasForm: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button className="text-aduana-azul hover:text-aduana-azul/80">
                     <Icon name="Eye" size={18} />
-                  </button>
-                  <button className="text-red-500 hover:text-red-700">
-                    <Icon name="Trash2" size={18} />
                   </button>
                 </div>
               </div>
@@ -478,38 +959,45 @@ export const DenunciasForm: React.FC = () => {
           value={formData.documentoAduanero || ''}
           onChange={(e) => handleInputChange('documentoAduanero', e.target.value)}
         />
-        <InputField
-          label="Tipo de Documento"
-          id="tipoDocumento"
-          type="text"
-          placeholder="Seleccione tipo"
-          value={formData.tipoDocumento || ''}
-          onChange={(e) => handleInputChange('tipoDocumento', e.target.value)}
-        />
+        <div>
+          <label className="form-label">Tipo de Documento</label>
+          <select
+            className="form-input"
+            value={formData.tipoDocumento || ''}
+            onChange={(e) => handleInputChange('tipoDocumento', e.target.value)}
+          >
+            <option value="">Seleccione tipo</option>
+            <option value="DIN">DIN - Declaración de Ingreso</option>
+            <option value="DUS">DUS - Declaración Única de Salida</option>
+            <option value="MIC/DTA">MIC/DTA - Manifiesto Internacional</option>
+            <option value="BL">B/L - Bill of Lading</option>
+            <option value="FACTURA">Factura Comercial</option>
+          </select>
+        </div>
       </div>
     </div>
   );
 
+  // Paso 5: Revisión
   const Revision = () => {
     const numeroDenunciaGenerado = useMemo(() => generarNumeroDenuncia(), []);
+    const numeroInternoGenerado = useMemo(() => generarNumeroInterno(numeroDenunciaGenerado), [numeroDenunciaGenerado]);
     
     return (
       <div className="space-y-6">
-        {/* Banner informativo */}
         <div className="alert alert-info">
           <Icon name="Info" size={20} />
           <div>
             <p className="font-medium">Revise la información antes de enviar</p>
             <p className="text-sm mt-1">
               {isDesdeHallazgo 
-                ? `Al confirmar, el hallazgo ${formData.hallazgoOrigen} será convertido en la denuncia N° ${numeroDenunciaGenerado} y se iniciará el flujo correspondiente.`
-                : 'Una vez enviada la denuncia, se generará el expediente digital y se iniciará el flujo de trabajo correspondiente.'
+                ? `Al confirmar, el hallazgo ${formData.hallazgoOrigen} será convertido en la denuncia N° ${numeroDenunciaGenerado}.`
+                : 'Una vez enviada la denuncia, se generará el expediente digital.'
               }
             </p>
           </div>
         </div>
 
-        {/* Número de denuncia a generar */}
         <div className="card p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-emerald-100 rounded-lg">
@@ -518,14 +1006,16 @@ export const DenunciasForm: React.FC = () => {
             <div>
               <p className="text-sm text-emerald-700">Número de Denuncia a Generar</p>
               <p className="text-2xl font-bold text-emerald-800">{numeroDenunciaGenerado}</p>
+              <p className="text-xs text-emerald-600">N° Interno: {numeroInternoGenerado}</p>
             </div>
-            {isDesdeHallazgo && (
-              <div className="ml-auto">
-                <Badge variant="warning">
-                  Desde {formData.hallazgoOrigen}
-                </Badge>
-              </div>
-            )}
+            <div className="ml-auto flex gap-2">
+              <Badge variant={(formData.tipoDenuncia === 'Penal' ? 'error' : 'info') as BadgeVariant}>
+                {formData.tipoDenuncia || 'Sin tipo'}
+              </Badge>
+              {isDesdeHallazgo && (
+                <Badge variant="warning">Desde {formData.hallazgoOrigen}</Badge>
+              )}
+            </div>
           </div>
         </div>
 
@@ -542,22 +1032,32 @@ export const DenunciasForm: React.FC = () => {
                 <dd className="font-medium">{formData.seccion || 'No especificada'}</dd>
               </div>
               <div className="flex justify-between">
+                <dt className="text-gray-500">Fecha Ocurrencia:</dt>
+                <dd className="font-medium">{formData.fechaOcurrencia || 'No especificada'}</dd>
+              </div>
+              <div className="flex justify-between">
                 <dt className="text-gray-500">Tipo de Infracción:</dt>
                 <dd className="font-medium">{formData.tipoInfraccion || 'No especificada'}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Norma Infringida:</dt>
-                <dd className="font-medium text-xs">{formData.normaInfringida || 'No especificada'}</dd>
+                <dt className="text-gray-500">Artículo:</dt>
+                <dd className="font-medium">{articuloSeleccionado?.nombre || formData.codigoArticulo || 'No especificado'}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500">Monto Estimado:</dt>
                 <dd className="font-medium text-aduana-rojo">{formData.montoEstimado || '$0'}</dd>
               </div>
+              {formData.multa && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Multa:</dt>
+                  <dd className="font-medium">${Number(formData.multa).toLocaleString('es-CL')}</dd>
+                </div>
+              )}
             </dl>
           </div>
 
           <div className="card p-5">
-            <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Denunciado</h4>
+            <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Infractor Principal</h4>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <dt className="text-gray-500">RUT:</dt>
@@ -581,12 +1081,18 @@ export const DenunciasForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Descripción de hechos */}
         <div className="card p-5">
-          <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Descripción de los Hechos</h4>
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">
-            {formData.descripcionHechos || 'No se ha proporcionado descripción.'}
+          <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Descripción de los Hechos *</h4>
+          <textarea
+            className={`form-input min-h-[150px] ${errors.descripcionHechos ? 'border-red-500' : ''}`}
+            placeholder="Describa detalladamente los hechos que motivan la denuncia (mínimo 50 caracteres)..."
+            value={formData.descripcionHechos}
+            onChange={(e) => handleInputChange('descripcionHechos', e.target.value)}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            {formData.descripcionHechos.length} caracteres (mínimo 50)
           </p>
+          {errors.descripcionHechos && <p className="text-red-500 text-sm mt-1">{errors.descripcionHechos}</p>}
         </div>
 
         <div className="card p-5">
@@ -610,10 +1116,8 @@ export const DenunciasForm: React.FC = () => {
         <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
           <input type="checkbox" id="confirmar" className="mt-1" />
           <label htmlFor="confirmar" className="text-sm text-amber-800">
-            {isDesdeHallazgo 
-              ? `Confirmo que la información es veraz y autorizo la conversión del hallazgo ${formData.hallazgoOrigen} en denuncia formal. El hallazgo será marcado como "Convertido a Denuncia" y se generará el expediente digital correspondiente.`
-              : 'Confirmo que la información proporcionada es veraz y corresponde a los hechos investigados. Entiendo que esta denuncia generará un expediente digital y notificaciones al denunciado.'
-            }
+            Confirmo que la información proporcionada es veraz y corresponde a los hechos investigados. 
+            Entiendo que esta denuncia generará un expediente digital y se iniciará el proceso correspondiente.
           </label>
         </div>
       </div>
@@ -634,10 +1138,12 @@ export const DenunciasForm: React.FC = () => {
       case 1:
         return <DatosGenerales />;
       case 2:
-        return <Involucrados />;
+        return <Tipificacion />;
       case 3:
-        return <Documentos />;
+        return <Involucrados />;
       case 4:
+        return <Documentos />;
+      case 5:
         return <Revision />;
       default:
         return <DatosGenerales />;
@@ -645,6 +1151,20 @@ export const DenunciasForm: React.FC = () => {
   };
 
   const handleSubmit = () => {
+    if (!validateCurrentStep()) {
+      showToast({
+        type: 'error',
+        title: 'Campos requeridos',
+        message: 'Complete los campos obligatorios antes de enviar.',
+        duration: 3000,
+      });
+      return;
+    }
+    
+    setShowModalFormalizar(true);
+  };
+
+  const handleConfirmSubmit = () => {
     const numeroDenuncia = generarNumeroDenuncia();
     
     showToast({
@@ -652,12 +1172,11 @@ export const DenunciasForm: React.FC = () => {
       title: isDesdeHallazgo 
         ? '¡Hallazgo convertido a denuncia exitosamente!'
         : '¡Denuncia registrada exitosamente!',
-      message: isDesdeHallazgo
-        ? `El hallazgo ${formData.hallazgoOrigen} ha sido convertido en la denuncia N° ${numeroDenuncia}. El expediente digital ha sido generado.`
-        : `La denuncia N° ${numeroDenuncia} ha sido registrada. El expediente digital ha sido generado y se ha iniciado el flujo de trabajo correspondiente.`,
+      message: `La denuncia N° ${numeroDenuncia} ha sido registrada. El expediente digital ha sido generado.`,
       duration: 5000,
     });
     
+    setShowModalFormalizar(false);
     setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
   };
 
@@ -679,14 +1198,14 @@ export const DenunciasForm: React.FC = () => {
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <button
-            onClick={() => navigate(isDesdeHallazgo ? -1 : ERoutePaths.DENUNCIAS)}
+            onClick={() => isDesdeHallazgo ? navigate(-1) : navigate(ERoutePaths.DENUNCIAS)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Icon name="ArrowLeft" size={20} />
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {isDesdeHallazgo ? 'Gestionar Hallazgo → Denuncia' : 'Nueva Denuncia'}
+              {isEditing ? 'Editar Denuncia' : isDesdeHallazgo ? 'Gestionar Hallazgo → Denuncia' : 'Nueva Denuncia'}
             </h1>
             <p className="text-gray-600">
               {isDesdeHallazgo 
@@ -706,7 +1225,7 @@ export const DenunciasForm: React.FC = () => {
           
           {/* Step Labels */}
           <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-8 text-sm">
+            <div className="flex items-center gap-6 text-sm">
               {stepLabels.map((label, index) => (
                 <span
                   key={index}
@@ -749,7 +1268,7 @@ export const DenunciasForm: React.FC = () => {
               {currentStep < totalSteps ? (
                 <CustomButton
                   variant="primary"
-                  onClick={() => setCurrentStep(currentStep + 1)}
+                  onClick={handleNextStep}
                   className="flex items-center gap-2"
                 >
                   Siguiente
@@ -769,6 +1288,34 @@ export const DenunciasForm: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación */}
+      <ModalConfirmacion
+        isOpen={showModalFormalizar}
+        onClose={() => setShowModalFormalizar(false)}
+        onConfirm={handleConfirmSubmit}
+        titulo="Confirmar Envío de Denuncia"
+        mensaje={`¿Está seguro que desea ${isDesdeHallazgo ? 'crear la denuncia desde el hallazgo' : 'enviar esta denuncia'}? Se generará el expediente digital y se iniciará el flujo de trabajo correspondiente.`}
+        tipo="info"
+        textoConfirmar={isDesdeHallazgo ? 'Crear Denuncia' : 'Enviar Denuncia'}
+      >
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-500">Tipo:</span>
+            <Badge variant={(formData.tipoDenuncia === 'Penal' ? 'error' : 'info') as BadgeVariant}>
+              {formData.tipoDenuncia || 'Sin tipo'}
+            </Badge>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Aduana:</span>
+            <span className="font-medium">{formData.aduanaOrigen}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Infractor:</span>
+            <span className="font-medium">{formData.nombreDenunciado}</span>
+          </div>
+        </div>
+      </ModalConfirmacion>
     </CustomLayout>
   );
 };

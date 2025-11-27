@@ -118,30 +118,211 @@ export interface DocumentoAdjunto {
 }
 
 // ============================================
-// DENUNCIAS
+// DENUNCIAS - MODELO COMPLETO
 // ============================================
 
 export type EstadoDenuncia = 
+  | 'Borrador'
   | 'Ingresada' 
   | 'En Revisión' 
   | 'Formulada' 
   | 'Notificada' 
-  | 'En Proceso' 
-  | 'Cerrada';
+  | 'En Proceso'
+  | 'Observada'
+  | 'Allanada'
+  | 'Reclamada'
+  | 'Cerrada'
+  | 'Archivada';
 
+// Tipo de involucrado en la denuncia
+export type TipoInvolucrado = 
+  | 'Infractor Principal'
+  | 'Infractor Secundario'
+  | 'Responsable Solidario'
+  | 'Agente de Aduanas'
+  | 'Importador'
+  | 'Exportador'
+  | 'Transportista';
+
+// Involucrado en una denuncia (DENUNCIA_INFRACTOR)
+export interface DenunciaInvolucrado {
+  id: string;
+  tipoInvolucrado: TipoInvolucrado;
+  rut: string;
+  nombre: string;
+  direccion?: string;
+  email?: string;
+  telefono?: string;
+  representanteLegal?: string;
+  orden: number;
+  esPrincipal: boolean;
+}
+
+// Documento aduanero asociado (DENUNCIA_DOC_ADUANERO)
+export interface DenunciaDocumentoAduanero {
+  id: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  numeroAceptacion?: string;
+  fecha: string;
+  aduana: string;
+  descripcion?: string;
+}
+
+// Modelo completo de Denuncia
 export interface Denuncia {
   id: string;
-  numeroDenuncia: string;
-  fechaIngreso: string;
+  
+  // Identificadores
+  numeroDenuncia: string;           // NRO_DENUNCIA (autogenerado)
+  numeroInterno?: string;           // NRO_INTERNO (devuelve a PFI)
+  
+  // Fechas
+  fechaIngreso: string;             // Fecha de registro
+  fechaEmision?: string;            // FECHA_EMISION
+  fechaOcurrencia?: string;         // FECHA_OCURRENCIA
+  
+  // Estado y tipo
   estado: EstadoDenuncia;
   tipoDenuncia: TipoDenuncia;
-  aduana: string;
+  
+  // Ubicación
+  aduana: string;                   // COD_ADUANA
+  aduanaEmision?: string;           // COD_ADUANA_EMISION
+  seccion?: string;                 // COD_SECCION
+  
+  // Datos del deudor/infractor principal (legacy, para compatibilidad)
   rutDeudor: string;
   nombreDeudor: string;
+  
+  // Involucrados (nuevo modelo completo)
+  involucrados?: DenunciaInvolucrado[];
+  
+  // Tipificación
   tipoInfraccion: string;
-  diasVencimiento: number;
+  codigoArticulo?: string;          // COD_ARTICULO
+  etapaFormulacion?: string;        // COD_ETAPA_FORMULACION
+  
+  // Montos - Infraccional
   montoEstimado: string;
-  hallazgoOrigen?: string; // PFI-XXX si viene de un hallazgo
+  multa?: number;                   // MULTA
+  multaMaxima?: number;             // MULTA_MAXIMA (readonly)
+  multaAllanamiento?: number;       // MULTA_ALLANAMIENTO
+  montoDerechos?: number;           // MONTO_DERECHOS (calculado)
+  montoDerechosCancelados?: number; // MONTO_DERECHOS_CANCELADOS
+  montoRetencion?: number;          // MONTO_RETENCION
+  montoNoDeclarado?: number;        // MONTO_NO_DECLARADO
+  codigoMoneda?: string;            // CODIGO_MONEDA
+  
+  // Flags
+  autodenuncio?: boolean;           // AUTODENUNCIO
+  retencion?: boolean;              // RETENCION
+  mercanciaAfecta?: boolean;        // MERCANCIA_AFECTA
+  observada?: boolean;              // OBSERVADA
+  
+  // Tipificación Penal
+  codigoDenunciante?: string;       // COD_DENUNCIANTE
+  numeroOficio?: string;            // NRO_OFICIO
+  fechaOficio?: string;             // FECHA_OFICIO
+  
+  // Descripción
+  descripcionHechos?: string;       // HTML_DESCRIPCION
+  fundamentoLegal?: string;
+  normaInfringida?: string;
+  
+  // Mercancía
+  mercanciaId?: string;             // MERCANCIA_ID
+  mercanciaDescripcion?: string;
+  
+  // Documentos Aduaneros
+  documentosAduaneros?: DenunciaDocumentoAduanero[];
+  
+  // Documentos adjuntos (expediente)
+  documentosAdjuntos?: DocumentoAdjunto[];
+  
+  // Workflow
+  instanciaJbpm?: string;           // INSTANCIA_JBPM
+  loginFuncionario?: string;        // LOGIN_FUNCIONARIO
+  loginFiscalizador?: string;       // LOGIN_FISCALIZADOR
+  
+  // Relaciones
+  hallazgoOrigen?: string;          // PFI-XXX si viene de un hallazgo
+  cargosAsociados?: string[];       // IDs de cargos
+  girosAsociados?: string[];        // IDs de giros
+  reclamosAsociados?: string[];     // IDs de reclamos
+  
+  // Auditoría
+  fechaCreacion?: string;
+  fechaModificacion?: string;
+  usuarioCreacion?: string;
+  usuarioModificacion?: string;
+  
+  // Control de plazos
+  diasVencimiento: number;
+}
+
+// ============================================
+// ARTÍCULOS (para tipificación)
+// ============================================
+
+export interface Articulo {
+  id: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  tipoArticulo: 'Infraccional' | 'Penal';  // 1 = Infraccional, 2 = Penal
+  multaMinima?: number;
+  multaMaxima?: number;
+  permiteAllanamiento: boolean;
+  porcentajeAllanamiento?: number;  // % de reducción por allanamiento
+  normaLegal: string;
+  vigente: boolean;
+}
+
+// ============================================
+// CATÁLOGOS
+// ============================================
+
+export interface Aduana {
+  id: string;
+  codigo: string;
+  nombre: string;
+  region: string;
+}
+
+export interface Seccion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  aduanaCodigo: string;
+}
+
+export interface TipoDocumentoAduanero {
+  id: string;
+  codigo: string;
+  nombre: string;
+  sigla: string;
+}
+
+export interface EtapaFormulacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  orden: number;
+}
+
+export interface Denunciante {
+  id: string;
+  codigo: string;
+  nombre: string;
+  tipo: string;
+}
+
+export interface Moneda {
+  id: string;
+  codigo: string;
+  nombre: string;
+  simbolo: string;
 }
 
 // ============================================
@@ -149,23 +330,44 @@ export interface Denuncia {
 // ============================================
 
 export type EstadoCargo = 
+  | 'Borrador'
   | 'Pendiente Aprobación' 
   | 'En Revisión' 
   | 'Aprobado' 
   | 'Rechazado' 
-  | 'Notificado';
+  | 'Notificado'
+  | 'Anulado';
+
+export interface CargoInfractor {
+  id: string;
+  rut: string;
+  nombre: string;
+  tipoInvolucrado: TipoInvolucrado;
+  montoAsignado?: number;
+  porcentajeResponsabilidad?: number;
+}
 
 export interface Cargo {
   id: string;
   numeroCargo: string;
   fechaIngreso: string;
+  fechaOcurrencia?: string;
+  fechaEmision?: string;
   estado: EstadoCargo;
   aduana: string;
   rutDeudor: string;
   nombreDeudor: string;
   montoTotal: string;
+  montoDerechos?: number;
+  montoMulta?: number;
+  montoIntereses?: number;
   diasVencimiento: number;
   denunciaAsociada?: string;
+  denunciaNumero?: string;
+  mercanciaId?: string;
+  infractores?: CargoInfractor[];
+  numeroInterno?: string;
+  observaciones?: string;
 }
 
 // ============================================
@@ -173,7 +375,7 @@ export interface Cargo {
 // ============================================
 
 export type TipoGiro = 'F09' | 'F16' | 'F17';
-export type EstadoGiro = 'Emitido' | 'Pagado' | 'Vencido' | 'Anulado';
+export type EstadoGiro = 'Emitido' | 'Pagado' | 'Vencido' | 'Anulado' | 'Parcialmente Pagado';
 
 export interface Giro {
   id: string;
@@ -183,9 +385,14 @@ export interface Giro {
   fechaVencimiento: string;
   estado: EstadoGiro;
   montoTotal: string;
+  montoPagado?: number;
+  saldoPendiente?: number;
   emitidoA: string;
   rutDeudor: string;
   cargoAsociado?: string;
+  denunciaAsociada?: string;
+  fechaPago?: string;
+  numeroComprobante?: string;
 }
 
 // ============================================
@@ -193,24 +400,65 @@ export interface Giro {
 // ============================================
 
 export type TipoReclamoCompleto = 'Art. 117' | 'Reposición' | 'TTA';
+export type OrigenReclamo = 'DENUNCIA' | 'CARGO' | 'GIRO' | 'OTRO';
 export type EstadoReclamo = 
   | 'Ingresado' 
   | 'En Análisis' 
   | 'Pendiente Resolución' 
   | 'Derivado a Tribunal' 
-  | 'Resuelto';
+  | 'Resuelto'
+  | 'Rechazado'
+  | 'Acogido'
+  | 'Acogido Parcialmente';
 
 export interface Reclamo {
   id: string;
   numeroReclamo: string;
   tipoReclamo: TipoReclamoCompleto;
   fechaIngreso: string;
+  fechaPresentacion?: string;
   estado: EstadoReclamo;
+  origenReclamo?: OrigenReclamo;
+  entidadOrigenId?: string;        // ID de la denuncia/cargo/giro
+  numeroEntidadOrigen?: string;    // Número de la entidad origen
   denunciaAsociada: string;
   reclamante: string;
   rutReclamante: string;
   diasRespuesta: number;
   descripcion: string;
+  fundamentoReclamo?: string;
+  resolucion?: string;
+  fechaResolucion?: string;
+}
+
+// ============================================
+// MERCANCÍA
+// ============================================
+
+export type EstadoMercancia = 
+  | 'En Tránsito'
+  | 'En Puerto'
+  | 'En Depósito'
+  | 'Retenida'
+  | 'Liberada'
+  | 'Decomisada'
+  | 'Subastada';
+
+export interface Mercancia {
+  id: string;
+  descripcion: string;
+  partida: string;
+  subpartida?: string;
+  cantidad: number;
+  unidadMedida: string;
+  valorFOB?: number;
+  valorCIF?: number;
+  pesoKg?: number;
+  paisOrigen?: string;
+  estado: EstadoMercancia;
+  ubicacion?: string;
+  contenedor?: string;
+  manifiesto?: string;
 }
 
 // ============================================
@@ -221,7 +469,9 @@ export type RolUsuario =
   | 'Funcionario Fiscalizador' 
   | 'Jefe de Sección' 
   | 'Administrador' 
-  | 'Auditor';
+  | 'Auditor'
+  | 'Abogado'
+  | 'Usuario Control Interno';
 
 export interface Usuario {
   id: string;
@@ -230,18 +480,9 @@ export interface Usuario {
   email: string;
   rol: RolUsuario;
   aduana: string;
+  seccion?: string;
   activo: boolean;
-}
-
-// ============================================
-// ADUANAS
-// ============================================
-
-export interface Aduana {
-  id: string;
-  codigo: string;
-  nombre: string;
-  region: string;
+  permisos?: string[];
 }
 
 // ============================================
@@ -342,3 +583,60 @@ export interface AlertaTrazabilidad {
   descripcion: string;
 }
 
+// ============================================
+// EXPEDIENTE DIGITAL
+// ============================================
+
+export type TipoExpediente = 'DENUNCIA' | 'CARGO' | 'RECLAMO' | 'GIRO';
+
+export interface ExpedienteDigital {
+  id: string;
+  tipo: TipoExpediente;
+  numeroExpediente: string;
+  entidadId: string;
+  fechaCreacion: string;
+  fechaModificacion: string;
+  archivos: ArchivoExpediente[];
+  timeline: TimelineItem[];
+}
+
+export interface ArchivoExpediente {
+  id: string;
+  nombre: string;
+  tipo: string;
+  tamanio: string;
+  fechaSubida: string;
+  usuarioSubida: string;
+  estado: 'Vigente' | 'Reemplazado' | 'Anulado';
+  categoria: string;
+}
+
+// ============================================
+// RAP (Resolución de Aplicación de Penas)
+// ============================================
+
+export interface RAP {
+  id: string;
+  numero: string;
+  fecha: string;
+  denunciaId: string;
+  tipo: 'Multa' | 'Comiso' | 'Ambas';
+  montoMulta?: number;
+  descripcionComiso?: string;
+  estado: 'Emitida' | 'Notificada' | 'Firme' | 'Reclamada';
+}
+
+// ============================================
+// PERMISOS POR ESTADO (para UI)
+// ============================================
+
+export interface PermisosEstado {
+  puedeEditar: boolean;
+  puedeEliminar: boolean;
+  puedeFormalizar: boolean;
+  puedeGenerarCargo: boolean;
+  puedeCrearReclamo: boolean;
+  puedeNotificar: boolean;
+  puedeCerrar: boolean;
+  camposEditables: string[];
+}

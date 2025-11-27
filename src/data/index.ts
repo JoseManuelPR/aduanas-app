@@ -39,12 +39,20 @@ export {
 export {
   denuncias,
   getDenunciaPorNumero,
+  getDenunciaPorId,
   getDenunciasPorEstado,
   getDenunciasPorTipo,
   getDenunciasVencidas,
   getDenunciasPorVencer,
   getDenunciasPorHallazgo,
+  getDenunciasPorAduana,
+  getDenunciasConCargos,
+  getDenunciasConReclamos,
+  getDenunciasObservadas,
   getConteoDenuncias,
+  validarDenuncia,
+  generarNumeroInterno,
+  getPermisosPorEstado,
 } from './denuncias';
 
 // Cargos
@@ -92,15 +100,22 @@ export {
 // Catálogos
 export {
   aduanas,
-  usuarios,
+  secciones,
+  articulos,
+  tiposDocumentoAduanero,
+  etapasFormulacion,
+  denunciantes,
+  monedas,
   tiposInfraccion,
+  estadosDenuncia,
+  tiposInvolucrado,
   getAduanaPorCodigo,
   getAduanaPorNombre,
-  getUsuarioPorRut,
-  getUsuariosPorAduana,
-  getUsuariosPorRol,
-  getNombresAduanas,
-  getNombresTiposInfraccion,
+  getSeccionesPorAduana,
+  getArticuloPorCodigo,
+  getArticulosPorTipo,
+  getArticulosInfraccionales,
+  getArticulosPenales,
 } from './catalogos';
 
 // KPIs
@@ -133,5 +148,12 @@ export const usuarioActual = {
   email: "jrodriguez@aduana.cl",
   role: "Funcionario Fiscalizador",
   aduana: "Valparaíso",
+  login: "jrodriguez",
 };
 
+// ============================================
+// FUNCIONES DE COMPATIBILIDAD (legacy)
+// ============================================
+
+// Re-exportar usuarios si existe en catalogos antiguo
+export { usuarios, getUsuarioPorRut, getUsuariosPorAduana, getUsuariosPorRol, getNombresAduanas, getNombresTiposInfraccion } from './catalogos';
