@@ -217,7 +217,7 @@ function LoginTemplate({
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-3">
-            {socialLogin.map((social) => (
+            {socialLogin.map((social: { provider: string; icon: React.ReactNode; onClick: () => void }) => (
               <CustomButton
                 key={social.provider}
                 variant="secondary"

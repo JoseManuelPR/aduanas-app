@@ -6,7 +6,7 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge, getEstadoBadgeVariant, getDiasVencimientoBadgeVariant } from "../../components/UI";
+import { Badge, getDiasVencimientoBadgeVariant } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -41,7 +41,7 @@ const getEstadoHallazgoBadgeVariant = (estado: EstadoHallazgo): "default" | "suc
 
 export const HallazgosList: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [selectedRows] = useState<string[]>([]);
 
   // Obtener conteos desde datos centralizados
   const conteoHallazgos = getConteoHallazgos();

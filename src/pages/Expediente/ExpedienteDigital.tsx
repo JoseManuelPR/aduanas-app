@@ -9,7 +9,6 @@ import { ERoutePaths } from "../../routes/routes";
 // Datos centralizados
 import {
   denuncias,
-  getDenunciaPorNumero,
   getTodasLasNotificaciones,
   usuarioActual,
 } from '../../data';

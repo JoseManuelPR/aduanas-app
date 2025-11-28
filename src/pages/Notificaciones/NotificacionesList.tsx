@@ -222,7 +222,7 @@ export const NotificacionesList: React.FC = () => {
   ];
 
   // Acciones para cada tipo
-  const handleGestionar = (tipo: TabType, id: string, referencia: string) => {
+  const handleGestionar = (tipo: TabType, referencia: string) => {
     switch (tipo) {
       case 'hallazgos':
         // Buscar el hallazgo por su número (ej: PFI-123) y navegar a gestionar denuncia
@@ -258,7 +258,7 @@ export const NotificacionesList: React.FC = () => {
               'numeroDenuncia' in row ? row.numeroDenuncia :
               'numeroReclamo' in row ? row.numeroReclamo :
               'numeroCargo' in row ? row.numeroCargo : '';
-            handleGestionar(tipo, row.id, referencia);
+            handleGestionar(tipo, referencia);
           }}
         >
           Gestionar
@@ -289,8 +289,8 @@ export const NotificacionesList: React.FC = () => {
     return (
       <div>
         <Table
-          headers={columns}
-          data={tabData.paginated}
+          headers={columns as any}
+          data={tabData.paginated as any}
           actions={getActions(tabId)}
           emptyState={emptyMessages[tabId]}
         />

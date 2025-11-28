@@ -73,6 +73,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
         <nav className="flex flex-col h-[calc(100%-8rem)] overflow-y-auto px-3 py-4">
           <div className="flex-1 space-y-1">
             {items.map((item, index) => {
+              if (!item.to) return null;
               const isActive = location.pathname === item.to || 
                               (item.to !== '/' && location.pathname.startsWith(item.to));
               const isLogout = item.label.toLowerCase().includes('cerrar') || 
@@ -89,7 +90,6 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
                     ${isActive 
                       ? 'bg-aduana-azul-50 text-aduana-azul font-medium border-l-4 border-aduana-azul -ml-1 pl-[calc(0.75rem-4px)]' 
                       : 'text-gray-600 hover:bg-gray-100'}
-                    ${item.className || ''}
                   `}
                 >
                   <span className={`flex-shrink-0 ${isActive ? 'text-aduana-azul' : 'text-gray-500'}`}>
@@ -128,12 +128,12 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
           {/* Logout button at bottom */}
           <div className="mt-auto pt-4 border-t border-gray-200">
             {items.filter(item => 
-              item.label.toLowerCase().includes('cerrar') || 
-              item.label.toLowerCase().includes('logout')
+              item.to && (item.label.toLowerCase().includes('cerrar') || 
+              item.label.toLowerCase().includes('logout'))
             ).map((item, index) => (
               <NavLink
                 key={`logout-${index}`}
-                to={item.to}
+                to={item.to!}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
                   text-gray-600 hover:bg-red-50 hover:text-aduana-rojo

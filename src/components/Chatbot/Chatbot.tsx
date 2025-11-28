@@ -26,7 +26,6 @@ import type {
 import {
   normativeCatalog,
   welcomeQuickActions,
-  traceabilityQuickActions,
   legalQuickActions,
   statisticsQuickActions,
   dateRangeQuickActions,
@@ -39,14 +38,8 @@ import {
 } from './chatbotData';
 
 import {
-  denuncias,
   getDenunciaPorNumero,
-  hallazgos,
   getHallazgoPorNumero,
-  giros,
-  getGiroPorNumero,
-  reclamos,
-  getReclamoPorNumero,
   getConteoDenuncias,
 } from '../../data';
 
@@ -547,12 +540,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 // COMPONENTE PRINCIPAL: Chatbot
 // ============================================
 
-export const Chatbot: React.FC<ChatbotProps> = ({
-  currentPage,
-  currentEntityId,
-  currentEntityType,
-  onNavigate,
-}) => {
+export const Chatbot: React.FC<ChatbotProps> = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -740,17 +728,17 @@ export const Chatbot: React.FC<ChatbotProps> = ({
               count: 1,
               summary: `${denuncia.hallazgoOrigen} (origen)`,
             } : undefined,
-            giros: (denuncia.girosAsociados?.length || 0) > 0 || extras?.giros ? {
-              count: extras?.giros?.length || denuncia.girosAsociados?.length || 0,
-              summary: extras?.giros 
-                ? extras.giros.map(g => `${g.numero} (${g.estado})`).join(', ')
-                : `${denuncia.girosAsociados?.length} giro(s) asociado(s)`,
+            giros: (denuncia.girosAsociados?.length || 0) > 0 || (extras && 'giros' in extras && extras.giros) ? {
+              count: (extras && 'giros' in extras && extras.giros) ? extras.giros.length : (denuncia.girosAsociados?.length || 0),
+              summary: (extras && 'giros' in extras && extras.giros)
+                ? extras.giros.map((g: { numero: string; estado: string }) => `${g.numero} (${g.estado})`).join(', ')
+                : `${denuncia.girosAsociados?.length || 0} giro(s) asociado(s)`,
             } : undefined,
-            reclamos: (denuncia.reclamosAsociados?.length || 0) > 0 || extras?.reclamos ? {
-              count: extras?.reclamos?.length || denuncia.reclamosAsociados?.length || 0,
-              summary: extras?.reclamos
-                ? extras.reclamos.map(r => `${r.numero} (${r.estado})`).join(', ')
-                : `${denuncia.reclamosAsociados?.length} reclamo(s) en evaluación`,
+            reclamos: (denuncia.reclamosAsociados?.length || 0) > 0 || (extras && 'reclamos' in extras && extras.reclamos) ? {
+              count: (extras && 'reclamos' in extras && extras.reclamos) ? extras.reclamos.length : (denuncia.reclamosAsociados?.length || 0),
+              summary: (extras && 'reclamos' in extras && extras.reclamos)
+                ? extras.reclamos.map((r: { numero: string; estado: string }) => `${r.numero} (${r.estado})`).join(', ')
+                : `${denuncia.reclamosAsociados?.length || 0} reclamo(s) en evaluación`,
             } : undefined,
             mercancias: extras?.mercancias ? {
               count: extras.mercancias.length,
@@ -902,7 +890,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({
     };
   }, []);
 
-  const generateStatisticsResponse = useCallback((period?: string): { message: ChatMessage } => {
+  const generateStatisticsResponse = useCallback((): { message: ChatMessage } => {
     const conteo = getConteoDenuncias();
     const today = new Date();
     
