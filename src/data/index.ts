@@ -58,13 +58,29 @@ export {
 // Cargos
 export {
   cargos,
+  cuentasCatalogo,
+  normasCatalogo,
+  fundamentosCatalogo,
+  getCargoPorId,
   getCargoPorNumero,
   getCargosPorEstado,
+  getCargosPorOrigen,
   getCargosVencidos,
   getCargosPorVencer,
   getCargosPorDenuncia,
+  getCargosPorDenunciaNumero,
+  getCargosPorAduana,
+  getCargosConGiros,
+  calcularTotalCargo,
+  puedeEmitirCargo,
+  getPermisosCargo,
   getConteoCargos,
   formatMonto,
+  crearCargo,
+  actualizarCargo,
+  getCuentaPorCodigo,
+  getNormaPorCodigo,
+  getFundamentoPorCodigo,
 } from './cargos';
 
 // Giros

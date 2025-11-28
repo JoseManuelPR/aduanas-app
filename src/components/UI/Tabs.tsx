@@ -6,12 +6,13 @@ export interface Tab {
   icon?: React.ReactNode;
   badge?: number | string;
   badgeVariant?: 'default' | 'danger' | 'info' | 'warning' | 'success';
-  content: React.ReactNode;
+  content?: React.ReactNode;
 }
 
 interface TabsProps {
   tabs: Tab[];
   defaultTab?: string;
+  activeTab?: string;
   onChange?: (tabId: string) => void;
   variant?: 'underline' | 'pills' | 'boxed';
   className?: string;
@@ -20,14 +21,20 @@ interface TabsProps {
 export const Tabs: React.FC<TabsProps> = ({
   tabs,
   defaultTab,
+  activeTab: controlledActiveTab,
   onChange,
   variant = 'underline',
   className = '',
 }) => {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+  const [internalActiveTab, setInternalActiveTab] = useState(defaultTab || tabs[0]?.id);
+  
+  // Use controlled or internal state
+  const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
+    if (controlledActiveTab === undefined) {
+      setInternalActiveTab(tabId);
+    }
     onChange?.(tabId);
   };
 
@@ -96,9 +103,12 @@ export const Tabs: React.FC<TabsProps> = ({
           </button>
         ))}
       </div>
-      <div className="mt-4 animate-fade-in">
-        {tabs.find((tab) => tab.id === activeTab)?.content}
-      </div>
+      {/* Only render content if tabs have content */}
+      {tabs.some(tab => tab.content) && (
+        <div className="mt-4 animate-fade-in">
+          {tabs.find((tab) => tab.id === activeTab)?.content}
+        </div>
+      )}
     </div>
   );
 };

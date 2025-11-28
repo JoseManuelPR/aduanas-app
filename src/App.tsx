@@ -8,7 +8,7 @@ import { HallazgosList } from './pages/Hallazgos';
 import { DenunciasList, DenunciasForm, DenunciaDetalle } from './pages/Denuncias';
 import { ExpedienteDigital } from './pages/Expediente';
 import { NotificacionesList } from './pages/Notificaciones';
-import { CargosList } from './pages/Cargos';
+import { CargosList, CargoDetalle, CargoForm } from './pages/Cargos';
 import { GirosList } from './pages/Giros';
 import { ReclamosList } from './pages/Reclamos';
 import { ReportesDashboard } from './pages/Reportes';
@@ -42,8 +42,9 @@ function App() {
       
       {/* Cargos */}
       <Route path={ERoutePaths.CARGOS} element={<CargosList />} />
-      <Route path={ERoutePaths.CARGOS_NUEVO} element={<CargosList />} />
-      <Route path={ERoutePaths.CARGOS_DETALLE} element={<CargosList />} />
+      <Route path={ERoutePaths.CARGOS_NUEVO} element={<CargoForm />} />
+      <Route path={ERoutePaths.CARGOS_DETALLE} element={<CargoDetalle />} />
+      <Route path={ERoutePaths.CARGOS_EDITAR} element={<CargoForm />} />
       
       {/* Giros */}
       <Route path={ERoutePaths.GIROS} element={<GirosList />} />

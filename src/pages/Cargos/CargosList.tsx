@@ -1,3 +1,9 @@
+/**
+ * CargosList - Bandeja de Cargos
+ * Sistema DECARE - Servicio Nacional de Aduanas de Chile
+ */
+
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
@@ -15,40 +21,144 @@ import {
   formatMonto,
   getTodasLasNotificaciones,
   usuarioActual,
+  aduanas,
   type Cargo,
+  type EstadoCargo,
+  type OrigenCargo,
 } from '../../data';
 
 export const CargosList: React.FC = () => {
   const navigate = useNavigate();
 
+  // Estados de filtros
+  const [filtros, setFiltros] = useState({
+    numeroCargo: '',
+    rutDeudor: '',
+    estado: '' as EstadoCargo | '',
+    aduana: '',
+    origen: '' as OrigenCargo | '',
+    fechaDesde: '',
+    fechaHasta: '',
+    montoMinimo: '',
+    montoMaximo: '',
+  });
+
   // Obtener conteos desde datos centralizados
   const conteoCargos = getConteoCargos();
   const allNotifications = getTodasLasNotificaciones();
+
+  // Filtrar cargos
+  const cargosFiltrados = useMemo(() => {
+    return cargos.filter(cargo => {
+      if (filtros.numeroCargo && !cargo.numeroCargo.toLowerCase().includes(filtros.numeroCargo.toLowerCase())) {
+        return false;
+      }
+      if (filtros.rutDeudor && !cargo.rutDeudor.includes(filtros.rutDeudor)) {
+        return false;
+      }
+      if (filtros.estado && cargo.estado !== filtros.estado) {
+        return false;
+      }
+      if (filtros.aduana && cargo.aduana !== filtros.aduana && cargo.codigoAduana !== filtros.aduana) {
+        return false;
+      }
+      if (filtros.origen && cargo.origen !== filtros.origen) {
+        return false;
+      }
+      // Filtros de monto (simplificado)
+      if (filtros.montoMinimo) {
+        const monto = parseInt(cargo.montoTotal.replace(/[$,.]/g, ''));
+        if (monto < parseInt(filtros.montoMinimo)) return false;
+      }
+      if (filtros.montoMaximo) {
+        const monto = parseInt(cargo.montoTotal.replace(/[$,.]/g, ''));
+        if (monto > parseInt(filtros.montoMaximo)) return false;
+      }
+      return true;
+    });
+  }, [filtros]);
+
+  const handleFiltroChange = (campo: string, valor: string) => {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+  };
+
+  const limpiarFiltros = () => {
+    setFiltros({
+      numeroCargo: '',
+      rutDeudor: '',
+      estado: '',
+      aduana: '',
+      origen: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      montoMinimo: '',
+      montoMaximo: '',
+    });
+  };
 
   const handleActions = (row: Cargo) => (
     <div className="flex flex-col w-full gap-1">
       <CustomButton 
         variant="primary" 
         className="w-full text-xs"
-        onClick={() => navigate(`/expediente/${row.id}`)}
-      >
-        <Icon name="FileText" className="hidden md:block" size={14} />
-        Expediente
-      </CustomButton>
-      <CustomButton 
-        variant="secondary" 
-        className="w-full text-xs"
         onClick={() => navigate(`/cargos/${row.id}`)}
       >
         <Icon name="Eye" className="hidden md:block" size={14} />
         Ver Detalle
       </CustomButton>
+      {row.estado === 'Borrador' || row.estado === 'Observado' ? (
+        <CustomButton 
+          variant="secondary" 
+          className="w-full text-xs"
+          onClick={() => navigate(`/cargos/${row.id}/editar`)}
+        >
+          <Icon name="Edit" className="hidden md:block" size={14} />
+          Editar
+        </CustomButton>
+      ) : (row.estado === 'Emitido' || row.estado === 'Aprobado' || row.estado === 'Notificado') && (
+        <CustomButton 
+          variant="secondary" 
+          className="w-full text-xs"
+          onClick={() => navigate(`/giros/nuevo?cargoId=${row.id}`)}
+        >
+          <Icon name="Receipt" className="hidden md:block" size={14} />
+          Generar Giro
+        </CustomButton>
+      )}
     </div>
   );
 
   // Columnas para la tabla
   const columnasCargos = [
-    { key: 'numeroCargo' as const, label: 'N° Cargo', sortable: true },
+    { 
+      key: 'numeroCargo' as const, 
+      label: 'N° Cargo', 
+      sortable: true,
+      render: (row: Cargo) => (
+        <button 
+          onClick={() => navigate(`/cargos/${row.id}`)}
+          className="font-semibold text-aduana-azul hover:underline"
+        >
+          {row.numeroCargo}
+        </button>
+      )
+    },
+    { 
+      key: 'numeroInterno' as const, 
+      label: 'N° Interno', 
+      sortable: true,
+      render: (row: Cargo) => row.numeroInterno || '-'
+    },
+    { 
+      key: 'origen' as const, 
+      label: 'Origen', 
+      sortable: true,
+      render: (row: Cargo) => (
+        <Badge variant={row.origen === 'DENUNCIA' ? 'info' : 'warning'}>
+          {row.origen === 'DENUNCIA' ? 'Denuncia' : row.origen === 'FISCALIZACION' ? 'Fiscalización' : 'Otro'}
+        </Badge>
+      )
+    },
     { key: 'fechaIngreso' as const, label: 'Fecha Ingreso', sortable: true },
     { 
       key: 'estado' as const, 
@@ -62,7 +172,16 @@ export const CargosList: React.FC = () => {
     },
     { key: 'aduana' as const, label: 'Aduana', sortable: true },
     { key: 'rutDeudor' as const, label: 'RUT Deudor', sortable: true },
-    { key: 'nombreDeudor' as const, label: 'Nombre Deudor', sortable: true },
+    { 
+      key: 'nombreDeudor' as const, 
+      label: 'Deudor', 
+      sortable: true,
+      render: (row: Cargo) => (
+        <span className="truncate max-w-[150px] block" title={row.nombreDeudor}>
+          {row.nombreDeudor}
+        </span>
+      )
+    },
     { 
       key: 'montoTotal' as const, 
       label: 'Monto Total', 
@@ -72,8 +191,21 @@ export const CargosList: React.FC = () => {
       )
     },
     { 
+      key: 'denunciaNumero' as const, 
+      label: 'Denuncia', 
+      sortable: true,
+      render: (row: Cargo) => row.denunciaNumero ? (
+        <button 
+          onClick={() => navigate(`/denuncias/${row.denunciaAsociada}`)}
+          className="text-blue-600 hover:underline text-sm"
+        >
+          {row.denunciaNumero}
+        </button>
+      ) : '-'
+    },
+    { 
       key: 'diasVencimiento' as const, 
-      label: 'Días Plazo', 
+      label: 'Plazo', 
       sortable: true,
       render: (row: Cargo) => {
         const dias = row.diasVencimiento;
@@ -85,6 +217,12 @@ export const CargosList: React.FC = () => {
         );
       }
     },
+  ];
+
+  // Estados para el filtro
+  const estadosCargo: EstadoCargo[] = [
+    'Borrador', 'Observado', 'Pendiente Aprobación', 'En Revisión', 
+    'Emitido', 'Aprobado', 'Rechazado', 'Notificado', 'Cerrado', 'Anulado'
   ];
 
   return (
@@ -115,7 +253,7 @@ export const CargosList: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900">Gestión de Cargos</h1>
             </div>
             <p className="text-gray-600 mt-1 ml-7">
-              Registro y seguimiento de cargos administrativos
+              Determinación de deuda y gestión de cargos administrativos
             </p>
           </div>
           <CustomButton 
@@ -128,18 +266,22 @@ export const CargosList: React.FC = () => {
         </div>
 
         {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="card p-4 border-l-4 border-l-gray-400">
+            <p className="text-sm text-gray-600">Borradores</p>
+            <p className="text-2xl font-bold text-gray-600">{conteoCargos.porEstado.borrador}</p>
+          </div>
           <div className="card p-4 border-l-4 border-l-amber-500">
-            <p className="text-sm text-gray-600">Pendientes Aprobación</p>
+            <p className="text-sm text-gray-600">Pendientes</p>
             <p className="text-2xl font-bold text-amber-600">{conteoCargos.pendientes}</p>
           </div>
           <div className="card p-4 border-l-4 border-l-emerald-500">
-            <p className="text-sm text-gray-600">Aprobados</p>
+            <p className="text-sm text-gray-600">Emitidos</p>
             <p className="text-2xl font-bold text-emerald-600">{conteoCargos.aprobados}</p>
           </div>
           <div className="card p-4 border-l-4 border-l-red-500">
-            <p className="text-sm text-gray-600">Rechazados</p>
-            <p className="text-2xl font-bold text-red-600">{conteoCargos.rechazados}</p>
+            <p className="text-sm text-gray-600">Vencidos</p>
+            <p className="text-2xl font-bold text-red-600">{conteoCargos.vencidos}</p>
           </div>
           <div className="card p-4 border-l-4 border-l-aduana-azul">
             <p className="text-sm text-gray-600">Monto Total</p>
@@ -153,56 +295,113 @@ export const CargosList: React.FC = () => {
           <div className="bg-aduana-azul py-3 px-6 flex items-center justify-between">
             <span className="text-white font-medium flex items-center gap-2">
               <Icon name="DollarSign" size={18} />
-              Búsqueda de Cargos
+              Bandeja de Cargos
             </span>
             <span className="text-white/80 text-sm">
-              {cargos.length} registros encontrados
+              {cargosFiltrados.length} de {cargos.length} registros
             </span>
           </div>
 
           {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
             <InputField
               label="N° Cargo"
               id="nroCargo"
               type="text"
               placeholder="CAR-2024-XXXXX"
+              value={filtros.numeroCargo}
+              onChange={(e) => handleFiltroChange('numeroCargo', e.target.value)}
             />
             <InputField
               label="RUT Deudor"
               id="rutDeudor"
               type="text"
               placeholder="12.345.678-9"
+              value={filtros.rutDeudor}
+              onChange={(e) => handleFiltroChange('rutDeudor', e.target.value)}
             />
-            <InputField
-              label="Estado"
-              id="estado"
-              type="text"
-              placeholder="Seleccione estado"
-            />
-            <InputField
-              label="Aduana"
-              id="aduana"
-              type="text"
-              placeholder="Seleccione aduana"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <select
+                value={filtros.estado}
+                onChange={(e) => handleFiltroChange('estado', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todos los estados</option>
+                {estadosCargo.map(estado => (
+                  <option key={estado} value={estado}>{estado}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Aduana</label>
+              <select
+                value={filtros.aduana}
+                onChange={(e) => handleFiltroChange('aduana', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todas las aduanas</option>
+                {aduanas.map(aduana => (
+                  <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
+              <select
+                value={filtros.origen}
+                onChange={(e) => handleFiltroChange('origen', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todos los orígenes</option>
+                <option value="DENUNCIA">Denuncia</option>
+                <option value="FISCALIZACION">Fiscalización</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
             <InputField
               label="Fecha desde"
               id="fechaDesde"
               type="date"
+              value={filtros.fechaDesde}
+              onChange={(e) => handleFiltroChange('fechaDesde', e.target.value)}
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
             />
             <InputField
               label="Fecha hasta"
               id="fechaHasta"
               type="date"
+              value={filtros.fechaHasta}
+              onChange={(e) => handleFiltroChange('fechaHasta', e.target.value)}
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
             />
+            <div className="grid grid-cols-2 gap-2">
+              <InputField
+                label="Monto desde"
+                id="montoMinimo"
+                type="number"
+                placeholder="0"
+                value={filtros.montoMinimo}
+                onChange={(e) => handleFiltroChange('montoMinimo', e.target.value)}
+              />
+              <InputField
+                label="Monto hasta"
+                id="montoMaximo"
+                type="number"
+                placeholder="∞"
+                value={filtros.montoMaximo}
+                onChange={(e) => handleFiltroChange('montoMaximo', e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Acciones */}
+          {/* Acciones de filtro */}
           <div className="flex flex-col md:flex-row justify-end items-center px-5 py-3 gap-3 border-b border-gray-200">
-            <CustomButton variant="secondary" className="flex items-center gap-1 text-sm">
+            <CustomButton 
+              variant="secondary" 
+              className="flex items-center gap-1 text-sm"
+              onClick={limpiarFiltros}
+            >
               <Icon name="Eraser" size={16} />
               Limpiar
             </CustomButton>
@@ -221,7 +420,7 @@ export const CargosList: React.FC = () => {
             <Table
               classHeader="bg-aduana-azul text-white text-xs"
               headers={columnasCargos}
-              data={cargos}
+              data={cargosFiltrados}
               actions={handleActions}
             />
           </div>

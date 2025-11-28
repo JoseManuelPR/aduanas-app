@@ -4,7 +4,7 @@ import type { TableProps } from "./table.types";
 import { Icon } from "he-button-custom-library";
 
 
-export function Table<T extends Record<string, unknown>>({
+export function Table<T extends object>({
   headers,
   data,
   loading = false,
@@ -23,8 +23,8 @@ export function Table<T extends Record<string, unknown>>({
     if (!sortConfig.key) return data;
 
     return [...data].sort((a, b) => {
-      const aValue = a[sortConfig.key!];
-      const bValue = b[sortConfig.key!];
+      const aValue = (a as Record<string, unknown>)[sortConfig.key as string];
+      const bValue = (b as Record<string, unknown>)[sortConfig.key as string];
 
       if (typeof aValue === "string" && typeof bValue === "string") {
         return sortConfig.direction === "asc"
@@ -119,7 +119,7 @@ export function Table<T extends Record<string, unknown>>({
                 .filter((h) => h.visible !== false)
                 .map((header) => (
                   <td key={String(header.key)} className={`px-4 py-2 border border-gray-200/55`}>
-                    {header.render ? header.render(row) : String(row[header.key])}
+                    {header.render ? header.render(row) : String((row as Record<string, unknown>)[header.key as string])}
                   </td>
                 ))}
               {actions && <td className="px-4 py-2 flex gap-2 justify-center items-center">{actions(row)}</td>}

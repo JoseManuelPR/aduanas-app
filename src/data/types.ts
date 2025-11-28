@@ -326,48 +326,175 @@ export interface Moneda {
 }
 
 // ============================================
-// CARGOS
+// CARGOS - MODELO COMPLETO
 // ============================================
 
 export type EstadoCargo = 
   | 'Borrador'
+  | 'Observado'
   | 'Pendiente Aprobación' 
   | 'En Revisión' 
+  | 'Emitido'
   | 'Aprobado' 
   | 'Rechazado' 
   | 'Notificado'
+  | 'Cerrado'
   | 'Anulado';
+
+export type OrigenCargo = 'DENUNCIA' | 'FISCALIZACION' | 'OTRO';
+
+// Tipo de cuenta de cargo (CARGO_CUENTA)
+export interface CargoCuenta {
+  id: string;
+  codigoCuenta: string;           // CODIGO_CUENTA
+  nombreCuenta: string;           // NOMBRE_CUENTA (readonly)
+  monto: number;                  // MONTO (obligatorio)
+  moneda: string;                 // MONEDA
+  descripcion?: string;
+  orden: number;
+}
+
+// Operación de cargo (CARGO_OPERACION)
+export interface CargoOperacion {
+  id: string;
+  tipoOperacion: string;          // TIPO_OPERACION
+  descripcion: string;            // DESCRIPCION
+  monto: number;                  // MONTO
+  fecha: string;
+  moneda?: string;
+}
+
+// Documento aduanero asociado al cargo (CARGO_DOC_ADUANERO)
+export interface CargoDocumentoAduanero {
+  id: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  numeroAceptacion?: string;
+  fecha: string;
+  aduana: string;
+  descripcion?: string;
+  montoRelacionado?: number;
+}
 
 export interface CargoInfractor {
   id: string;
+  idInvolucrado: string;          // ID_INVOLUCRADO (selector)
   rut: string;
   nombre: string;
-  tipoInvolucrado: TipoInvolucrado;
+  tipoInfractor: TipoInvolucrado; // TIPO_INFRACTOR (selector)
+  direccion?: string;
+  email?: string;
+  telefono?: string;
   montoAsignado?: number;
   porcentajeResponsabilidad?: number;
+  esPrincipal: boolean;
 }
 
 export interface Cargo {
   id: string;
-  numeroCargo: string;
-  fechaIngreso: string;
-  fechaOcurrencia?: string;
-  fechaEmision?: string;
+  
+  // Identificadores
+  numeroCargo: string;            // NRO_CARGO (autogenerado)
+  numeroInterno?: string;         // NRO_INTERNO
+  
+  // Fechas
+  fechaIngreso: string;           // FECHA_INGRESO
+  fechaOcurrencia?: string;       // FECHA_OCURRENCIA
+  fechaEmision?: string;          // FECHA_EMISION (obligatorio)
+  fechaNotificacion?: string;
+  
+  // Estado y origen
   estado: EstadoCargo;
-  aduana: string;
+  origen: OrigenCargo;            // ORIGEN (selector, readonly si viene de Denuncia)
+  
+  // Ubicación
+  aduana: string;                 // COD_ADUANA
+  codigoAduana?: string;          // COD_ADUANA
+  codigoAduanaDestino?: string;   // COD_ADUANA_DESTINO
+  codigoSeccion?: string;         // COD_SECCION
+  
+  // Datos del deudor principal (legacy)
   rutDeudor: string;
   nombreDeudor: string;
-  montoTotal: string;
+  
+  // Tipificación y fundamentación
+  norma?: string;                 // NORMA (número, catálogo)
+  fundamento?: string;            // FUNDAMENTO (catálogo)
+  descripcionHechos?: string;     // DESCRIPCION_HECHOS (CLOB, editor texto)
+  
+  // Montos (calculados)
+  montoTotal: string;             // TOTAL (suma de cuentas)
   montoDerechos?: number;
   montoMulta?: number;
   montoIntereses?: number;
-  diasVencimiento: number;
-  denunciaAsociada?: string;
-  denunciaNumero?: string;
-  mercanciaId?: string;
+  montoReajuste?: number;
+  
+  // Cuentas de cargo (CARGO_CUENTA)
+  cuentas?: CargoCuenta[];
+  
+  // Operaciones (CARGO_OPERACION)
+  operaciones?: CargoOperacion[];
+  
+  // Infractores (CARGO_INFRACTOR)
   infractores?: CargoInfractor[];
-  numeroInterno?: string;
+  
+  // Documentos aduaneros (CARGO_DOC_ADUANERO)
+  documentosAduaneros?: CargoDocumentoAduanero[];
+  
+  // Relaciones
+  denunciaAsociada?: string;      // ID de la denuncia
+  denunciaNumero?: string;        // Número de la denuncia
+  mercanciaId?: string;           // MERCANCIA_ID (readonly, link)
+  girosGenerados?: string[];      // IDs de giros generados
+  reclamosAsociados?: string[];   // IDs de reclamos
+  expedienteDigitalId?: string;
+  
+  // Control de plazos
+  diasVencimiento: number;
+  fechaVencimiento?: string;
+  
+  // Observaciones y notas
   observaciones?: string;
+  
+  // Workflow
+  instanciaJbpm?: string;
+  loginFuncionario?: string;
+  
+  // Auditoría
+  fechaCreacion?: string;
+  fechaModificacion?: string;
+  usuarioCreacion?: string;
+  usuarioModificacion?: string;
+}
+
+// Catálogo de cuentas de cargo
+export interface CuentaCatalogo {
+  id: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  tipoCuenta: 'Derechos' | 'Multa' | 'Intereses' | 'Reajuste' | 'Otro';
+  activo: boolean;
+}
+
+// Catálogo de normas
+export interface NormaCatalogo {
+  id: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  tipoNorma: string;
+  vigente: boolean;
+}
+
+// Catálogo de fundamentos
+export interface FundamentoCatalogo {
+  id: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  normaRelacionada?: string;
+  vigente: boolean;
 }
 
 // ============================================

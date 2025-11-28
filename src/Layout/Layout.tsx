@@ -4,6 +4,7 @@ import type { SidebarItem } from 'he-button-custom-library'
 import CustomSidebar from "../organisms/Sidebar/Sidebar";
 import IMAGE_PLATFORM from "../assets/images";
 import { NotificationDropdown, NotificationItem } from "../components/NotificationDropdown";
+import { Chatbot } from "../components/Chatbot";
 
 
 interface LayoutProps {
@@ -62,6 +63,9 @@ const CustomLayout = ({ children, user, options, sidebarItems, onLogout, platfor
           {children}
         </main>
       </div>
+      
+      {/* Floating Chatbot - Available on all pages */}
+      <Chatbot />
     </div>
   );
 }
