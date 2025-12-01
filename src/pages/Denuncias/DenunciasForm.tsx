@@ -29,6 +29,56 @@ import {
   type DenunciaInvolucrado,
 } from '../../data';
 
+// Función para convertir fecha DD-MM-YYYY a YYYY-MM-DD (formato HTML date input)
+const convertirFechaParaInput = (fecha: string): string => {
+  if (!fecha) return '';
+  // Si ya está en formato YYYY-MM-DD, retornar tal cual
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
+  // Convertir DD-MM-YYYY a YYYY-MM-DD
+  const partes = fecha.split('-');
+  if (partes.length === 3) {
+    return `${partes[2]}-${partes[1]}-${partes[0]}`;
+  }
+  return fecha;
+};
+
+// Función para obtener código de artículo basado en tipo de infracción
+const obtenerArticuloPorInfraccion = (tipoInfraccion: string, tipoDenuncia: string): string => {
+  const mapeoInfraccion: Record<string, string> = {
+    'Contrabando': '168',
+    'Declaración Falsa': '174',
+    'Fraude Aduanero': '178',
+    'Clasificación Incorrecta': '176',
+    'Valor Incorrecto': '177',
+    'Documentación Incompleta': '175',
+    'Falsificación Documental': '169',
+    'Evasión Tributaria': tipoDenuncia === 'Penal' ? 'PEN-97' : '178',
+  };
+  return mapeoInfraccion[tipoInfraccion] || '';
+};
+
+// Función para calcular multa estimada basada en monto
+const calcularMultaEstimada = (montoEstimado: string, codigoArticulo: string): number => {
+  const articulo = articulos.find(a => a.codigo === codigoArticulo);
+  if (!articulo || !articulo.multaMinima) return 0;
+  
+  // Extraer número del monto estimado (ej: "$12.500.000" -> 12500000)
+  const montoNumero = parseInt(montoEstimado.replace(/[^0-9]/g, '')) || 0;
+  
+  // Calcular multa como porcentaje del monto (entre mínimo y máximo del artículo)
+  const multaCalculada = Math.round(montoNumero * 0.1); // 10% del monto como ejemplo
+  
+  // Asegurar que esté dentro del rango del artículo
+  if (articulo.multaMinima && multaCalculada < articulo.multaMinima) {
+    return articulo.multaMinima;
+  }
+  if (articulo.multaMaxima && multaCalculada > articulo.multaMaxima) {
+    return articulo.multaMaxima;
+  }
+  
+  return multaCalculada || articulo.multaMinima || 0;
+};
+
 // Modal de confirmación
 import { ModalConfirmacion } from './components/ModalConfirmacion';
 
@@ -182,10 +232,52 @@ export const DenunciasForm: React.FC = () => {
           const datosFormulario = prepararDatosFormularioDenuncia(hallazgo);
           
           if (datosFormulario) {
+            // Obtener código de artículo basado en tipo de infracción
+            const codigoArticuloCalculado = obtenerArticuloPorInfraccion(
+              datosFormulario.tipoInfraccion || '',
+              hallazgo.tipoHallazgo
+            );
+            
+            // Calcular multa estimada
+            const multaCalculada = calcularMultaEstimada(
+              hallazgo.montoEstimado,
+              codigoArticuloCalculado
+            );
+            
+            // Obtener artículo para multa de allanamiento
+            const articuloEncontrado = articulos.find(a => a.codigo === codigoArticuloCalculado);
+            const multaAllanamientoCalculada = articuloEncontrado?.permiteAllanamiento && articuloEncontrado?.porcentajeAllanamiento
+              ? Math.round(multaCalculada * (1 - articuloEncontrado.porcentajeAllanamiento / 100))
+              : 0;
+            
+            // Extraer monto numérico para derechos
+            const montoNumerico = parseInt(hallazgo.montoEstimado.replace(/[^0-9]/g, '')) || 0;
+            const montoDerechosCalculado = Math.round(montoNumerico * 0.06); // 6% aproximado de derechos
+            
+            // Convertir fechas al formato YYYY-MM-DD para inputs de tipo date
+            const fechaIngresoConvertida = convertirFechaParaInput(hallazgo.fechaIngreso);
+            const fechaOcurrenciaCalculada = convertirFechaParaInput(hallazgo.fechaIngreso); // Usar fecha ingreso como base
+            
             setFormData({
               ...initialFormData,
               ...datosFormulario,
               tipoDenuncia: hallazgo.tipoHallazgo,
+              // Fechas convertidas al formato correcto
+              fechaIngreso: fechaIngresoConvertida,
+              fechaOcurrencia: fechaOcurrenciaCalculada,
+              fechaEmision: new Date().toISOString().split('T')[0],
+              // Tipificación pre-rellenada
+              codigoArticulo: codigoArticuloCalculado,
+              multa: multaCalculada,
+              multaAllanamiento: multaAllanamientoCalculada,
+              montoDerechos: montoDerechosCalculado,
+              montoRetencion: Math.round(montoNumerico * 0.02), // 2% retención estimada
+              montoNoDeclarado: montoNumerico,
+              // Para denuncias penales
+              codigoDenunciante: hallazgo.tipoHallazgo === 'Penal' ? 'SNA' : '',
+              numeroOficio: hallazgo.tipoHallazgo === 'Penal' ? `OF-2025-${hallazgo.numeroHallazgo.replace('PFI-', '')}` : '',
+              fechaOficio: hallazgo.tipoHallazgo === 'Penal' ? new Date().toISOString().split('T')[0] : '',
+              // Involucrados
               involucrados: [{
                 id: 'inv-new-1',
                 tipoInvolucrado: 'Infractor Principal',
@@ -490,34 +582,34 @@ export const DenunciasForm: React.FC = () => {
       
       {/* Fechas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label className="form-label">Fecha de Emisión</label>
-          <input
-            type="date"
-            className="form-input"
-            value={formData.fechaEmision}
-            onChange={(e) => handleInputChange('fechaEmision', e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="form-label">Fecha de Ocurrencia *</label>
-          <input
-            type="date"
-            className={`form-input ${errors.fechaOcurrencia ? 'border-red-500' : ''}`}
-            value={formData.fechaOcurrencia}
-            onChange={(e) => handleInputChange('fechaOcurrencia', e.target.value)}
-          />
-          {errors.fechaOcurrencia && <p className="text-red-500 text-sm mt-1">{errors.fechaOcurrencia}</p>}
-        </div>
-        <div>
-          <label className="form-label">Fecha de Ingreso</label>
-          <input
-            type="date"
-            className="form-input"
-            value={formData.fechaIngreso}
-            disabled
-          />
-        </div>
+        <InputField
+          label="Fecha de Emisión"
+          id="fechaEmision"
+          type="date"
+          value={formData.fechaEmision}
+          onChange={(e) => handleInputChange('fechaEmision', e.target.value)}
+          icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
+        />
+        <InputField
+          label="Fecha de Ocurrencia"
+          id="fechaOcurrencia"
+          type="date"
+          value={formData.fechaOcurrencia}
+          onChange={(e) => handleInputChange('fechaOcurrencia', e.target.value)}
+          icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
+          required
+          hasError={!!errors.fechaOcurrencia}
+          errorMessage={errors.fechaOcurrencia}
+        />
+        <InputField
+          label="Fecha de Ingreso"
+          id="fechaIngreso"
+          type="date"
+          value={formData.fechaIngreso}
+          onChange={() => {}}
+          disabled
+          icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
+        />
       </div>
 
       {/* Mercancía */}
@@ -769,25 +861,22 @@ export const DenunciasForm: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div>
-              <label className="form-label">N° Oficio</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="OF-2025-XXXXX"
-                value={formData.numeroOficio}
-                onChange={(e) => handleInputChange('numeroOficio', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="form-label">Fecha Oficio</label>
-              <input
-                type="date"
-                className="form-input"
-                value={formData.fechaOficio}
-                onChange={(e) => handleInputChange('fechaOficio', e.target.value)}
-              />
-            </div>
+            <InputField
+              label="N° Oficio"
+              id="numeroOficio"
+              type="text"
+              placeholder="OF-2025-XXXXX"
+              value={formData.numeroOficio}
+              onChange={(e) => handleInputChange('numeroOficio', e.target.value)}
+            />
+            <InputField
+              label="Fecha Oficio"
+              id="fechaOficio"
+              type="date"
+              value={formData.fechaOficio}
+              onChange={(e) => handleInputChange('fechaOficio', e.target.value)}
+              icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
+            />
           </div>
         </div>
       )}
