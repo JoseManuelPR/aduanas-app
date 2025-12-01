@@ -86,12 +86,29 @@ export {
 // Giros
 export {
   giros,
+  getGiroPorId,
   getGiroPorNumero,
   getGirosPorEstado,
   getGirosPorTipo,
+  getGirosPorOrigen,
   getGirosVencidos,
+  getGirosPorVencer,
   getGirosPorCargo,
+  getGirosPorCargoNumero,
+  getGirosPorDenuncia,
+  getGirosPorDeudor,
+  getGirosPorAduana,
+  calcularTotalGiro,
+  calcularSaldoPendiente,
+  puedeRegistrarPago,
+  validarPago,
+  puedeAnularGiro,
+  getPermisosGiro,
   getConteoGiros,
+  crearGiro,
+  actualizarGiro,
+  registrarPagoGiro,
+  anularGiro,
 } from './giros';
 
 // Reclamos

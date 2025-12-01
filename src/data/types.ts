@@ -498,28 +498,112 @@ export interface FundamentoCatalogo {
 }
 
 // ============================================
-// GIROS
+// GIROS - MODELO COMPLETO
 // ============================================
 
 export type TipoGiro = 'F09' | 'F16' | 'F17';
-export type EstadoGiro = 'Emitido' | 'Pagado' | 'Vencido' | 'Anulado' | 'Parcialmente Pagado';
+export type EstadoGiro = 'Emitido' | 'Notificado' | 'Pagado' | 'Parcialmente Pagado' | 'Vencido' | 'Anulado';
+export type OrigenGiro = 'CARGO' | 'DENUNCIA' | 'MANUAL';
+export type FormaPago = 'Transferencia' | 'Depósito' | 'Efectivo' | 'Cheque' | 'Vale Vista' | 'Otro';
 
+// Cuenta de giro (CUENTA_GIRO)
+export interface GiroCuenta {
+  id: string;
+  codigoCuenta: string;
+  nombreCuenta: string;
+  monto: number;
+  moneda: string;
+  descripcion?: string;
+  orden: number;
+}
+
+// Pago registrado en el giro
+export interface GiroPago {
+  id: string;
+  fecha: string;
+  monto: number;
+  formaPago: FormaPago;
+  numeroComprobante?: string;
+  banco?: string;
+  observaciones?: string;
+  usuarioRegistro: string;
+  fechaRegistro: string;
+}
+
+// Modelo completo de Giro
 export interface Giro {
   id: string;
-  numeroGiro: string;
+  
+  // Identificadores
+  numeroGiro: string;                    // NRO_GIRO (autogenerado)
+  
+  // Tipo y estado
   tipoGiro: TipoGiro;
-  fechaEmision: string;
-  fechaVencimiento: string;
   estado: EstadoGiro;
-  montoTotal: string;
-  montoPagado?: number;
-  saldoPendiente?: number;
-  emitidoA: string;
+  
+  // Origen
+  origenGiro: OrigenGiro;                // ORIGEN_GIRO
+  entidadOrigenId?: string;              // ID del cargo o denuncia
+  numeroEntidadOrigen?: string;          // NRO_ENTIDAD_ORIGEN
+  
+  // Fechas
+  fechaEmision: string;                  // FECHA_EMISION
+  fechaVencimiento: string;              // FECHA_VENCIMIENTO
+  fechaNotificacion?: string;
+  fechaPago?: string;                    // FECHA_PAGO (último pago completo)
+  
+  // Plazo y cálculo de vencimiento
+  plazo?: number;                        // PLAZO en días
+  diaHabil?: boolean;                    // DIA_HABIL
+  
+  // Deudor
+  emitidoA: string;                      // Nombre del deudor
   rutDeudor: string;
-  cargoAsociado?: string;
-  denunciaAsociada?: string;
-  fechaPago?: string;
-  numeroComprobante?: string;
+  direccionDeudor?: string;
+  emailDeudor?: string;
+  telefonoDeudor?: string;
+  
+  // Ubicación
+  aduana?: string;
+  codigoAduana?: string;
+  
+  // Montos
+  montoTotal: string;                    // MONTO_TOTAL (formateado)
+  montoTotalNumero?: number;             // MONTO_TOTAL numérico
+  montoPagado?: number;                  // MONTO_PAGADO
+  saldoPendiente?: number;               // Calculado: montoTotal - montoPagado
+  
+  // Cuentas de giro (CUENTA_GIRO)
+  cuentas?: GiroCuenta[];
+  
+  // Pagos registrados
+  pagos?: GiroPago[];
+  
+  // Relaciones heredadas (para compatibilidad)
+  cargoAsociado?: string;                // ID del cargo
+  cargoNumero?: string;                  // Número del cargo
+  denunciaAsociada?: string;             // ID de la denuncia
+  denunciaNumero?: string;               // Número de la denuncia
+  mercanciaId?: string;                  // Mercancía asociada (liberación condicionada)
+  reclamosAsociados?: string[];          // IDs de reclamos
+  
+  // Comprobantes
+  numeroComprobante?: string;            // Último comprobante de pago
+  expedienteDigitalId?: string;
+  
+  // Días de vencimiento (calculado)
+  diasVencimiento?: number;
+  
+  // Workflow y auditoría
+  loginFuncionario?: string;
+  fechaCreacion?: string;
+  fechaModificacion?: string;
+  usuarioCreacion?: string;
+  usuarioModificacion?: string;
+  
+  // Observaciones
+  observaciones?: string;
+  motivoAnulacion?: string;
 }
 
 // ============================================

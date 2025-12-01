@@ -9,7 +9,7 @@ import { DenunciasList, DenunciasForm, DenunciaDetalle } from './pages/Denuncias
 import { ExpedienteDigital } from './pages/Expediente';
 import { NotificacionesList } from './pages/Notificaciones';
 import { CargosList, CargoDetalle, CargoForm } from './pages/Cargos';
-import { GirosList } from './pages/Giros';
+import { GirosList, GiroDetalle, GiroForm } from './pages/Giros';
 import { ReclamosList } from './pages/Reclamos';
 import { ReportesDashboard } from './pages/Reportes';
 import { SeguimientoList } from './pages/SeguimientoMercancia';
@@ -48,8 +48,8 @@ function App() {
       
       {/* Giros */}
       <Route path={ERoutePaths.GIROS} element={<GirosList />} />
-      <Route path={ERoutePaths.GIROS_NUEVO} element={<GirosList />} />
-      <Route path={ERoutePaths.GIROS_DETALLE} element={<GirosList />} />
+      <Route path={ERoutePaths.GIROS_NUEVO} element={<GiroForm />} />
+      <Route path={ERoutePaths.GIROS_DETALLE} element={<GiroDetalle />} />
       
       {/* Reclamos */}
       <Route path={ERoutePaths.RECLAMOS} element={<ReclamosList />} />
