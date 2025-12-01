@@ -24,8 +24,6 @@ export const DenunciaReclamos: React.FC<DenunciaReclamosProps> = ({
 
   const getTipoReclamoBadge = (tipo: Reclamo['tipoReclamo']): { variant: BadgeVariant, icon: string } => {
     switch (tipo) {
-      case 'Art. 117':
-        return { variant: 'info', icon: 'FileText' };
       case 'Reposición':
         return { variant: 'warning', icon: 'RotateCcw' };
       case 'TTA':
@@ -132,8 +130,6 @@ export const DenunciaReclamos: React.FC<DenunciaReclamosProps> = ({
                   <div className={`p-3 rounded-lg ${
                     reclamo.tipoReclamo === 'TTA' 
                       ? 'bg-red-100' 
-                      : reclamo.tipoReclamo === 'Art. 117'
-                      ? 'bg-blue-100'
                       : 'bg-amber-100'
                   }`}>
                     <Icon 
@@ -142,8 +138,6 @@ export const DenunciaReclamos: React.FC<DenunciaReclamosProps> = ({
                       className={
                         reclamo.tipoReclamo === 'TTA' 
                           ? 'text-red-600' 
-                          : reclamo.tipoReclamo === 'Art. 117'
-                          ? 'text-blue-600'
                           : 'text-amber-600'
                       }
                     />
@@ -213,12 +207,6 @@ export const DenunciaReclamos: React.FC<DenunciaReclamosProps> = ({
       <div className="card p-4 bg-gray-50">
         <h5 className="text-sm font-medium text-gray-700 mb-3">Resumen por tipo</h5>
         <div className="flex flex-wrap gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-gray-600">
-              Art. 117: {reclamos.filter(r => r.tipoReclamo === 'Art. 117').length}
-            </span>
-          </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-amber-500"></div>
             <span className="text-gray-600">

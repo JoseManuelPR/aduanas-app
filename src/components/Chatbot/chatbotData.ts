@@ -354,7 +354,7 @@ export const entityPatterns = {
   denunciaSimple: /\b(\d{6})\b/,
   hallazgo: /(?:hallazgo|pfi)[\s-]*(\d{2,4})/i,
   giro: /(f(?:09|16|17)-?\d{4}-?\d{6})/i,
-  reclamo: /(rec-(?:117|rep|tta)-?\d{4}-?\d{4})/i,
+  reclamo: /(rec-(?:rep|tta)-?\d{4}-?\d{4})/i,
 };
 
 // ============================================

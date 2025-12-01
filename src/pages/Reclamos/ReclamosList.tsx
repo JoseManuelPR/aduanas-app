@@ -54,7 +54,6 @@ export const ReclamosList: React.FC = () => {
       sortable: true,
       render: (row: Reclamo) => {
         const colorMap: Record<string, 'info' | 'warning' | 'danger'> = {
-          'Art. 117': 'info',
           'Reposición': 'warning',
           'TTA': 'danger',
         };
@@ -131,7 +130,7 @@ export const ReclamosList: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900">Gestión de Reclamos</h1>
             </div>
             <p className="text-gray-600 mt-1 ml-7">
-              Reclamos Art. 117, Reposición y Tribunal Tributario Aduanero
+              Reclamos Reposición y Tribunal Tributario Aduanero
             </p>
           </div>
           <CustomButton 
@@ -176,15 +175,7 @@ export const ReclamosList: React.FC = () => {
         </div>
 
         {/* Info sobre tipos de reclamo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="card p-4 border-l-4 border-l-blue-500">
-            <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Badge variant="info">Art. 117</Badge>
-            </h4>
-            <p className="text-sm text-gray-600 mt-2">
-              Reclamo administrativo contra actos de fiscalización. Plazo: 15 días hábiles.
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="card p-4 border-l-4 border-l-amber-500">
             <h4 className="font-semibold text-gray-900 flex items-center gap-2">
               <Badge variant="warning">Reposición</Badge>
@@ -228,7 +219,7 @@ export const ReclamosList: React.FC = () => {
               label="Tipo de Reclamo"
               id="tipoReclamo"
               type="text"
-              placeholder="Art. 117 / Reposición / TTA"
+              placeholder="Reposición / TTA"
             />
             <InputField
               label="Estado"

@@ -7,18 +7,6 @@ import type { Reclamo } from './types';
 
 export const reclamos: Reclamo[] = [
   {
-    id: "r-001",
-    numeroReclamo: "REC-117-2024-0089",
-    tipoReclamo: "Art. 117",
-    fechaIngreso: "18-11-2025",
-    estado: "En Análisis",
-    denunciaAsociada: "993519",
-    reclamante: "Importadora Global S.A.",
-    rutReclamante: "76.123.456-7",
-    diasRespuesta: 12,
-    descripcion: "Reclamo por determinación de derechos",
-  },
-  {
     id: "r-002",
     numeroReclamo: "REC-REP-2024-0045",
     tipoReclamo: "Reposición",
@@ -43,18 +31,6 @@ export const reclamos: Reclamo[] = [
     descripcion: "Reclamo ante Tribunal Tributario y Aduanero",
   },
   {
-    id: "r-004",
-    numeroReclamo: "REC-117-2024-0090",
-    tipoReclamo: "Art. 117",
-    fechaIngreso: "15-11-2025",
-    estado: "En Análisis",
-    denunciaAsociada: "993522",
-    reclamante: "Zona Franca del Pacífico",
-    rutReclamante: "81.321.654-9",
-    diasRespuesta: 8,
-    descripcion: "Reclamo por clasificación arancelaria",
-  },
-  {
     id: "r-005",
     numeroReclamo: "REC-REP-2024-0046",
     tipoReclamo: "Reposición",
@@ -77,18 +53,6 @@ export const reclamos: Reclamo[] = [
     rutReclamante: "76.852.963-1",
     diasRespuesta: 20,
     descripcion: "Impugnación de liquidación",
-  },
-  {
-    id: "r-007",
-    numeroReclamo: "REC-117-2024-0091",
-    tipoReclamo: "Art. 117",
-    fechaIngreso: "22-11-2025",
-    estado: "Ingresado",
-    denunciaAsociada: "993525",
-    reclamante: "Importaciones del Sur Ltda.",
-    rutReclamante: "78.456.789-0",
-    diasRespuesta: 18,
-    descripcion: "Reclamo por valor aduanero",
   },
 ];
 
@@ -118,7 +82,6 @@ export const getConteoReclamos = () => ({
     resuelto: reclamos.filter(r => r.estado === 'Resuelto').length,
   },
   porTipo: {
-    art117: reclamos.filter(r => r.tipoReclamo === 'Art. 117').length,
     reposicion: reclamos.filter(r => r.tipoReclamo === 'Reposición').length,
     tta: reclamos.filter(r => r.tipoReclamo === 'TTA').length,
   },

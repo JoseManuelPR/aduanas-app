@@ -526,7 +526,7 @@ export interface Giro {
 // RECLAMOS
 // ============================================
 
-export type TipoReclamoCompleto = 'Art. 117' | 'Reposición' | 'TTA';
+export type TipoReclamoCompleto = 'Reposición' | 'TTA';
 export type OrigenReclamo = 'DENUNCIA' | 'CARGO' | 'GIRO' | 'OTRO';
 export type EstadoReclamo = 
   | 'Ingresado' 
