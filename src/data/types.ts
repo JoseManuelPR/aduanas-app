@@ -607,39 +607,120 @@ export interface Giro {
 }
 
 // ============================================
-// RECLAMOS
+// RECLAMOS - MODELO COMPLETO
 // ============================================
 
 export type TipoReclamoCompleto = 'Reposición' | 'TTA';
 export type OrigenReclamo = 'DENUNCIA' | 'CARGO' | 'GIRO' | 'OTRO';
+export type CodigoProcesoReclamo = 'REP' | 'TTA' | 'REC';
+export type TipoFalloTTA = 'Acogido' | 'Rechazado' | 'Acogido Parcialmente' | 'Inadmisible' | 'Desistido';
+
 export type EstadoReclamo = 
   | 'Ingresado' 
+  | 'En Admisibilidad'
+  | 'Admitido'
   | 'En Análisis' 
+  | 'En Tramitación'
   | 'Pendiente Resolución' 
   | 'Derivado a Tribunal' 
+  | 'Fallado'
   | 'Resuelto'
   | 'Rechazado'
   | 'Acogido'
-  | 'Acogido Parcialmente';
+  | 'Acogido Parcialmente'
+  | 'Cerrado';
 
+// Datos específicos del TTA (RECLAMO_TTA)
+export interface ReclamoTTA {
+  id: string;
+  reclamoId: string;
+  rolTTA?: string;
+  tribunalCompetente?: string;
+  fechaPresentacionTTA?: string;
+  fechaAdmisibilidad?: string;
+  fechaContestacion?: string;
+  fechaAudiencia?: string;
+  fechaSentencia?: string;
+  fechaApelacion?: string;
+  fechaFalloFinal?: string;
+  admisible?: boolean;
+  motivoInadmisibilidad?: string;
+  fallo1raInstancia?: TipoFalloTTA;
+  fundamentoFallo1ra?: string;
+  montoFallo1ra?: number;
+  tieneApelacion?: boolean;
+  quienApela?: 'Contribuyente' | 'Aduana' | 'Ambos';
+  falloApelacion?: TipoFalloTTA;
+  fundamentoFalloApelacion?: string;
+  falloFinal?: TipoFalloTTA;
+  fundamentoFalloFinal?: string;
+  montoFalloFinal?: number;
+  plazoProbatorio?: number;
+  fechaVencimientoProbatorio?: string;
+  plazoContestacion?: number;
+  informeAduanas?: string;
+  escritoPresentacion?: string;
+  contestacionDemanda?: string;
+  observaciones?: string;
+}
+
+// Modelo completo de Reclamo
 export interface Reclamo {
   id: string;
   numeroReclamo: string;
   tipoReclamo: TipoReclamoCompleto;
+  codigoProcesoReclamo?: CodigoProcesoReclamo;
+  estado: EstadoReclamo;
   fechaIngreso: string;
   fechaPresentacion?: string;
-  estado: EstadoReclamo;
-  origenReclamo?: OrigenReclamo;
-  entidadOrigenId?: string;        // ID de la denuncia/cargo/giro
-  numeroEntidadOrigen?: string;    // Número de la entidad origen
+  fechaAdmisibilidad?: string;
+  fechaResolucion?: string;
+  origenReclamo: OrigenReclamo;
+  entidadOrigenId?: string;
+  numeroEntidadOrigen?: string;
   denunciaAsociada: string;
+  cargoAsociado?: string;
+  giroAsociado?: string;
   reclamante: string;
   rutReclamante: string;
-  diasRespuesta: number;
-  descripcion: string;
+  direccionReclamante?: string;
+  emailReclamante?: string;
+  telefonoReclamante?: string;
+  representanteLegal?: string;
+  montoReclamado?: number;
+  montoResuelto?: number;
   fundamentoReclamo?: string;
+  peticiones?: string;
+  descripcion: string;
   resolucion?: string;
-  fechaResolucion?: string;
+  tipoResolucion?: 'Acogida' | 'Rechazada' | 'Acogida Parcialmente';
+  fundamentoResolucion?: string;
+  datosTTA?: ReclamoTTA;
+  aduana?: string;
+  codigoAduana?: string;
+  diasRespuesta: number;
+  plazo?: number;
+  fechaVencimiento?: string;
+  loginFuncionario?: string;
+  loginAbogado?: string;
+  expedienteDigitalId?: string;
+  instanciaJbpm?: string;
+  fechaCreacion?: string;
+  fechaModificacion?: string;
+  usuarioCreacion?: string;
+  usuarioModificacion?: string;
+  observaciones?: string;
+}
+
+// Permisos según estado del reclamo
+export interface PermisosReclamo {
+  puedeEditar: boolean;
+  puedeRegistrarAdmisibilidad: boolean;
+  puedeRegistrarFallo: boolean;
+  puedeRegistrarApelacion: boolean;
+  puedeCerrar: boolean;
+  puedeGenerarInforme: boolean;
+  camposEditables: string[];
 }
 
 // ============================================

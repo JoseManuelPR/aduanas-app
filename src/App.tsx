@@ -10,7 +10,7 @@ import { ExpedienteDigital } from './pages/Expediente';
 import { NotificacionesList } from './pages/Notificaciones';
 import { CargosList, CargoDetalle, CargoForm } from './pages/Cargos';
 import { GirosList, GiroDetalle, GiroForm } from './pages/Giros';
-import { ReclamosList } from './pages/Reclamos';
+import { ReclamosList, ReclamoDetalle, ReclamoForm } from './pages/Reclamos';
 import { ReportesDashboard } from './pages/Reportes';
 import { SeguimientoList } from './pages/SeguimientoMercancia';
 
@@ -53,8 +53,9 @@ function App() {
       
       {/* Reclamos */}
       <Route path={ERoutePaths.RECLAMOS} element={<ReclamosList />} />
-      <Route path={ERoutePaths.RECLAMOS_NUEVO} element={<ReclamosList />} />
-      <Route path={ERoutePaths.RECLAMOS_DETALLE} element={<ReclamosList />} />
+      <Route path={ERoutePaths.RECLAMOS_NUEVO} element={<ReclamoForm />} />
+      <Route path={ERoutePaths.RECLAMOS_DETALLE} element={<ReclamoDetalle />} />
+      <Route path={ERoutePaths.RECLAMOS_EDITAR} element={<ReclamoForm />} />
       
       {/* Notificaciones */}
       <Route path={ERoutePaths.NOTIFICACIONES} element={<NotificacionesList />} />

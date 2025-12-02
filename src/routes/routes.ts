@@ -39,6 +39,7 @@ enum ERoutePaths {
   RECLAMOS = '/reclamos',
   RECLAMOS_NUEVO = '/reclamos/nuevo',
   RECLAMOS_DETALLE = '/reclamos/:id',
+  RECLAMOS_EDITAR = '/reclamos/:id/editar',
   
   // Notificaciones
   NOTIFICACIONES = '/notificaciones',

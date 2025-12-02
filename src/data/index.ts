@@ -114,11 +114,24 @@ export {
 // Reclamos
 export {
   reclamos,
+  getReclamoPorId,
   getReclamoPorNumero,
   getReclamosPorEstado,
   getReclamosPorTipo,
+  getReclamosPorOrigen,
   getReclamosPorDenuncia,
+  getReclamosPorCargo,
+  getReclamosPorGiro,
+  getReclamosPorAduana,
+  getReclamosPorVencer,
+  puedeRegistrarAdmisibilidad,
+  puedeRegistrarFallo,
+  getPermisosReclamo,
   getConteoReclamos,
+  crearReclamo,
+  actualizarReclamo,
+  registrarAdmisibilidad,
+  registrarFallo,
 } from './reclamos';
 
 // Alertas

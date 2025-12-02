@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
@@ -14,22 +15,67 @@ import {
   getConteoReclamos,
   getTodasLasNotificaciones,
   usuarioActual,
+  aduanas,
   type Reclamo,
+  type EstadoReclamo,
+  type TipoReclamoCompleto,
+  type OrigenReclamo,
 } from '../../data';
+
+// Opciones para filtros
+const estadosReclamo: EstadoReclamo[] = [
+  'Ingresado', 'En Admisibilidad', 'Admitido', 'En Análisis', 
+  'En Tramitación', 'Pendiente Resolución', 'Derivado a Tribunal',
+  'Fallado', 'Resuelto', 'Rechazado', 'Acogido', 'Acogido Parcialmente', 'Cerrado'
+];
+
+const tiposReclamo: TipoReclamoCompleto[] = ['Reposición', 'TTA'];
+const origenesReclamo: OrigenReclamo[] = ['DENUNCIA', 'CARGO', 'GIRO', 'OTRO'];
 
 export const ReclamosList: React.FC = () => {
   const navigate = useNavigate();
 
+  // Estados de filtros
+  const [filtroNumero, setFiltroNumero] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [filtroOrigen, setFiltroOrigen] = useState('');
+  const [filtroReclamante, setFiltroReclamante] = useState('');
+  const [filtroAduana, setFiltroAduana] = useState('');
+
   // Obtener conteos desde datos centralizados
   const conteoReclamos = getConteoReclamos();
   const allNotifications = getTodasLasNotificaciones();
+
+  // Filtrar reclamos
+  const reclamosFiltrados = useMemo(() => {
+    return reclamos.filter(r => {
+      if (filtroNumero && !r.numeroReclamo.toLowerCase().includes(filtroNumero.toLowerCase())) return false;
+      if (filtroTipo && r.tipoReclamo !== filtroTipo) return false;
+      if (filtroEstado && r.estado !== filtroEstado) return false;
+      if (filtroOrigen && r.origenReclamo !== filtroOrigen) return false;
+      if (filtroReclamante && !r.reclamante.toLowerCase().includes(filtroReclamante.toLowerCase()) && 
+          !r.rutReclamante.includes(filtroReclamante)) return false;
+      if (filtroAduana && r.codigoAduana !== filtroAduana && r.aduana !== filtroAduana) return false;
+      return true;
+    });
+  }, [filtroNumero, filtroTipo, filtroEstado, filtroOrigen, filtroReclamante, filtroAduana]);
+
+  const limpiarFiltros = () => {
+    setFiltroNumero('');
+    setFiltroTipo('');
+    setFiltroEstado('');
+    setFiltroOrigen('');
+    setFiltroReclamante('');
+    setFiltroAduana('');
+  };
 
   const handleActions = (row: Reclamo) => (
     <div className="flex flex-col w-full gap-1">
       <CustomButton 
         variant="primary" 
         className="w-full text-xs"
-        onClick={() => navigate(`/reclamos/${row.id}`)}
+        onClick={() => navigate(ERoutePaths.RECLAMOS_DETALLE.replace(':id', row.id))}
       >
         <Icon name="Eye" className="hidden md:block" size={14} />
         Ver Detalle
@@ -37,10 +83,10 @@ export const ReclamosList: React.FC = () => {
       <CustomButton 
         variant="secondary" 
         className="w-full text-xs"
-        onClick={() => navigate(`/expediente/${row.id}`)}
+        onClick={() => navigate(ERoutePaths.RECLAMOS_EDITAR.replace(':id', row.id))}
       >
-        <Icon name="FileText" className="hidden md:block" size={14} />
-        Expediente
+        <Icon name="Edit" className="hidden md:block" size={14} />
+        Editar
       </CustomButton>
     </div>
   );
@@ -70,12 +116,20 @@ export const ReclamosList: React.FC = () => {
       label: 'Estado', 
       sortable: true,
       render: (row: Reclamo) => {
-        const estadoMap: Record<string, 'pendiente' | 'proceso' | 'resuelto' | 'danger'> = {
-          'Ingresado': 'pendiente',
+        const estadoMap: Record<string, 'pendiente' | 'proceso' | 'resuelto' | 'danger' | 'success' | 'info'> = {
+          'Ingresado': 'info',
+          'En Admisibilidad': 'pendiente',
+          'Admitido': 'info',
           'En Análisis': 'proceso',
-          'Pendiente Resolución': 'proceso',
+          'En Tramitación': 'proceso',
+          'Pendiente Resolución': 'pendiente',
           'Derivado a Tribunal': 'danger',
+          'Fallado': 'success',
           'Resuelto': 'resuelto',
+          'Rechazado': 'danger',
+          'Acogido': 'success',
+          'Acogido Parcialmente': 'proceso',
+          'Cerrado': 'resuelto',
         };
         return (
           <Badge variant={estadoMap[row.estado] || 'info'} dot>
@@ -84,18 +138,38 @@ export const ReclamosList: React.FC = () => {
         );
       }
     },
-    { key: 'denunciaAsociada' as const, label: 'Denuncia Asociada', sortable: true },
+    { 
+      key: 'origenReclamo' as const, 
+      label: 'Origen', 
+      sortable: true,
+      render: (row: Reclamo) => (
+        <span className="text-sm">
+          {row.origenReclamo}
+          {row.numeroEntidadOrigen && (
+            <span className="text-gray-500 block text-xs">{row.numeroEntidadOrigen}</span>
+          )}
+        </span>
+      )
+    },
     { key: 'reclamante' as const, label: 'Reclamante', sortable: true },
     { 
+      key: 'montoReclamado' as const, 
+      label: 'Monto', 
+      sortable: true,
+      render: (row: Reclamo) => row.montoReclamado 
+        ? `$${row.montoReclamado.toLocaleString('es-CL')}` 
+        : '-'
+    },
+    { 
       key: 'diasRespuesta' as const, 
-      label: 'Días Respuesta', 
+      label: 'Días', 
       sortable: true,
       render: (row: Reclamo) => {
         const dias = row.diasRespuesta;
         const variant = getDiasVencimientoBadgeVariant(dias);
         return (
           <Badge variant={variant}>
-            {dias === 0 ? 'Derivado' : `${dias} días`}
+            {dias === 0 ? '✓' : `${dias}d`}
           </Badge>
         );
       }
@@ -214,53 +288,86 @@ export const ReclamosList: React.FC = () => {
               id="nroReclamo"
               type="text"
               placeholder="REC-XXX-2024-XXXX"
+              value={filtroNumero}
+              onChange={(e) => setFiltroNumero(e.target.value)}
             />
-            <InputField
-              label="Tipo de Reclamo"
-              id="tipoReclamo"
-              type="text"
-              placeholder="Reposición / TTA"
-            />
-            <InputField
-              label="Estado"
-              id="estado"
-              type="text"
-              placeholder="Seleccione estado"
-            />
-            <InputField
-              label="Denuncia Asociada"
-              id="denunciaAsociada"
-              type="text"
-              placeholder="Ej: 993519"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Reclamo</label>
+              <select 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                value={filtroTipo}
+                onChange={(e) => setFiltroTipo(e.target.value)}
+              >
+                <option value="">Todos los tipos</option>
+                {tiposReclamo.map(tipo => (
+                  <option key={tipo} value={tipo}>{tipo}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <select 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value)}
+              >
+                <option value="">Todos los estados</option>
+                {estadosReclamo.map(estado => (
+                  <option key={estado} value={estado}>{estado}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
+              <select 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                value={filtroOrigen}
+                onChange={(e) => setFiltroOrigen(e.target.value)}
+              >
+                <option value="">Todos los orígenes</option>
+                {origenesReclamo.map(origen => (
+                  <option key={origen} value={origen}>{origen}</option>
+                ))}
+              </select>
+            </div>
             <InputField
               label="Reclamante"
               id="reclamante"
               type="text"
               placeholder="Nombre o RUT"
+              value={filtroReclamante}
+              onChange={(e) => setFiltroReclamante(e.target.value)}
             />
-            <InputField
-              label="Fecha ingreso"
-              id="fechaIngreso"
-              type="date"
-              icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Aduana</label>
+              <select 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                value={filtroAduana}
+                onChange={(e) => setFiltroAduana(e.target.value)}
+              >
+                <option value="">Todas las aduanas</option>
+                {aduanas.map(aduana => (
+                  <option key={aduana.codigo} value={aduana.codigo}>{aduana.nombre}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Acciones */}
-          <div className="flex flex-col md:flex-row justify-end items-center px-5 py-3 gap-3 border-b border-gray-200">
-            <CustomButton variant="secondary" className="flex items-center gap-1 text-sm">
-              <Icon name="Eraser" size={16} />
-              Limpiar
-            </CustomButton>
-            <CustomButton variant="secondary" className="flex items-center gap-1 text-sm">
-              <Icon name="FileDown" size={16} />
-              Exportar
-            </CustomButton>
-            <CustomButton variant="primary" className="flex items-center gap-1 text-sm">
-              <Icon name="Search" size={16} />
-              Buscar
-            </CustomButton>
+          <div className="flex flex-col md:flex-row justify-between items-center px-5 py-3 gap-3 border-b border-gray-200">
+            <span className="text-sm text-gray-500">
+              {reclamosFiltrados.length} de {reclamos.length} reclamos
+            </span>
+            <div className="flex gap-3">
+              <CustomButton variant="secondary" className="flex items-center gap-1 text-sm" onClick={limpiarFiltros}>
+                <Icon name="Eraser" size={16} />
+                Limpiar
+              </CustomButton>
+              <CustomButton variant="secondary" className="flex items-center gap-1 text-sm">
+                <Icon name="FileDown" size={16} />
+                Exportar
+              </CustomButton>
+            </div>
           </div>
 
           {/* Tabla */}
@@ -268,7 +375,7 @@ export const ReclamosList: React.FC = () => {
             <Table
               classHeader="bg-aduana-azul text-white text-xs"
               headers={columnasReclamos}
-              data={reclamos}
+              data={reclamosFiltrados}
               actions={handleActions}
             />
           </div>
