@@ -45,9 +45,11 @@ enum ERoutePaths {
   NOTIFICACIONES = '/notificaciones',
   NOTIFICACIONES_DETALLE = '/notificaciones/:id',
   
-  // Seguimiento de Mercancía
-  SEGUIMIENTO_MERCANCIA = '/seguimiento-mercancia',
-  SEGUIMIENTO_MERCANCIA_DETALLE = '/seguimiento-mercancia/:id',
+  // Gestión de Mercancías
+  MERCANCIAS = '/mercancias',
+  MERCANCIAS_NUEVO = '/mercancias/nuevo',
+  MERCANCIAS_DETALLE = '/mercancias/:id',
+  MERCANCIAS_EDITAR = '/mercancias/:id/editar',
   
   // Movimientos Terrestres
   MOVIMIENTOS_TERRESTRES = '/movimientos-terrestres',

@@ -5,6 +5,8 @@
 import React, { useState, useEffect, useMemo, ChangeEvent } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from 'he-button-custom-library';
+import CONSTANTS_APP from "../../constants/sidebar-menu";
+import CustomLayout from "../../Layout/Layout";
 import { Badge } from '../../components/UI';
 import {
   getReclamoPorId,
@@ -14,6 +16,8 @@ import {
   crearReclamo,
   actualizarReclamo,
   aduanas,
+  getTodasLasNotificaciones,
+  usuarioActual,
   type Reclamo,
   type TipoReclamoCompleto,
   type OrigenReclamo,
@@ -227,9 +231,24 @@ const ReclamoForm: React.FC = () => {
     { number: 3, title: 'Fundamentos', icon: 'AlignLeft' },
     { number: 4, title: 'Revisión', icon: 'Check' },
   ];
+  
+  const allNotifications = getTodasLasNotificaciones();
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50">
+    <CustomLayout
+      platformName="DECARE"
+      sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
+      options={[]}
+      onLogout={() => navigate(ERoutePaths.LOGIN)}
+      notifications={allNotifications}
+      user={{
+        initials: usuarioActual.initials,
+        name: usuarioActual.name,
+        email: usuarioActual.email,
+        role: usuarioActual.role,
+      }}
+    >
+    <div className="flex-1 flex flex-col bg-gray-50 min-h-full">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-4">
@@ -694,6 +713,7 @@ const ReclamoForm: React.FC = () => {
         </div>
       </div>
     </div>
+    </CustomLayout>
   );
 };
 

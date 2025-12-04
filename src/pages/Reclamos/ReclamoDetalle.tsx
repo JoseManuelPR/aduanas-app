@@ -5,6 +5,8 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Icon } from 'he-button-custom-library';
+import CONSTANTS_APP from "../../constants/sidebar-menu";
+import CustomLayout from "../../Layout/Layout";
 import { Badge, Tabs, Tab } from '../../components/UI';
 import { 
   getReclamoPorId,
@@ -17,6 +19,8 @@ import {
   registrarAdmisibilidad,
   registrarFallo,
   aduanas,
+  getTodasLasNotificaciones,
+  usuarioActual,
   type Reclamo,
   type TipoFalloTTA,
   formatMonto,
@@ -73,22 +77,37 @@ const ReclamoDetalle: React.FC = () => {
   }, [reclamo]);
   
   const permisos = useMemo(() => reclamo ? getPermisosReclamo(reclamo) : null, [reclamo]);
+  const allNotifications = getTodasLasNotificaciones();
   
   if (!reclamo) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Icon name="FileX" size={64} className="text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700">Reclamo no encontrado</h2>
-          <p className="text-gray-500 mt-2">El reclamo que buscas no existe o ha sido eliminado.</p>
-          <button
-            onClick={() => navigate(ERoutePaths.RECLAMOS)}
-            className="mt-4 px-4 py-2 bg-aduana-azul text-white rounded-lg hover:bg-aduana-azul-dark"
-          >
-            Volver a Reclamos
-          </button>
+      <CustomLayout
+        platformName="DECARE"
+        sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
+        options={[]}
+        onLogout={() => navigate(ERoutePaths.LOGIN)}
+        notifications={allNotifications}
+        user={{
+          initials: usuarioActual.initials,
+          name: usuarioActual.name,
+          email: usuarioActual.email,
+          role: usuarioActual.role,
+        }}
+      >
+        <div className="flex-1 flex items-center justify-center bg-gray-50 min-h-[60vh]">
+          <div className="text-center">
+            <Icon name="FileX" size={64} className="text-gray-300 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-700">Reclamo no encontrado</h2>
+            <p className="text-gray-500 mt-2">El reclamo que buscas no existe o ha sido eliminado.</p>
+            <button
+              onClick={() => navigate(ERoutePaths.RECLAMOS)}
+              className="mt-4 px-4 py-2 bg-aduana-azul text-white rounded-lg hover:bg-aduana-azul-dark"
+            >
+              Volver a Reclamos
+            </button>
+          </div>
         </div>
-      </div>
+      </CustomLayout>
     );
   }
   
@@ -156,7 +175,20 @@ const ReclamoDetalle: React.FC = () => {
   const validacionFallo = puedeRegistrarFallo(reclamo);
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50">
+    <CustomLayout
+      platformName="DECARE"
+      sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
+      options={[]}
+      onLogout={() => navigate(ERoutePaths.LOGIN)}
+      notifications={allNotifications}
+      user={{
+        initials: usuarioActual.initials,
+        name: usuarioActual.name,
+        email: usuarioActual.email,
+        role: usuarioActual.role,
+      }}
+    >
+    <div className="flex-1 flex flex-col bg-gray-50 min-h-full">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -322,6 +354,7 @@ const ReclamoDetalle: React.FC = () => {
         esApelacion={esApelacion}
       />
     </div>
+    </CustomLayout>
   );
 };
 

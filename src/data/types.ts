@@ -724,33 +724,162 @@ export interface PermisosReclamo {
 }
 
 // ============================================
-// MERCANCÍA
+// MERCANCÍA - MODELO COMPLETO
 // ============================================
 
 export type EstadoMercancia = 
+  | 'En Custodia'
+  | 'Comisada'
+  | 'Entregada'
+  | 'Subastada'
+  | 'Destruida'
+  | 'Donada'
+  | 'Entregada por RAP'
+  | 'Incautada Judicialmente'
+  | 'Pendiente Disposición'
   | 'En Tránsito'
   | 'En Puerto'
   | 'En Depósito'
   | 'Retenida'
-  | 'Liberada'
-  | 'Decomisada'
-  | 'Subastada';
+  | 'Liberada';
 
-export interface Mercancia {
+export type TipoEventoMercancia = 
+  | 'Ingreso'
+  | 'Retención'
+  | 'Incautación'
+  | 'Comiso'
+  | 'Devolución'
+  | 'Destrucción'
+  | 'Subasta'
+  | 'Donación'
+  | 'Entrega RAP'
+  | 'Traslado'
+  | 'Inventario'
+  | 'Resolución Judicial'
+  | 'Cambio Estado'
+  | 'Observación';
+
+// Item individual de mercancía
+export interface ItemMercancia {
   id: string;
-  descripcion: string;
-  partida: string;
-  subpartida?: string;
+  mercanciaId: string;
+  descripcionItem: string;
   cantidad: number;
   unidadMedida: string;
+  valorUnitario?: number;
+  valorTotal?: number;
+  marca?: string;
+  modelo?: string;
+  serie?: string;
+  estado: 'Bueno' | 'Regular' | 'Malo' | 'Destruido';
+  observaciones?: string;
+}
+
+// Evento de seguimiento de mercancía
+export interface SeguimientoMercancia {
+  id: string;
+  mercanciaId: string;
+  tipoEvento: TipoEventoMercancia;
+  fechaEvento: string;
+  autoridad?: string;
+  nroResolucion?: string;
+  fechaResolucion?: string;
+  ubicacionAnterior?: string;
+  ubicacionNueva?: string;
+  funcionarioResponsable: string;
+  observaciones?: string;
+  documentosAdjuntos?: string[];
+  fechaRegistro: string;
+  usuarioRegistro: string;
+}
+
+// Modelo completo de Mercancía
+export interface Mercancia {
+  id: string;
+  
+  // Identificadores
+  codigoMercancia?: string;         // ID_MERCANCIA (autogenerado)
+  
+  // Descripción
+  descripcion: string;              // DESCRIPCION_MERCANCIA
+  descripcionDetallada?: string;
+  
+  // Clasificación arancelaria
+  partida: string;
+  subpartida?: string;
+  posicionArancelaria?: string;
+  
+  // Cantidades y medidas
+  cantidad: number;
+  unidadMedida: string;
+  numeroBultos?: number;            // NUMERO_BULTOS
+  pesoBruto?: number;               // PESO_BRUTO (kg)
+  pesoNeto?: number;
+  volumen?: number;                 // m³
+  
+  // Valores
   valorFOB?: number;
-  valorCIF?: number;
-  pesoKg?: number;
+  valorCIF?: number;                // VALOR_CIF
+  valorAduanero?: number;
+  moneda?: string;
+  
+  // Origen y procedencia
   paisOrigen?: string;
-  estado: EstadoMercancia;
+  paisProcedencia?: string;
+  
+  // Estado y ubicación
+  estado: EstadoMercancia;          // ESTADO_MERCANCIA
   ubicacion?: string;
+  bodega?: string;
+  seccionBodega?: string;
+  
+  // Transporte
   contenedor?: string;
   manifiesto?: string;
+  nave?: string;
+  viaje?: string;
+  
+  // Aduana
+  codigoAduanaIngreso?: string;     // COD_ADUANA_INGRESO
+  nombreAduanaIngreso?: string;
+  fechaIngreso: string;             // FECHA_INGRESO
+  
+  // Relaciones
+  denunciaId?: string;
+  denunciaNumero?: string;
+  cargoId?: string;
+  cargoNumero?: string;
+  expedienteDigitalId?: string;
+  
+  // Items y seguimiento
+  items?: ItemMercancia[];
+  seguimientos?: SeguimientoMercancia[];
+  
+  // Disposición final
+  disposicionFinal?: TipoEventoMercancia;
+  fechaDisposicionFinal?: string;
+  resolucionDisposicion?: string;
+  
+  // Auditoría
+  fechaCreacion: string;
+  usuarioCreacion: string;
+  fechaModificacion?: string;
+  usuarioModificacion?: string;
+  
+  // Alertas
+  tieneAlertaDisposicion?: boolean;
+  alertaEventosContradictorios?: boolean;
+}
+
+// Permisos según estado de la mercancía
+export interface PermisosMercancia {
+  puedeRegistrarEvento: boolean;
+  puedeDevolver: boolean;
+  puedeComiso: boolean;
+  puedeDestruir: boolean;
+  puedeSubastar: boolean;
+  puedeDonar: boolean;
+  eventosDisponibles: TipoEventoMercancia[];
 }
 
 // ============================================

@@ -11,8 +11,8 @@ import { NotificacionesList } from './pages/Notificaciones';
 import { CargosList, CargoDetalle, CargoForm } from './pages/Cargos';
 import { GirosList, GiroDetalle, GiroForm } from './pages/Giros';
 import { ReclamosList, ReclamoDetalle, ReclamoForm } from './pages/Reclamos';
+import { MercanciasList, MercanciaDetalle, MercanciaForm } from './pages/Mercancias';
 import { ReportesDashboard } from './pages/Reportes';
-import { SeguimientoList } from './pages/SeguimientoMercancia';
 
 function App() {
   return (
@@ -61,9 +61,11 @@ function App() {
       <Route path={ERoutePaths.NOTIFICACIONES} element={<NotificacionesList />} />
       <Route path={ERoutePaths.NOTIFICACIONES_DETALLE} element={<NotificacionesList />} />
       
-      {/* Seguimiento de Mercancía */}
-      <Route path={ERoutePaths.SEGUIMIENTO_MERCANCIA} element={<SeguimientoList />} />
-      <Route path={ERoutePaths.SEGUIMIENTO_MERCANCIA_DETALLE} element={<SeguimientoList />} />
+      {/* Gestión de Mercancías */}
+      <Route path={ERoutePaths.MERCANCIAS} element={<MercanciasList />} />
+      <Route path={ERoutePaths.MERCANCIAS_NUEVO} element={<MercanciaForm />} />
+      <Route path={ERoutePaths.MERCANCIAS_DETALLE} element={<MercanciaDetalle />} />
+      <Route path={ERoutePaths.MERCANCIAS_EDITAR} element={<MercanciaForm />} />
       
       {/* Reportes e Indicadores */}
       <Route path={ERoutePaths.REPORTES} element={<ReportesDashboard />} />

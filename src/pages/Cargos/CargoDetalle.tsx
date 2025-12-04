@@ -338,7 +338,7 @@ export const CargoDetalle: React.FC = () => {
                 cargo={cargo} 
                 denuncia={denunciaAsociada ?? null}
                 onVerDenuncia={() => denunciaAsociada && navigate(`/denuncias/${denunciaAsociada.id}`)}
-                onVerMercancia={() => cargo.mercanciaId && navigate(`/seguimiento-mercancia/${cargo.mercanciaId}`)}
+                onVerMercancia={() => cargo.mercanciaId && navigate(ERoutePaths.MERCANCIAS_DETALLE.replace(':id', cargo.mercanciaId))}
               />
             )}
             

@@ -134,8 +134,8 @@ const ITEMS_SIDEBAR_MENU = [
     badge: 8,
   },
   {
-    label: "Seguimiento Mercancía",
-    to: ERoutePaths.SEGUIMIENTO_MERCANCIA,
+    label: "Mercancías",
+    to: ERoutePaths.MERCANCIAS,
     icon: <IconSeguimiento />,
   },
   {

@@ -171,7 +171,7 @@ export {
   getEstadisticasGenerales,
 } from './kpis';
 
-// Seguimiento de Mercancía
+// Seguimiento de Mercancía (movimientos)
 export {
   movimientosActivos,
   timelineMovimientoEjemplo,
@@ -182,6 +182,24 @@ export {
   getMovimientosPorEstado,
   getMovimientosConAlerta,
 } from './seguimientoMercancia';
+
+// Mercancías
+export {
+  mercancias,
+  getMercanciaPorId,
+  getMercanciaPorCodigo,
+  getMercanciasPorEstado,
+  getMercanciasPorAduana,
+  getMercanciasPorDenuncia,
+  getMercanciasPorCargo,
+  getMercanciasConAlerta,
+  getMercanciasPendientesDisposicion,
+  getPermisosMercancia,
+  puedeRegistrarEvento,
+  getConteoMercancias,
+  registrarEventoMercancia,
+  crearMercancia,
+} from './mercancias';
 
 // ============================================
 // USUARIO ACTUAL (para prototipo)
