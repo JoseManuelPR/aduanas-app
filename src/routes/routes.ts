@@ -59,6 +59,12 @@ enum ERoutePaths {
   INDICADORES = '/indicadores',
   AUDITORIA = '/auditoria',
   
+  // Gestión de Involucrados
+  INVOLUCRADOS = '/involucrados',
+  INVOLUCRADOS_NUEVO = '/involucrados/nuevo',
+  INVOLUCRADOS_DETALLE = '/involucrados/:id',
+  INVOLUCRADOS_EDITAR = '/involucrados/:id/editar',
+  
   // Mantenedores (Administración)
   MANTENEDORES = '/mantenedores',
   MANTENEDORES_ADUANAS = '/mantenedores/aduanas',

@@ -1061,3 +1061,118 @@ export interface PermisosEstado {
   puedeCerrar: boolean;
   camposEditables: string[];
 }
+
+// ============================================
+// INVOLUCRADOS - MÓDULO CENTRALIZADO
+// ============================================
+
+export type TipoPersona = 'Natural' | 'Jurídica';
+
+export type TipoIdentificacion = 
+  | 'RUT'
+  | 'Pasaporte'
+  | 'DNI'
+  | 'RUC'
+  | 'Otro';
+
+export type TipoDireccion = 
+  | 'Particular'
+  | 'Comercial'
+  | 'Legal'
+  | 'Notificación';
+
+export type EstadoInvolucrado = 'Activo' | 'Inactivo';
+
+// Dirección de involucrado
+export interface DireccionInvolucrado {
+  id: string;
+  involucradoId: string;
+  tipoDireccion: TipoDireccion;
+  direccion: string;
+  numero?: string;
+  departamento?: string;
+  region: string;
+  comuna: string;
+  codigoPostal?: string;
+  pais?: string;
+  esPrincipal: boolean;
+}
+
+// Modelo centralizado de Involucrado
+export interface Involucrado {
+  id: string;
+  
+  // Identificación
+  tipoIdentificacion: TipoIdentificacion;
+  numeroIdentificacion: string;       // RUT, Pasaporte, etc.
+  digitoVerificador?: string;         // Solo para RUT
+  
+  // Tipo de persona
+  tipoPersona: TipoPersona;
+  
+  // Datos persona natural
+  nombre?: string;
+  apellidoPaterno?: string;
+  apellidoMaterno?: string;
+  
+  // Datos persona jurídica
+  razonSocial?: string;
+  giro?: string;
+  
+  // Nombre completo (calculado o razón social)
+  nombreCompleto: string;
+  
+  // Datos de contacto
+  email?: string;
+  emailSecundario?: string;
+  telefono?: string;
+  telefonoSecundario?: string;
+  
+  // Nacionalidad
+  nacionalidad?: string;
+  
+  // Direcciones
+  direcciones: DireccionInvolucrado[];
+  
+  // Representante legal (solo para persona jurídica)
+  representanteLegalId?: string;
+  representanteLegalNombre?: string;
+  representanteLegalRut?: string;
+  
+  // Estado
+  estado: EstadoInvolucrado;
+  
+  // Relaciones con procesos (IDs de entidades asociadas)
+  denunciasAsociadas?: string[];
+  cargosAsociados?: string[];
+  girosAsociados?: string[];
+  reclamosAsociados?: string[];
+  
+  // Auditoría
+  fechaCreacion: string;
+  usuarioCreacion: string;
+  fechaModificacion?: string;
+  usuarioModificacion?: string;
+  
+  // Notas internas
+  observaciones?: string;
+}
+
+// Permisos para gestión de involucrados
+export interface PermisosInvolucrado {
+  puedeEditar: boolean;
+  puedeEliminar: boolean;
+  puedeInactivar: boolean;
+  motivoNoEliminar?: string;
+}
+
+// Historial de casos del involucrado
+export interface HistorialCasoInvolucrado {
+  tipo: 'DENUNCIA' | 'CARGO' | 'GIRO' | 'RECLAMO';
+  id: string;
+  numero: string;
+  fecha: string;
+  estado: string;
+  tipoInvolucrado: TipoInvolucrado;
+  monto?: string;
+}

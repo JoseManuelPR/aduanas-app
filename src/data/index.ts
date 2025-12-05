@@ -201,6 +201,31 @@ export {
   crearMercancia,
 } from './mercancias';
 
+// Involucrados
+export {
+  involucrados,
+  tiposIdentificacion,
+  tiposPersona,
+  tiposDireccion,
+  regiones,
+  getInvolucradoPorId,
+  getInvolucradoPorRut,
+  getInvolucradosPorTipoPersona,
+  getInvolucradosPorEstado,
+  buscarInvolucrados,
+  getConteoInvolucrados,
+  getPermisosInvolucrado,
+  getHistorialCasos,
+  validarRut,
+  formatRut,
+  crearInvolucrado,
+  actualizarInvolucrado,
+  agregarDireccion,
+  eliminarDireccion,
+  inactivarInvolucrado,
+  activarInvolucrado,
+} from './involucrados';
+
 // ============================================
 // USUARIO ACTUAL (para prototipo)
 // ============================================

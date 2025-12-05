@@ -12,6 +12,7 @@ import { CargosList, CargoDetalle, CargoForm } from './pages/Cargos';
 import { GirosList, GiroDetalle, GiroForm } from './pages/Giros';
 import { ReclamosList, ReclamoDetalle, ReclamoForm } from './pages/Reclamos';
 import { MercanciasList, MercanciaDetalle, MercanciaForm } from './pages/Mercancias';
+import { InvolucradosList, InvolucradoDetalle, InvolucradoForm } from './pages/Involucrados';
 import { ReportesDashboard } from './pages/Reportes';
 
 function App() {
@@ -66,6 +67,12 @@ function App() {
       <Route path={ERoutePaths.MERCANCIAS_NUEVO} element={<MercanciaForm />} />
       <Route path={ERoutePaths.MERCANCIAS_DETALLE} element={<MercanciaDetalle />} />
       <Route path={ERoutePaths.MERCANCIAS_EDITAR} element={<MercanciaForm />} />
+      
+      {/* Gestión de Involucrados */}
+      <Route path={ERoutePaths.INVOLUCRADOS} element={<InvolucradosList />} />
+      <Route path={ERoutePaths.INVOLUCRADOS_NUEVO} element={<InvolucradoForm />} />
+      <Route path={ERoutePaths.INVOLUCRADOS_DETALLE} element={<InvolucradoDetalle />} />
+      <Route path={ERoutePaths.INVOLUCRADOS_EDITAR} element={<InvolucradoForm />} />
       
       {/* Reportes e Indicadores */}
       <Route path={ERoutePaths.REPORTES} element={<ReportesDashboard />} />
