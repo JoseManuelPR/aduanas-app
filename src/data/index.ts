@@ -226,6 +226,27 @@ export {
   activarInvolucrado,
 } from './involucrados';
 
+// Documentos Aduaneros
+export {
+  documentosAduaneros,
+  getDocumentosAduanerosPorDenuncia,
+  getDocumentosAduanerosPorCargo,
+  getDocumentosAduanerosPorReclamo,
+  getDocumentosAduanerosPorGiro,
+  getDocumentoAduaneroPorId,
+} from './documentosAduaneros';
+
+// Expedientes Digitales
+export {
+  expedientesDigitales,
+  documentosObligatorios,
+  getExpedientePorEntidad,
+  getExpedientePorId,
+  getDocumentosObligatoriosPorTipo,
+  calcularCompletitud,
+  getPermisosArchivo,
+} from './expedientes';
+
 // ============================================
 // USUARIO ACTUAL (para prototipo)
 // ============================================

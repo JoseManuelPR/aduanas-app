@@ -1005,31 +1005,221 @@ export interface AlertaTrazabilidad {
 }
 
 // ============================================
+// DOCUMENTOS ADUANEROS
+// ============================================
+
+export type TipoDocAduanero =
+  | 'DIN'        // Declaración de Ingreso
+  | 'DUS'        // Declaración Única de Salida
+  | 'TRS'        // Tránsito
+  | 'DTS'        // Documento de Transferencia
+  | 'CPT'        // Comprobante de Pago Tributario
+  | 'BL'         // Bill of Lading
+  | 'AWB'        // Air Waybill
+  | 'CI'         // Commercial Invoice
+  | 'PL'         // Packing List
+  | 'CO'         // Certificate of Origin
+  | 'Otro';
+
+export type EstadoDocumentoAduanero =
+  | 'Vigente'
+  | 'Anulado'
+  | 'Rectificado'
+  | 'Cancelado';
+
+export interface DocumentoAduanero {
+  id: string;
+  tipoDocumento: TipoDocAduanero;
+  numeroDocumento: string;
+  numeroAceptacion?: string;
+  fechaEmision: string;
+  fechaAceptacion?: string;
+  aduana: string;
+  codigoAduana?: string;
+  estado: EstadoDocumentoAduanero;
+  descripcion?: string;
+
+  // Datos específicos según tipo de documento
+  importador?: string;
+  rutImportador?: string;
+  exportador?: string;
+  rutExportador?: string;
+  agenteAduana?: string;
+  codigoAgente?: string;
+
+  // Valores y montos
+  valorFOB?: number;
+  valorCIF?: number;
+  moneda?: string;
+
+  // Mercancía
+  descripcionMercancia?: string;
+  pesoNeto?: number;
+  pesoBruto?: number;
+  numeroBultos?: number;
+
+  // Archivos asociados
+  archivoXML?: string;          // Ruta o URL del XML
+  archivoXMLContent?: string;   // Contenido del XML
+  archivoXSL?: string;          // Ruta o URL del XSL
+  archivoHTML?: string;         // HTML transformado para visualización
+  archivoPDF?: string;          // PDF del documento
+
+  // Relaciones
+  denunciaId?: string;
+  cargoId?: string;
+  reclamoId?: string;
+  giroId?: string;
+  mercanciaId?: string;
+
+  // Metadatos
+  fechaCreacion: string;
+  usuarioCreacion: string;
+  fechaModificacion?: string;
+  usuarioModificacion?: string;
+  observaciones?: string;
+}
+
+// ============================================
 // EXPEDIENTE DIGITAL
 // ============================================
 
 export type TipoExpediente = 'DENUNCIA' | 'CARGO' | 'RECLAMO' | 'GIRO';
+
+export type CategoriaArchivoExpediente =
+  | 'Documento Aduanero'
+  | 'Denuncia/Cargo'
+  | 'Notificación'
+  | 'Resolución'
+  | 'Prueba/Evidencia'
+  | 'Fotografía'
+  | 'Informe Técnico'
+  | 'Comunicación'
+  | 'Reclamo/Recurso'
+  | 'Sentencia'
+  | 'Comprobante de Pago'
+  | 'Otro';
+
+export type TipoArchivoExpediente =
+  | 'PDF'
+  | 'XML'
+  | 'DOC'
+  | 'DOCX'
+  | 'XLS'
+  | 'XLSX'
+  | 'JPG'
+  | 'PNG'
+  | 'ZIP'
+  | 'RAR'
+  | 'MSG'
+  | 'EML'
+  | 'TXT';
+
+export type EstadoArchivoExpediente =
+  | 'Vigente'
+  | 'Reemplazado'
+  | 'Anulado'
+  | 'En Revisión';
+
+export type OrigenArchivo =
+  | 'Manual'            // Subido manualmente por usuario
+  | 'Sistema'           // Generado automáticamente por el sistema
+  | 'Importado'         // Importado desde otro sistema
+  | 'Notificación';     // Generado por proceso de notificación
+
+export interface ArchivoExpediente {
+  id: string;
+  expedienteId: string;
+  nombre: string;
+  nombreOriginal?: string;        // Nombre original del archivo subido
+  tipo: TipoArchivoExpediente;
+  extension?: string;
+  tamanio: string;                // Formateado (ej: "1.2 MB")
+  tamanioBytes?: number;          // Tamaño en bytes
+  fechaSubida: string;
+  horaSubida?: string;
+  usuarioSubida: string;
+  nombreUsuarioSubida?: string;   // Nombre completo del usuario
+  estado: EstadoArchivoExpediente;
+  categoria: CategoriaArchivoExpediente;
+  origen: OrigenArchivo;
+
+  // Ruta y acceso al archivo
+  rutaArchivo?: string;
+  urlDescarga?: string;
+  urlVisualizacion?: string;
+
+  // Metadatos adicionales
+  descripcion?: string;
+  observaciones?: string;
+  esFirmado?: boolean;
+  esConfidencial?: boolean;
+  requiereValidacion?: boolean;
+
+  // Para documentos XML
+  contenidoXML?: string;
+  tieneVistaHTML?: boolean;
+
+  // Versionamiento
+  version?: number;
+  archivoReemplazadoId?: string;  // ID del archivo que fue reemplazado
+
+  // Auditoría
+  fechaAnulacion?: string;
+  usuarioAnulacion?: string;
+  motivoAnulacion?: string;
+}
 
 export interface ExpedienteDigital {
   id: string;
   tipo: TipoExpediente;
   numeroExpediente: string;
   entidadId: string;
+  entidadNumero?: string;         // Número de la denuncia/cargo/reclamo/giro
   fechaCreacion: string;
   fechaModificacion: string;
+
+  // Archivos y documentos
   archivos: ArchivoExpediente[];
+  documentosAduaneros?: DocumentoAduanero[];
+
+  // Historial
   timeline: TimelineItem[];
+
+  // Estado del expediente
+  estado: string;
+  completitud?: number;           // Porcentaje de documentos obligatorios presentes
+  documentosFaltantes?: string[]; // Lista de documentos obligatorios faltantes
+
+  // Alertas
+  tieneDocumentosFaltantes?: boolean;
+  tieneDocumentosVencidos?: boolean;
+
+  // Auditoría
+  usuarioCreacion?: string;
+  fechaUltimaModificacion?: string;
+  usuarioUltimaModificacion?: string;
 }
 
-export interface ArchivoExpediente {
-  id: string;
+// Permisos para gestión de archivos del expediente
+export interface PermisosArchivoExpediente {
+  puedeSubir: boolean;
+  puedeDescargar: boolean;
+  puedeVisualizar: boolean;
+  puedeEliminar: boolean;
+  puedeAnular: boolean;
+  puedeReemplazar: boolean;
+  motivoNoEliminar?: string;
+}
+
+// Configuración de documentos obligatorios por tipo de expediente
+export interface DocumentoObligatorioConfig {
+  tipo: TipoExpediente;
+  categoria: CategoriaArchivoExpediente;
   nombre: string;
-  tipo: string;
-  tamanio: string;
-  fechaSubida: string;
-  usuarioSubida: string;
-  estado: 'Vigente' | 'Reemplazado' | 'Anulado';
-  categoria: string;
+  descripcion: string;
+  obligatorio: boolean;
+  plazoMaximoDias?: number;
 }
 
 // ============================================

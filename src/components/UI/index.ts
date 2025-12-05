@@ -7,4 +7,6 @@ export { Tabs } from './Tabs';
 export type { Tab } from './Tabs';
 export { Timeline } from './Timeline';
 export { ToastProvider, useToast, toast } from './Toast';
+export { Modal } from './Modal';
+export type { ModalProps } from './Modal';
 

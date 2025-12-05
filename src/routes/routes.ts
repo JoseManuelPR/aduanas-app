@@ -23,6 +23,14 @@ enum ERoutePaths {
   
   // Expediente Digital
   EXPEDIENTE = '/expediente/:id',
+  EXPEDIENTE_DENUNCIA = '/denuncias/:id/expediente',
+  EXPEDIENTE_CARGO = '/cargos/:id/expediente',
+  EXPEDIENTE_RECLAMO = '/reclamos/:id/expediente',
+  EXPEDIENTE_GIRO = '/giros/:id/expediente',
+
+  // Documentos Aduaneros
+  DOCUMENTOS_ADUANEROS = '/documentos-aduaneros',
+  DOCUMENTOS_ADUANEROS_DETALLE = '/documentos-aduaneros/:id',
   
   // Módulo de Cargos
   CARGOS = '/cargos',

@@ -38,7 +38,11 @@ function App() {
       <Route path={ERoutePaths.DENUNCIAS_DETALLE} element={<DenunciaDetalle />} />
       <Route path={ERoutePaths.DENUNCIAS_EDITAR} element={<DenunciasForm />} />
       
-      {/* Expediente Digital */}
+      {/* Expediente Digital - Rutas específicas primero */}
+      <Route path={ERoutePaths.EXPEDIENTE_DENUNCIA} element={<ExpedienteDigital />} />
+      <Route path={ERoutePaths.EXPEDIENTE_CARGO} element={<ExpedienteDigital />} />
+      <Route path={ERoutePaths.EXPEDIENTE_RECLAMO} element={<ExpedienteDigital />} />
+      <Route path={ERoutePaths.EXPEDIENTE_GIRO} element={<ExpedienteDigital />} />
       <Route path={ERoutePaths.EXPEDIENTE} element={<ExpedienteDigital />} />
       
       {/* Cargos */}
