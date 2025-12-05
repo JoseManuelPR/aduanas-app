@@ -19,7 +19,7 @@ interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   inputClassName?: string;
 }
 
-const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
+const InputFieldComponent = React.forwardRef<HTMLInputElement, InputFieldProps>(
   (
     {
       label,
@@ -110,6 +110,26 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
     );
   }
 );
+
+InputFieldComponent.displayName = "InputField";
+
+// Memoizar el componente para evitar re-renders innecesarios que causan pérdida de foco
+// No comparamos onChange porque las funciones siempre serán diferentes referencias
+// pero React manejará esto internamente si el valor y otras props no cambian
+const InputField = React.memo(InputFieldComponent, (prevProps, nextProps) => {
+  // Solo re-renderizar si las props relevantes cambian (excluyendo onChange)
+  return (
+    prevProps.value === nextProps.value &&
+    prevProps.label === nextProps.label &&
+    prevProps.errorMessage === nextProps.errorMessage &&
+    prevProps.hasError === nextProps.hasError &&
+    prevProps.required === nextProps.required &&
+    prevProps.disabled === nextProps.disabled &&
+    prevProps.placeholder === nextProps.placeholder &&
+    prevProps.id === nextProps.id &&
+    prevProps.type === nextProps.type
+  );
+}) as typeof InputFieldComponent;
 
 InputField.displayName = "InputField";
 

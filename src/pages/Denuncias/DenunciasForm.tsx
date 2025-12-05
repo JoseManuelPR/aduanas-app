@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
@@ -299,45 +299,136 @@ export const DenunciasForm: React.FC = () => {
     }
   }, [hallazgoId, isDesdeHallazgo]);
 
-  // Handler para actualizar campos del formulario
-  const handleInputChange = (field: keyof FormularioDenunciaData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+  // Handler para actualizar campos del formulario (memoizado para evitar re-renders)
+  const handleInputChange = useCallback((field: keyof FormularioDenunciaData, value: any) => {
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+      
+      // Si cambia el tipo de denuncia, limpiar artículo
+      if (field === 'tipoDenuncia') {
+        newData.codigoArticulo = '';
+        newData.multa = '';
+        newData.multaAllanamiento = '';
+        newData.tipoDenuncia = value;
+      }
+      
+      // Si cambia el artículo, actualizar multa máxima
+      if (field === 'codigoArticulo') {
+        const articulo = articulos.find(a => a.codigo === value);
+        if (articulo && articulo.multaMinima) {
+          newData.codigoArticulo = value;
+          newData.multa = articulo.multaMinima || '';
+        }
+      }
+      
+      return newData;
+    });
     
     // Limpiar error del campo
-    if (errors[field]) {
-      setErrors(prev => {
+    setErrors(prev => {
+      if (prev[field]) {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
-      });
-    }
-    
-    // Si cambia el tipo de denuncia, limpiar artículo
-    if (field === 'tipoDenuncia') {
-      setFormData(prev => ({
-        ...prev,
-        tipoDenuncia: value,
-        codigoArticulo: '',
-        multa: '',
-        multaAllanamiento: '',
-      }));
-    }
-    
-    // Si cambia el artículo, actualizar multa máxima
-    if (field === 'codigoArticulo') {
-      const articulo = articulos.find(a => a.codigo === value);
-      if (articulo && articulo.multaMinima) {
-        setFormData(prev => ({
-          ...prev,
-          codigoArticulo: value,
-          multa: articulo.multaMinima || '',
-        }));
       }
-    }
-  };
+      return prev;
+    });
+  }, []);
+
+  // Handlers específicos memoizados para evitar recreación de funciones inline
+  // Datos Generales
+  const handleMercanciaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('mercanciaInvolucrada', e.target.value);
+  }, [handleInputChange]);
+
+  const handleMontoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('montoEstimado', e.target.value);
+  }, [handleInputChange]);
+
+  // Tipificación
+  const handleFundamentoLegalChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('fundamentoLegal', e.target.value);
+  }, [handleInputChange]);
+
+  const handleNormaInfringidaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('normaInfringida', e.target.value);
+  }, [handleInputChange]);
+
+  // Tipificación Infraccional - Montos
+  const handleMultaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('multa', e.target.value ? parseInt(e.target.value) : '');
+  }, [handleInputChange]);
+
+  const handleMultaAllanamientoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('multaAllanamiento', e.target.value ? parseInt(e.target.value) : '');
+  }, [handleInputChange]);
+
+  const handleMontoDerechosChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('montoDerechos', e.target.value ? parseInt(e.target.value) : '');
+  }, [handleInputChange]);
+
+  const handleMontoRetencionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('montoRetencion', e.target.value ? parseInt(e.target.value) : '');
+  }, [handleInputChange]);
+
+  const handleMontoNoDeclaradoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('montoNoDeclarado', e.target.value ? parseInt(e.target.value) : '');
+  }, [handleInputChange]);
+
+  // Infractor Principal
+  const handleRutDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('rutDenunciado', e.target.value);
+  }, [handleInputChange]);
+
+  const handleNombreDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('nombreDenunciado', e.target.value);
+  }, [handleInputChange]);
+
+  const handleDireccionDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('direccionDenunciado', e.target.value);
+  }, [handleInputChange]);
+
+  const handleEmailDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('emailDenunciado', e.target.value);
+  }, [handleInputChange]);
+
+  const handleTelefonoDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('telefonoDenunciado', e.target.value);
+  }, [handleInputChange]);
+
+  const handleRepresentanteLegalChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('representanteLegal', e.target.value);
+  }, [handleInputChange]);
+
+  const handleCodigoAgenteChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('codigoAgente', e.target.value);
+  }, [handleInputChange]);
+
+  const handleNombreAgenteChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('nombreAgente', e.target.value);
+  }, [handleInputChange]);
+
+  // Tipificación Penal
+  const handleNumeroOficioChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('numeroOficio', e.target.value);
+  }, [handleInputChange]);
+
+  const handleFechaOficioChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('fechaOficio', e.target.value);
+  }, [handleInputChange]);
+
+  // Documentos
+  const handleDocumentoAduaneroChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('documentoAduanero', e.target.value);
+  }, [handleInputChange]);
+
+  // Revisión
+  const handleDescripcionHechosChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleInputChange('descripcionHechos', e.target.value);
+  }, [handleInputChange]);
 
   // Validar paso actual
   const validateCurrentStep = (): boolean => {
@@ -461,8 +552,8 @@ export const DenunciasForm: React.FC = () => {
     );
   };
 
-  // Paso 1: Datos Generales
-  const DatosGenerales = () => (
+  // Paso 1: Datos Generales - Memoizado para evitar recreación que causa pérdida de foco
+  const DatosGenerales = useMemo(() => (
     <div className="space-y-6">
       {/* Tipo de denuncia */}
       <div className="card p-5 border-l-4 border-l-aduana-azul">
@@ -615,20 +706,22 @@ export const DenunciasForm: React.FC = () => {
       {/* Mercancía */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField
+          key="mercancia-involucrada"
           label="Mercancía Involucrada"
           id="mercancia"
           type="text"
           placeholder="Descripción de mercancía"
           value={formData.mercanciaInvolucrada}
-          onChange={(e) => handleInputChange('mercanciaInvolucrada', e.target.value)}
+          onChange={handleMercanciaChange}
         />
         <InputField
+          key="monto-estimado"
           label="Monto Estimado"
           id="montoEstimado"
           type="text"
           placeholder="$0"
           value={formData.montoEstimado}
-          onChange={(e) => handleInputChange('montoEstimado', e.target.value)}
+          onChange={handleMontoChange}
         />
       </div>
 
@@ -666,10 +759,37 @@ export const DenunciasForm: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+  ), [
+    // Incluimos todas las dependencias necesarias
+    // React.memo en InputField y handlers memoizados evitarán la pérdida de foco
+    formData,
+    errors,
+    handleInputChange,
+    handleMercanciaChange,
+    handleMontoChange,
+    handleFundamentoLegalChange,
+    handleNormaInfringidaChange,
+    handleMultaChange,
+    handleMultaAllanamientoChange,
+    handleMontoDerechosChange,
+    handleMontoRetencionChange,
+    handleMontoNoDeclaradoChange,
+    handleRutDenunciadoChange,
+    handleNombreDenunciadoChange,
+    handleDireccionDenunciadoChange,
+    handleEmailDenunciadoChange,
+    handleTelefonoDenunciadoChange,
+    handleRepresentanteLegalChange,
+    handleCodigoAgenteChange,
+    handleNombreAgenteChange,
+    handleNumeroOficioChange,
+    handleFechaOficioChange,
+    handleDocumentoAduaneroChange,
+    handleDescripcionHechosChange
+  ]);
 
-  // Paso 2: Tipificación
-  const Tipificacion = () => (
+  // Paso 2: Tipificación - Memoizado para evitar recreación que causa pérdida de foco
+  const Tipificacion = useMemo(() => (
     <div className="space-y-6">
       {/* Tipo de Infracción */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -690,11 +810,12 @@ export const DenunciasForm: React.FC = () => {
         <div>
           <label className="form-label">Norma Infringida</label>
           <input
+            key="norma-infringida"
             type="text"
             className="form-input"
             placeholder="Ej: Art. 174 Ordenanza de Aduanas"
             value={formData.normaInfringida}
-            onChange={(e) => handleInputChange('normaInfringida', e.target.value)}
+            onChange={handleNormaInfringidaChange}
           />
         </div>
       </div>
@@ -702,11 +823,12 @@ export const DenunciasForm: React.FC = () => {
       <div>
         <label className="form-label">Fundamento Legal</label>
         <input
+          key="fundamento-legal"
           type="text"
           className="form-input"
           placeholder="Ej: Ley 18.483 Art. 168"
           value={formData.fundamentoLegal}
-          onChange={(e) => handleInputChange('fundamentoLegal', e.target.value)}
+          onChange={handleFundamentoLegalChange}
         />
       </div>
 
@@ -753,11 +875,12 @@ export const DenunciasForm: React.FC = () => {
             <div>
               <label className="form-label">Multa ($)</label>
               <input
+                key="multa"
                 type="number"
                 className="form-input"
                 placeholder="0"
                 value={formData.multa}
-                onChange={(e) => handleInputChange('multa', e.target.value ? parseInt(e.target.value) : '')}
+                onChange={handleMultaChange}
               />
               {articuloSeleccionado && articuloSeleccionado.multaMinima && (
                 <p className="text-xs text-gray-500 mt-1">
@@ -770,11 +893,12 @@ export const DenunciasForm: React.FC = () => {
               <div>
                 <label className="form-label">Multa por Allanamiento ($)</label>
                 <input
+                  key="multa-allanamiento"
                   type="number"
                   className="form-input"
                   placeholder="0"
                   value={formData.multaAllanamiento}
-                  onChange={(e) => handleInputChange('multaAllanamiento', e.target.value ? parseInt(e.target.value) : '')}
+                  onChange={handleMultaAllanamientoChange}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   {articuloSeleccionado.porcentajeAllanamiento}% de reducción aplicable
@@ -785,11 +909,12 @@ export const DenunciasForm: React.FC = () => {
             <div>
               <label className="form-label">Monto Derechos ($)</label>
               <input
+                key="monto-derechos"
                 type="number"
                 className="form-input"
                 placeholder="0"
                 value={formData.montoDerechos}
-                onChange={(e) => handleInputChange('montoDerechos', e.target.value ? parseInt(e.target.value) : '')}
+                onChange={handleMontoDerechosChange}
               />
             </div>
           </div>
@@ -798,21 +923,23 @@ export const DenunciasForm: React.FC = () => {
             <div>
               <label className="form-label">Monto Retención ($)</label>
               <input
+                key="monto-retencion"
                 type="number"
                 className="form-input"
                 placeholder="0"
                 value={formData.montoRetencion}
-                onChange={(e) => handleInputChange('montoRetencion', e.target.value ? parseInt(e.target.value) : '')}
+                onChange={handleMontoRetencionChange}
               />
             </div>
             <div>
               <label className="form-label">Monto No Declarado ($)</label>
               <input
+                key="monto-no-declarado"
                 type="number"
                 className="form-input"
                 placeholder="0"
                 value={formData.montoNoDeclarado}
-                onChange={(e) => handleInputChange('montoNoDeclarado', e.target.value ? parseInt(e.target.value) : '')}
+                onChange={handleMontoNoDeclaradoChange}
               />
             </div>
           </div>
@@ -862,29 +989,45 @@ export const DenunciasForm: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <InputField
+              key="numero-oficio"
               label="N° Oficio"
               id="numeroOficio"
               type="text"
               placeholder="OF-2025-XXXXX"
               value={formData.numeroOficio}
-              onChange={(e) => handleInputChange('numeroOficio', e.target.value)}
+              onChange={handleNumeroOficioChange}
             />
             <InputField
+              key="fecha-oficio"
               label="Fecha Oficio"
               id="fechaOficio"
               type="date"
               value={formData.fechaOficio}
-              onChange={(e) => handleInputChange('fechaOficio', e.target.value)}
+              onChange={handleFechaOficioChange}
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
             />
           </div>
         </div>
       )}
     </div>
-  );
+  ), [
+    formData,
+    errors,
+    articuloSeleccionado,
+    handleInputChange,
+    handleFundamentoLegalChange,
+    handleNormaInfringidaChange,
+    handleMultaChange,
+    handleMultaAllanamientoChange,
+    handleMontoDerechosChange,
+    handleMontoRetencionChange,
+    handleMontoNoDeclaradoChange,
+    handleNumeroOficioChange,
+    handleFechaOficioChange
+  ]);
 
-  // Paso 3: Involucrados
-  const Involucrados = () => (
+  // Paso 3: Involucrados - Memoizado para evitar recreación que causa pérdida de foco
+  const Involucrados = useMemo(() => (
     <div className="space-y-6">
       <div className="card p-5 border-l-4 border-l-aduana-azul">
         <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -896,54 +1039,60 @@ export const DenunciasForm: React.FC = () => {
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputField
+            key="rut-denunciado"
             label="RUT"
             id="rutDenunciado"
             type="text"
             placeholder="12.345.678-9"
             value={formData.rutDenunciado}
-            onChange={(e) => handleInputChange('rutDenunciado', e.target.value)}
+            onChange={handleRutDenunciadoChange}
             required
           />
           <InputField
+            key="nombre-denunciado"
             label="Nombre/Razón Social"
             id="nombreDenunciado"
             type="text"
             placeholder="Nombre completo o razón social"
             value={formData.nombreDenunciado}
-            onChange={(e) => handleInputChange('nombreDenunciado', e.target.value)}
+            onChange={handleNombreDenunciadoChange}
             required
           />
           <InputField
+            key="direccion-denunciado"
             label="Dirección"
             id="direccionDenunciado"
             type="text"
             placeholder="Dirección completa"
             value={formData.direccionDenunciado}
-            onChange={(e) => handleInputChange('direccionDenunciado', e.target.value)}
+            onChange={handleDireccionDenunciadoChange}
           />
           <InputField
+            key="email-denunciado"
             label="Correo Electrónico"
             id="emailDenunciado"
             type="email"
             placeholder="correo@empresa.cl"
             value={formData.emailDenunciado}
-            onChange={(e) => handleInputChange('emailDenunciado', e.target.value)}
+            onChange={handleEmailDenunciadoChange}
           />
           <InputField
+            key="telefono-denunciado"
             label="Teléfono"
             id="telefonoDenunciado"
             type="text"
             placeholder="+56 9 1234 5678"
             value={formData.telefonoDenunciado}
-            onChange={(e) => handleInputChange('telefonoDenunciado', e.target.value)}
+            onChange={handleTelefonoDenunciadoChange}
           />
           <InputField
+            key="representante-legal"
             label="Representante Legal"
             id="representanteLegal"
             type="text"
             placeholder="Nombre del representante"
             value={formData.representanteLegal || ''}
-            onChange={(e) => handleInputChange('representanteLegal', e.target.value)}
+            onChange={handleRepresentanteLegalChange}
           />
         </div>
         {errors.rutDenunciado && <p className="text-red-500 text-sm mt-2">{errors.rutDenunciado}</p>}
@@ -956,20 +1105,22 @@ export const DenunciasForm: React.FC = () => {
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputField
+            key="codigo-agente"
             label="Código de Agente"
             id="codigoAgente"
             type="text"
             placeholder="Código del agente"
             value={formData.codigoAgente || ''}
-            onChange={(e) => handleInputChange('codigoAgente', e.target.value)}
+            onChange={handleCodigoAgenteChange}
           />
           <InputField
+            key="nombre-agente"
             label="Nombre del Agente"
             id="nombreAgente"
             type="text"
             placeholder="Nombre del agente de aduanas"
             value={formData.nombreAgente || ''}
-            onChange={(e) => handleInputChange('nombreAgente', e.target.value)}
+            onChange={handleNombreAgenteChange}
           />
         </div>
       </div>
@@ -979,7 +1130,20 @@ export const DenunciasForm: React.FC = () => {
         Agregar otro involucrado
       </CustomButton>
     </div>
-  );
+  ), [
+    formData,
+    errors,
+    isDesdeHallazgo,
+    handleInputChange,
+    handleRutDenunciadoChange,
+    handleNombreDenunciadoChange,
+    handleDireccionDenunciadoChange,
+    handleEmailDenunciadoChange,
+    handleTelefonoDenunciadoChange,
+    handleRepresentanteLegalChange,
+    handleCodigoAgenteChange,
+    handleNombreAgenteChange
+  ]);
 
   // Paso 4: Documentos
   const getIconForDocType = (tipo: DocumentoAdjunto['tipo']) => {
@@ -1041,12 +1205,13 @@ export const DenunciasForm: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField
+          key="documento-aduanero"
           label="N° Documento Aduanero"
           id="nroDocumentoAduanero"
           type="text"
           placeholder="Ej: 6020-24-0012345"
           value={formData.documentoAduanero || ''}
-          onChange={(e) => handleInputChange('documentoAduanero', e.target.value)}
+          onChange={handleDocumentoAduaneroChange}
         />
         <div>
           <label className="form-label">Tipo de Documento</label>
@@ -1173,10 +1338,11 @@ export const DenunciasForm: React.FC = () => {
         <div className="card p-5">
           <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Descripción de los Hechos *</h4>
           <textarea
+            key="descripcion-hechos"
             className={`form-input min-h-[150px] ${errors.descripcionHechos ? 'border-red-500' : ''}`}
             placeholder="Describa detalladamente los hechos que motivan la denuncia (mínimo 50 caracteres)..."
             value={formData.descripcionHechos}
-            onChange={(e) => handleInputChange('descripcionHechos', e.target.value)}
+            onChange={handleDescripcionHechosChange}
           />
           <p className="text-xs text-gray-500 mt-1">
             {formData.descripcionHechos.length} caracteres (mínimo 50)
@@ -1225,17 +1391,17 @@ export const DenunciasForm: React.FC = () => {
 
     switch (currentStep) {
       case 1:
-        return <DatosGenerales />;
+        return DatosGenerales;
       case 2:
-        return <Tipificacion />;
+        return Tipificacion;
       case 3:
-        return <Involucrados />;
+        return Involucrados;
       case 4:
         return <Documentos />;
       case 5:
         return <Revision />;
       default:
-        return <DatosGenerales />;
+        return DatosGenerales;
     }
   };
 
