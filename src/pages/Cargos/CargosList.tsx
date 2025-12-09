@@ -30,10 +30,20 @@ import {
 export const CargosList: React.FC = () => {
   const navigate = useNavigate();
 
+  // Tipos de identificador disponibles
+  const tiposIdentificador = [
+    { value: 'RUT', label: 'RUT' },
+    { value: 'PASAPORTE', label: 'Pasaporte' },
+    { value: 'DNI', label: 'DNI' },
+    { value: 'RUC', label: 'RUC' },
+    { value: 'OTRO', label: 'Otro' },
+  ];
+
   // Estados de filtros
   const [filtros, setFiltros] = useState({
     numeroCargo: '',
-    rutDeudor: '',
+    tipoIdDeudor: '',
+    numeroIdDeudor: '',
     estado: '' as EstadoCargo | '',
     aduana: '',
     origen: '' as OrigenCargo | '',
@@ -53,7 +63,8 @@ export const CargosList: React.FC = () => {
       if (filtros.numeroCargo && !cargo.numeroCargo.toLowerCase().includes(filtros.numeroCargo.toLowerCase())) {
         return false;
       }
-      if (filtros.rutDeudor && !cargo.rutDeudor.includes(filtros.rutDeudor)) {
+      // Filtro por ID del deudor (busca en RUT por compatibilidad)
+      if (filtros.numeroIdDeudor && !cargo.rutDeudor.includes(filtros.numeroIdDeudor)) {
         return false;
       }
       if (filtros.estado && cargo.estado !== filtros.estado) {
@@ -85,7 +96,8 @@ export const CargosList: React.FC = () => {
   const limpiarFiltros = () => {
     setFiltros({
       numeroCargo: '',
-      rutDeudor: '',
+      tipoIdDeudor: '',
+      numeroIdDeudor: '',
       estado: '',
       aduana: '',
       origen: '',
@@ -101,21 +113,12 @@ export const CargosList: React.FC = () => {
       <CustomButton 
         variant="primary" 
         className="w-full text-xs"
-        onClick={() => navigate(`/cargos/${row.id}`)}
+        onClick={() => navigate(`/cargos/${row.id}/editar`)}
       >
-        <Icon name="Eye" className="hidden md:block" size={14} />
-        Ver Detalle
+        <Icon name="Edit" className="hidden md:block" size={14} />
+        Editar Cargo
       </CustomButton>
-      {row.estado === 'Borrador' || row.estado === 'Observado' ? (
-        <CustomButton 
-          variant="secondary" 
-          className="w-full text-xs"
-          onClick={() => navigate(`/cargos/${row.id}/editar`)}
-        >
-          <Icon name="Edit" className="hidden md:block" size={14} />
-          Editar
-        </CustomButton>
-      ) : (row.estado === 'Emitido' || row.estado === 'Aprobado' || row.estado === 'Notificado') && (
+      {(row.estado === 'Emitido' || row.estado === 'Aprobado' || row.estado === 'Notificado') && (
         <CustomButton 
           variant="secondary" 
           className="w-full text-xs"
@@ -144,18 +147,12 @@ export const CargosList: React.FC = () => {
       )
     },
     { 
-      key: 'numeroInterno' as const, 
-      label: 'N° Interno', 
-      sortable: true,
-      render: (row: Cargo) => row.numeroInterno || '-'
-    },
-    { 
       key: 'origen' as const, 
       label: 'Origen', 
       sortable: true,
       render: (row: Cargo) => (
-        <Badge variant={row.origen === 'DENUNCIA' ? 'info' : 'warning'}>
-          {row.origen === 'DENUNCIA' ? 'Denuncia' : row.origen === 'FISCALIZACION' ? 'Fiscalización' : 'Otro'}
+        <Badge variant={row.origen === 'DENUNCIA' ? 'info' : row.origen === 'TRAMITE_ADUANERO' ? 'warning' : 'default'}>
+          {row.origen === 'DENUNCIA' ? 'Denuncia' : row.origen === 'TRAMITE_ADUANERO' ? 'Trámite Aduanero' : 'Otro'}
         </Badge>
       )
     },
@@ -171,7 +168,7 @@ export const CargosList: React.FC = () => {
       )
     },
     { key: 'aduana' as const, label: 'Aduana', sortable: true },
-    { key: 'rutDeudor' as const, label: 'RUT Deudor', sortable: true },
+    { key: 'rutDeudor' as const, label: 'ID Deudor', sortable: true },
     { 
       key: 'nombreDeudor' as const, 
       label: 'Deudor', 
@@ -312,14 +309,29 @@ export const CargosList: React.FC = () => {
               value={filtros.numeroCargo}
               onChange={(e) => handleFiltroChange('numeroCargo', e.target.value)}
             />
-            <InputField
-              label="RUT Deudor"
-              id="rutDeudor"
-              type="text"
-              placeholder="12.345.678-9"
-              value={filtros.rutDeudor}
-              onChange={(e) => handleFiltroChange('rutDeudor', e.target.value)}
-            />
+            {/* ID Deudor anidado */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">ID del Deudor</label>
+              <div className="flex gap-2">
+                <select
+                  className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+                  value={filtros.tipoIdDeudor}
+                  onChange={(e) => handleFiltroChange('tipoIdDeudor', e.target.value)}
+                >
+                  <option value="">Tipo ID</option>
+                  {tiposIdentificador.map(tipo => (
+                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+                  placeholder="Número de ID"
+                  value={filtros.numeroIdDeudor}
+                  onChange={(e) => handleFiltroChange('numeroIdDeudor', e.target.value)}
+                />
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
               <select
@@ -355,7 +367,7 @@ export const CargosList: React.FC = () => {
               >
                 <option value="">Todos los orígenes</option>
                 <option value="DENUNCIA">Denuncia</option>
-                <option value="FISCALIZACION">Fiscalización</option>
+                <option value="TRAMITE_ADUANERO">Trámite Aduanero</option>
                 <option value="OTRO">Otro</option>
               </select>
             </div>

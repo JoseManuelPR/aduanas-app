@@ -30,10 +30,10 @@ const tiposReclamo: { value: TipoReclamoCompleto; label: string }[] = [
   { value: 'TTA', label: 'Reclamo ante TTA' },
 ];
 
+// Nota: Giro removido porque un evento reclamado no puede generar un giro
 const origenesReclamo: { value: OrigenReclamo; label: string }[] = [
   { value: 'DENUNCIA', label: 'Denuncia' },
   { value: 'CARGO', label: 'Cargo' },
-  { value: 'GIRO', label: 'Giro' },
   { value: 'OTRO', label: 'Otro' },
 ];
 

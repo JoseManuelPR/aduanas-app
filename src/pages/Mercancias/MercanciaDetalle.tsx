@@ -128,9 +128,9 @@ const MercanciaDetalle: React.FC = () => {
     }
   };
   
+  // Solo Resumen, Seguimiento y Documentos (Items removido - lo mismo que Resumen)
   const tabs: Tab[] = [
     { id: 'resumen', label: 'Resumen', icon: <Icon name="Package" size={18} /> },
-    { id: 'items', label: 'Items', icon: <Icon name="List" size={18} />, badge: mercancia.items?.length || 0 },
     { id: 'seguimiento', label: 'Seguimiento', icon: <Icon name="Clock" size={18} />, badge: mercancia.seguimientos?.length || 0, badgeVariant: 'info' as const },
     { id: 'documentos', label: 'Documentos', icon: <Icon name="FileText" size={18} /> },
   ];
@@ -139,8 +139,6 @@ const MercanciaDetalle: React.FC = () => {
     switch (activeTab) {
       case 'resumen':
         return <MercanciaResumen mercancia={mercancia} aduana={aduana} />;
-      case 'items':
-        return <MercanciaItems mercancia={mercancia} />;
       case 'seguimiento':
         return (
           <MercanciaSeguimiento 

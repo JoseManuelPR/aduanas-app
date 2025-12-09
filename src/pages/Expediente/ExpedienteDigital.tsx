@@ -35,11 +35,16 @@ export const ExpedienteDigital: React.FC = () => {
     isOpen: false,
   });
 
+  // Estado para búsqueda por N° de denuncia
+  const [numeroDenunciaBusqueda, setNumeroDenunciaBusqueda] = useState('');
+
   // Obtener notificaciones para el header
   const allNotifications = getTodasLasNotificaciones();
 
-  // Buscar la denuncia por id o usar la primera
-  const denunciaData = denuncias.find((d) => d.id === id) || denuncias[0];
+  // Buscar la denuncia por id o por número de denuncia
+  const denunciaData = numeroDenunciaBusqueda 
+    ? denuncias.find((d) => d.numeroDenuncia.includes(numeroDenunciaBusqueda))
+    : denuncias.find((d) => d.id === id) || denuncias[0];
 
   // Obtener expediente digital
   const expediente = getExpedientePorEntidad(denunciaData?.id || 'den-001', 'DENUNCIA') || expedientesDigitales[0];
@@ -75,114 +80,8 @@ export const ExpedienteDigital: React.FC = () => {
     }
   };
 
-  // Tabs del expediente
+  // Tabs del expediente - Sin resumen extenso, sin movimientos
   const tabs = [
-    {
-      id: 'resumen',
-      label: 'Resumen',
-      icon: <Icon name="FileText" size={16} />,
-      content: (
-        <div className="space-y-6">
-          {/* Alerta de documentos faltantes */}
-          {documentosFaltantes.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Icon name="AlertTriangle" size={20} className="text-amber-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-amber-900 mb-2">
-                    Documentos Obligatorios Faltantes
-                  </h4>
-                  <p className="text-sm text-amber-800 mb-2">
-                    Los siguientes documentos son obligatorios y aún no han sido subidos:
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-amber-800">
-                    {documentosFaltantes.map((doc, i) => (
-                      <li key={i}>{doc}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="card p-5 border-l-4 border-l-aduana-azul">
-              <p className="text-sm text-gray-500">Estado Actual</p>
-              <div className="mt-2">
-                <Badge variant={getEstadoBadgeVariant(expediente.estado)} size="md" dot>
-                  {expediente.estado}
-                </Badge>
-              </div>
-            </div>
-            <div className="card p-5 border-l-4 border-l-amber-500">
-              <p className="text-sm text-gray-500">Completitud del Expediente</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{completitud}%</p>
-              <p className="text-xs text-gray-500">
-                {expediente.archivos.length} archivos subidos
-              </p>
-            </div>
-            <div className="card p-5 border-l-4 border-l-emerald-500">
-              <p className="text-sm text-gray-500">Última Actualización</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">
-                {expediente.fechaModificacion}
-              </p>
-              <p className="text-xs text-gray-500">{expediente.usuarioUltimaModificacion}</p>
-            </div>
-          </div>
-
-          {/* Progreso del expediente */}
-          <div className="card p-5">
-            <h4 className="font-semibold text-gray-900 mb-4">Completitud del Expediente</h4>
-            <ProgressBar
-              value={completitud}
-              max={100}
-              label={`${completitud}% completado`}
-              colorScheme="auto"
-              size="lg"
-            />
-          </div>
-
-          {/* Datos de la entidad asociada */}
-          {denunciaData && (
-            <div className="card p-5">
-              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Icon name="FileText" size={18} />
-                Datos de la Denuncia
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Número de Denuncia</p>
-                  <p className="font-medium">{denunciaData.numeroDenuncia}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">RUT Deudor</p>
-                  <p className="font-medium">{denunciaData.rutDeudor}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Nombre Deudor</p>
-                  <p className="font-medium">{denunciaData.nombreDeudor}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Tipo de Infracción</p>
-                  <p className="font-medium">{denunciaData.tipoInfraccion}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Monto Estimado</p>
-                  <p className="font-medium text-aduana-rojo">{denunciaData.montoEstimado}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Aduana</p>
-                  <p className="font-medium">{denunciaData.aduana}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      ),
-    },
     {
       id: 'documentos-aduaneros',
       label: 'Documentos Aduaneros',
@@ -416,6 +315,26 @@ export const ExpedienteDigital: React.FC = () => {
       }}
     >
       <div className="min-h-full space-y-4 animate-fade-in">
+        {/* Búsqueda por N° de Denuncia */}
+        <div className="card p-4 bg-gray-50">
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Consultar por N° de Denuncia:</label>
+            <div className="flex gap-2 flex-1 max-w-md">
+              <input
+                type="text"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+                placeholder="Ej: 993519"
+                value={numeroDenunciaBusqueda}
+                onChange={(e) => setNumeroDenunciaBusqueda(e.target.value)}
+              />
+              <CustomButton variant="primary" className="flex items-center gap-2">
+                <Icon name="Search" size={16} />
+                Buscar
+              </CustomButton>
+            </div>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex items-start gap-3">

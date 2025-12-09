@@ -97,13 +97,6 @@ const ITEMS_SIDEBAR_MENU = [
     icon: <IconDashboard />,
   },
   {
-    label: "Hallazgos (PFI)",
-    to: ERoutePaths.HALLAZGOS,
-    icon: <IconHallazgo />,
-    badge: 5, // Hallazgos gestionables
-    badgeType: 'warning' as const,
-  },
-  {
     label: "Denuncias",
     to: ERoutePaths.DENUNCIAS,
     icon: <IconDenuncia />,

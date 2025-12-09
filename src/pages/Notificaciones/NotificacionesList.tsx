@@ -31,11 +31,19 @@ import type {
 // Sidebar menu (solo para el menú del sidebar)
 import CONSTANTS_APP from '../../constants/sidebar-menu';
 
-type TabType = 'hallazgos' | 'denuncias' | 'reclamos' | 'cargos';
+type TabType = 'denuncias' | 'reclamos' | 'cargos' | 'general';
+
+// Tipos de origen de notificación
+const tiposOrigen = [
+  { value: 'MANUAL', label: 'Manual' },
+  { value: 'APP_SATELITE_1', label: 'APP Satélite 1' },
+  { value: 'APP_SATELITE_2', label: 'APP Satélite 2' },
+  { value: 'SISTEMA', label: 'Sistema' },
+];
 
 export const NotificacionesList: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabType>('hallazgos');
+  const [activeTab, setActiveTab] = useState<TabType>('denuncias');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [fechaDesde, setFechaDesde] = useState('');
@@ -177,14 +185,14 @@ export const NotificacionesList: React.FC = () => {
     },
   ];
 
-  // Columnas para Denuncias
+  // Columnas para Denuncias - Con columna de origen
   const columnsDenuncias = [
-    { key: 'numeroNotificacion' as const, label: 'Número de Notificación', sortable: true },
-    { key: 'descripcion' as const, label: 'Descripción de la notificación', sortable: true },
-    { key: 'numeroDenuncia' as const, label: 'Número de Denuncia', sortable: true },
+    { key: 'numeroNotificacion' as const, label: 'N° Notificación', sortable: true },
+    { key: 'descripcion' as const, label: 'Descripción', sortable: true },
+    { key: 'numeroDenuncia' as const, label: 'N° Denuncia', sortable: true },
     { 
       key: 'tipoDenuncia' as const, 
-      label: 'Tipo de Denuncia', 
+      label: 'Tipo', 
       sortable: true,
       render: (row: NotificacionDenuncia) => (
         <Badge variant={row.tipoDenuncia === 'Infraccional' ? 'info' : 'danger'}>
@@ -192,7 +200,17 @@ export const NotificacionesList: React.FC = () => {
         </Badge>
       ),
     },
-    { key: 'fechaGeneracion' as const, label: 'Fecha de generación', sortable: true },
+    { 
+      key: 'origen' as const, 
+      label: 'Origen', 
+      sortable: true,
+      render: () => (
+        <Badge variant="default">
+          Manual
+        </Badge>
+      ),
+    },
+    { key: 'fechaGeneracion' as const, label: 'Fecha', sortable: true },
   ];
 
   // Columnas para Reclamos
@@ -221,20 +239,11 @@ export const NotificacionesList: React.FC = () => {
     { key: 'fechaGeneracion' as const, label: 'Fecha de generación', sortable: true },
   ];
 
-  // Acciones para cada tipo
+  // Acciones para cada tipo - Navegar a gestionar denuncia
   const handleGestionar = (tipo: TabType, referencia: string) => {
     switch (tipo) {
-      case 'hallazgos':
-        // Buscar el hallazgo por su número (ej: PFI-123) y navegar a gestionar denuncia
-        const hallazgo = getHallazgoPorNumero(referencia);
-        if (hallazgo) {
-          navigate(`/hallazgos/${hallazgo.id}/gestionar`);
-        } else {
-          // Fallback: navegar a la lista de hallazgos
-          navigate(ERoutePaths.HALLAZGOS);
-        }
-        break;
       case 'denuncias':
+        // Navegar directamente a la lista de denuncias o al detalle si hay referencia
         navigate(ERoutePaths.DENUNCIAS);
         break;
       case 'reclamos':
@@ -242,6 +251,10 @@ export const NotificacionesList: React.FC = () => {
         break;
       case 'cargos':
         navigate(ERoutePaths.CARGOS);
+        break;
+      case 'general':
+        // Para notificaciones generales, navegar a denuncias por defecto
+        navigate(ERoutePaths.DENUNCIAS);
         break;
     }
   };
@@ -254,14 +267,14 @@ export const NotificacionesList: React.FC = () => {
           className="text-xs"
           onClick={() => {
             const referencia = 
-              'numeroHallazgo' in row ? row.numeroHallazgo :
               'numeroDenuncia' in row ? row.numeroDenuncia :
               'numeroReclamo' in row ? row.numeroReclamo :
-              'numeroCargo' in row ? row.numeroCargo : '';
+              'numeroCargo' in row ? row.numeroCargo : 
+              'numeroHallazgo' in row ? row.numeroHallazgo : '';
             handleGestionar(tipo, referencia);
           }}
         >
-          Gestionar
+          Gestionar Denuncia
         </CustomButton>
       </div>
     );
@@ -307,15 +320,8 @@ export const NotificacionesList: React.FC = () => {
     );
   };
 
-  // Recalcular tabs cuando cambian los datos o el tab activo
+  // Recalcular tabs cuando cambian los datos o el tab activo - Sin Hallazgos
   const tabs = useMemo(() => [
-    {
-      id: 'hallazgos',
-      label: 'Hallazgos',
-      badge: conteoNotificaciones.hallazgos.noLeidas,
-      badgeVariant: 'danger' as const,
-      content: getTabContent('hallazgos'),
-    },
     {
       id: 'denuncias',
       label: 'Denuncias',
@@ -324,20 +330,20 @@ export const NotificacionesList: React.FC = () => {
       content: getTabContent('denuncias'),
     },
     {
-      id: 'reclamos',
-      label: 'Reclamos',
-      badge: conteoNotificaciones.reclamos.noLeidas,
-      badgeVariant: 'danger' as const,
-      content: getTabContent('reclamos'),
-    },
-    {
       id: 'cargos',
       label: 'Cargos',
       badge: conteoNotificaciones.cargos.noLeidas,
       badgeVariant: 'danger' as const,
       content: getTabContent('cargos'),
     },
-  ], [activeTab, currentPage, searchTerm, fechaDesde, fechaHasta, estadoFiltro, hallazgosData, denunciasData, reclamosData, cargosData]);
+    {
+      id: 'reclamos',
+      label: 'Reclamos',
+      badge: conteoNotificaciones.reclamos.noLeidas,
+      badgeVariant: 'danger' as const,
+      content: getTabContent('reclamos'),
+    },
+  ], [activeTab, currentPage, searchTerm, fechaDesde, fechaHasta, estadoFiltro, denunciasData, reclamosData, cargosData]);
 
   return (
     <CustomLayout

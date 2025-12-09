@@ -4,7 +4,6 @@ import { ERoutePaths } from './routes/routes';
 // Pages
 import { Login } from './pages/Login/Login';
 import { Dashboard } from './pages/Dashboard/Dashboard';
-import { HallazgosList } from './pages/Hallazgos';
 import { DenunciasList, DenunciasForm, DenunciaDetalle } from './pages/Denuncias';
 import { ExpedienteDigital } from './pages/Expediente';
 import { NotificacionesList } from './pages/Notificaciones';
@@ -27,14 +26,9 @@ function App() {
       {/* Dashboard */}
       <Route path={ERoutePaths.DASHBOARD} element={<Dashboard />} />
       
-      {/* Hallazgos */}
-      <Route path={ERoutePaths.HALLAZGOS} element={<HallazgosList />} />
-      
       {/* Denuncias */}
       <Route path={ERoutePaths.DENUNCIAS} element={<DenunciasList />} />
       <Route path={ERoutePaths.DENUNCIAS_NUEVA} element={<DenunciasForm />} />
-      <Route path={ERoutePaths.DENUNCIAS_DESDE_HALLAZGO} element={<DenunciasForm />} />
-      <Route path={ERoutePaths.HALLAZGOS_GESTIONAR} element={<DenunciasForm />} />
       <Route path={ERoutePaths.DENUNCIAS_DETALLE} element={<DenunciaDetalle />} />
       <Route path={ERoutePaths.DENUNCIAS_EDITAR} element={<DenunciasForm />} />
       

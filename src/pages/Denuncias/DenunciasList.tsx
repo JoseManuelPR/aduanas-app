@@ -22,6 +22,15 @@ import {
   type Denuncia,
 } from '../../data';
 
+// Tipos de ID disponibles
+const tiposIdentificador = [
+  { value: 'RUT', label: 'RUT' },
+  { value: 'PASAPORTE', label: 'Pasaporte' },
+  { value: 'DNI', label: 'DNI' },
+  { value: 'RUC', label: 'RUC' },
+  { value: 'OTRO', label: 'Otro' },
+];
+
 // Tipos de filtros
 interface FiltrosDenuncia {
   numeroDenuncia: string;
@@ -30,7 +39,8 @@ interface FiltrosDenuncia {
   estado: string;
   aduana: string;
   tipoInfraccion: string;
-  rutDeudor: string;
+  tipoIdInfractor: string;
+  numeroIdInfractor: string;
   fechaDesde: string;
   fechaHasta: string;
   montoMinimo: string;
@@ -45,7 +55,8 @@ const initialFiltros: FiltrosDenuncia = {
   estado: '',
   aduana: '',
   tipoInfraccion: '',
-  rutDeudor: '',
+  tipoIdInfractor: '',
+  numeroIdInfractor: '',
   fechaDesde: '',
   fechaHasta: '',
   montoMinimo: '',
@@ -73,7 +84,8 @@ export const DenunciasList: React.FC = () => {
       if (filtros.estado && d.estado !== filtros.estado) return false;
       if (filtros.aduana && d.aduana !== filtros.aduana) return false;
       if (filtros.tipoInfraccion && d.tipoInfraccion !== filtros.tipoInfraccion) return false;
-      if (filtros.rutDeudor && !d.rutDeudor.includes(filtros.rutDeudor)) return false;
+      // Filtro por ID del infractor (busca en RUT por compatibilidad)
+      if (filtros.numeroIdInfractor && !d.rutDeudor.includes(filtros.numeroIdInfractor)) return false;
       if (filtros.mercanciaAfecta === 'si' && !d.mercanciaAfecta) return false;
       if (filtros.mercanciaAfecta === 'no' && d.mercanciaAfecta) return false;
       return true;
@@ -134,7 +146,7 @@ export const DenunciasList: React.FC = () => {
       )
     },
     { key: 'aduana' as const, label: 'Aduana', sortable: true },
-    { key: 'rutDeudor' as const, label: 'RUT', sortable: true },
+    { key: 'rutDeudor' as const, label: 'ID Infractor', sortable: true },
     { key: 'nombreDeudor' as const, label: 'Infractor', sortable: true },
     { key: 'tipoInfraccion' as const, label: 'Infracción', sortable: true },
     { key: 'montoEstimado' as const, label: 'Monto', sortable: true },
@@ -196,27 +208,13 @@ export const DenunciasList: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <CustomButton 
-              variant="secondary"
+              variant="primary"
               className="flex items-center gap-2"
-              onClick={() => navigate('/hallazgos')}
+              onClick={() => navigate(ERoutePaths.DENUNCIAS_NUEVA)}
             >
-              <Icon name="FileSearch" size={18} />
-              Ver Hallazgos
+              <Icon name="Plus" size={18} />
+              Nueva Denuncia
             </CustomButton>
-          </div>
-        </div>
-        
-        {/* Banner informativo */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <Icon name="Info" size={20} className="text-blue-600 mt-0.5" />
-            <div>
-              <p className="font-medium text-blue-900">Las denuncias se crean desde Hallazgos</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Para crear una nueva denuncia, diríjase a <strong>Hallazgos (PFI)</strong> y seleccione 
-                <strong> "Gestionar"</strong> en el hallazgo correspondiente.
-              </p>
-            </div>
           </div>
         </div>
 
@@ -336,15 +334,29 @@ export const DenunciasList: React.FC = () => {
                 value={filtros.numeroInterno}
                 onChange={(e) => handleFiltroChange('numeroInterno', e.target.value)}
               />
-              <InputField
-                label="RUT Infractor"
-                id="rutDeudor"
-                type="text"
-                placeholder="12.345.678-9"
-                labelClassName="font-medium text-sm text-gray-700"
-                value={filtros.rutDeudor}
-                onChange={(e) => handleFiltroChange('rutDeudor', e.target.value)}
-              />
+              {/* ID Infractor anidado */}
+              <div className="lg:col-span-2">
+                <label className="block font-medium text-sm text-gray-700 mb-1">ID del Infractor</label>
+                <div className="flex gap-2">
+                  <select
+                    className="form-input w-1/3"
+                    value={filtros.tipoIdInfractor}
+                    onChange={(e) => handleFiltroChange('tipoIdInfractor', e.target.value)}
+                  >
+                    <option value="">Tipo ID</option>
+                    {tiposIdentificador.map(tipo => (
+                      <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    className="form-input flex-1"
+                    placeholder="Número de ID"
+                    value={filtros.numeroIdInfractor}
+                    onChange={(e) => handleFiltroChange('numeroIdInfractor', e.target.value)}
+                  />
+                </div>
+              </div>
               <div>
                 <label className="block font-medium text-sm text-gray-700 mb-1">Tipo Infracción</label>
                 <select

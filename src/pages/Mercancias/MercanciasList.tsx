@@ -42,34 +42,28 @@ export const MercanciasList: React.FC = () => {
   const navigate = useNavigate();
   
   // Estados de filtros
-  const [filtroCodigo, setFiltroCodigo] = useState('');
-  const [filtroDescripcion, setFiltroDescripcion] = useState('');
+  const [filtroTipoMercancia, setFiltroTipoMercancia] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
-  const [filtroAduana, setFiltroAduana] = useState('');
-  const [filtroTipoEvento, setFiltroTipoEvento] = useState('');
+  const [filtroDenunciaAsociada, setFiltroDenunciaAsociada] = useState('');
 
   // Obtener conteos desde datos centralizados
   const conteoMercancias = getConteoMercancias();
   const allNotifications = getTodasLasNotificaciones();
 
-  // Filtrar mercancías
+  // Filtrar mercancías por: tipo, estado, denuncia asociada
   const mercanciasFiltradas = useMemo(() => {
     return mercancias.filter(m => {
-      if (filtroCodigo && !m.codigoMercancia?.toLowerCase().includes(filtroCodigo.toLowerCase())) return false;
-      if (filtroDescripcion && !m.descripcion.toLowerCase().includes(filtroDescripcion.toLowerCase())) return false;
+      if (filtroTipoMercancia && !m.descripcion.toLowerCase().includes(filtroTipoMercancia.toLowerCase())) return false;
       if (filtroEstado && m.estado !== filtroEstado) return false;
-      if (filtroAduana && m.codigoAduanaIngreso !== filtroAduana) return false;
-      if (filtroTipoEvento && !m.seguimientos?.some(s => s.tipoEvento === filtroTipoEvento)) return false;
+      if (filtroDenunciaAsociada && !m.denunciaId?.includes(filtroDenunciaAsociada)) return false;
       return true;
     });
-  }, [filtroCodigo, filtroDescripcion, filtroEstado, filtroAduana, filtroTipoEvento]);
+  }, [filtroTipoMercancia, filtroEstado, filtroDenunciaAsociada]);
 
   const limpiarFiltros = () => {
-    setFiltroCodigo('');
-    setFiltroDescripcion('');
+    setFiltroTipoMercancia('');
     setFiltroEstado('');
-    setFiltroAduana('');
-    setFiltroTipoEvento('');
+    setFiltroDenunciaAsociada('');
   };
 
   const getEstadoBadgeVariant = (estado: EstadoMercancia) => {
@@ -115,16 +109,23 @@ export const MercanciasList: React.FC = () => {
     </div>
   );
 
-  // Columnas para la tabla
+  // Columnas para la tabla - Cambiar ID Mercancía por N° Denuncia
   const columnasMercancias = [
     { 
-      key: 'codigoMercancia' as const, 
-      label: 'ID Mercancía', 
+      key: 'denunciaId' as const, 
+      label: 'N° Denuncia', 
       sortable: true,
       render: (row: Mercancia) => (
-        <span className="font-mono text-aduana-azul font-medium">
-          {row.codigoMercancia || row.id}
-        </span>
+        row.denunciaId ? (
+          <button 
+            onClick={() => navigate(ERoutePaths.DENUNCIAS_DETALLE.replace(':id', row.denunciaId!))}
+            className="font-mono text-aduana-azul font-medium hover:underline"
+          >
+            {row.denunciaId}
+          </button>
+        ) : (
+          <span className="text-gray-400">Sin denuncia</span>
+        )
       )
     },
     { 
@@ -224,43 +225,24 @@ export const MercanciasList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard
-            title="Total Mercancías"
-            value={conteoMercancias.total}
-            subtitle="Registradas"
-            colorScheme="azul"
-            icon={<Icon name="Package" size={24} />}
-          />
-          <StatCard
-            title="En Custodia"
-            value={conteoMercancias.porEstado.enCustodia}
-            subtitle="Pendientes"
-            colorScheme="amarillo"
-            icon={<Icon name="Warehouse" size={24} />}
-          />
-          <StatCard
-            title="Comisadas"
-            value={conteoMercancias.porEstado.comisada}
-            subtitle="Por disponer"
-            colorScheme="rojo"
-            icon={<Icon name="Lock" size={24} />}
-          />
-          <StatCard
-            title="Pend. Disposición"
-            value={conteoMercancias.pendientesDisposicion}
-            subtitle="Requieren acción"
-            colorScheme="amarillo"
-            icon={<Icon name="Clock" size={24} />}
-          />
-          <StatCard
-            title="Con Alerta"
-            value={conteoMercancias.conAlerta}
-            subtitle="Revisar"
-            colorScheme="rojo"
-            icon={<Icon name="AlertTriangle" size={24} />}
-          />
+        {/* Estadísticas - Reducidas */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="card p-3 border-l-4 border-l-aduana-azul">
+            <p className="text-xs text-gray-600">Total</p>
+            <p className="text-xl font-bold text-aduana-azul">{conteoMercancias.total}</p>
+          </div>
+          <div className="card p-3 border-l-4 border-l-amber-500">
+            <p className="text-xs text-gray-600">En Custodia</p>
+            <p className="text-xl font-bold text-amber-600">{conteoMercancias.porEstado.enCustodia}</p>
+          </div>
+          <div className="card p-3 border-l-4 border-l-red-500">
+            <p className="text-xs text-gray-600">Comisadas</p>
+            <p className="text-xl font-bold text-red-600">{conteoMercancias.porEstado.comisada}</p>
+          </div>
+          <div className="card p-3 border-l-4 border-l-emerald-500">
+            <p className="text-xs text-gray-600">Con Alerta</p>
+            <p className="text-xl font-bold text-emerald-600">{conteoMercancias.conAlerta}</p>
+          </div>
         </div>
 
         {/* Alertas */}
@@ -291,23 +273,15 @@ export const MercanciasList: React.FC = () => {
             </span>
           </div>
 
-          {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          {/* Filtros - Por tipo de mercancía, estado, denuncia asociada */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
             <InputField
-              label="ID / Código"
-              id="codigo"
+              label="Tipo de Mercancía"
+              id="tipoMercancia"
               type="text"
-              placeholder="MER-2024-XXXXX"
-              value={filtroCodigo}
-              onChange={(e) => setFiltroCodigo(e.target.value)}
-            />
-            <InputField
-              label="Descripción"
-              id="descripcion"
-              type="text"
-              placeholder="Buscar por descripción..."
-              value={filtroDescripcion}
-              onChange={(e) => setFiltroDescripcion(e.target.value)}
+              placeholder="Buscar por tipo..."
+              value={filtroTipoMercancia}
+              onChange={(e) => setFiltroTipoMercancia(e.target.value)}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
@@ -322,37 +296,13 @@ export const MercanciasList: React.FC = () => {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Aduana Ingreso</label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
-                value={filtroAduana}
-                onChange={(e) => setFiltroAduana(e.target.value)}
-              >
-                <option value="">Todas las aduanas</option>
-                {aduanas.map(aduana => (
-                  <option key={aduana.codigo} value={aduana.codigo}>{aduana.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Evento</label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
-                value={filtroTipoEvento}
-                onChange={(e) => setFiltroTipoEvento(e.target.value)}
-              >
-                <option value="">Todos los eventos</option>
-                {tiposEvento.map(tipo => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-              </select>
-            </div>
             <InputField
-              label="Fecha Ingreso"
-              id="fechaIngreso"
-              type="date"
-              icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
+              label="Denuncia Asociada"
+              id="denunciaAsociada"
+              type="text"
+              placeholder="N° de denuncia..."
+              value={filtroDenunciaAsociada}
+              onChange={(e) => setFiltroDenunciaAsociada(e.target.value)}
             />
           </div>
 

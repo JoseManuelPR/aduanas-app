@@ -31,10 +31,20 @@ import {
 export const GirosList: React.FC = () => {
   const navigate = useNavigate();
 
+  // Tipos de identificador disponibles
+  const tiposIdentificador = [
+    { value: 'RUT', label: 'RUT' },
+    { value: 'PASAPORTE', label: 'Pasaporte' },
+    { value: 'DNI', label: 'DNI' },
+    { value: 'RUC', label: 'RUC' },
+    { value: 'OTRO', label: 'Otro' },
+  ];
+
   // Estados de filtros
   const [filtros, setFiltros] = useState({
     numeroGiro: '',
-    rutDeudor: '',
+    tipoIdDeudor: '',
+    numeroIdDeudor: '',
     estado: '' as EstadoGiro | '',
     tipo: '' as TipoGiro | '',
     origen: '' as OrigenGiro | '',
@@ -53,7 +63,8 @@ export const GirosList: React.FC = () => {
       if (filtros.numeroGiro && !giro.numeroGiro.toLowerCase().includes(filtros.numeroGiro.toLowerCase())) {
         return false;
       }
-      if (filtros.rutDeudor && !giro.rutDeudor.includes(filtros.rutDeudor)) {
+      // Filtro por ID del deudor (busca en RUT por compatibilidad)
+      if (filtros.numeroIdDeudor && !giro.rutDeudor.includes(filtros.numeroIdDeudor)) {
         return false;
       }
       if (filtros.estado && giro.estado !== filtros.estado) {
@@ -79,7 +90,8 @@ export const GirosList: React.FC = () => {
   const limpiarFiltros = () => {
     setFiltros({
       numeroGiro: '',
-      rutDeudor: '',
+      tipoIdDeudor: '',
+      numeroIdDeudor: '',
       estado: '',
       tipo: '',
       origen: '',
@@ -284,43 +296,24 @@ export const GirosList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard
-            title="Total Giros"
-            value={conteoGiros.total}
-            subtitle="Este período"
-            colorScheme="azul"
-            icon={<Icon name="Receipt" size={24} />}
-          />
-          <StatCard
-            title="Pendientes"
-            value={conteoGiros.pendientes}
-            subtitle="Emitidos y notificados"
-            colorScheme="amarillo"
-            icon={<Icon name="Clock" size={24} />}
-          />
-          <StatCard
-            title="Pagados"
-            value={conteoGiros.pagados}
-            subtitle="Recaudación exitosa"
-            colorScheme="verde"
-            icon={<Icon name="CheckCircle" size={24} />}
-          />
-          <StatCard
-            title="Vencidos"
-            value={conteoGiros.vencidos}
-            subtitle="Requieren gestión"
-            colorScheme="rojo"
-            icon={<Icon name="AlertCircle" size={24} />}
-          />
-          <StatCard
-            title="Monto Recaudado"
-            value={conteoGiros.montoRecaudadoFormateado}
-            subtitle={`Pendiente: ${conteoGiros.montoPendienteFormateado}`}
-            colorScheme="verde"
-            icon={<Icon name="TrendingUp" size={24} />}
-          />
+        {/* Estadísticas - Reducidas */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="card p-3 border-l-4 border-l-aduana-azul">
+            <p className="text-xs text-gray-600">Total</p>
+            <p className="text-xl font-bold text-aduana-azul">{conteoGiros.total}</p>
+          </div>
+          <div className="card p-3 border-l-4 border-l-amber-500">
+            <p className="text-xs text-gray-600">Pendientes</p>
+            <p className="text-xl font-bold text-amber-600">{conteoGiros.pendientes}</p>
+          </div>
+          <div className="card p-3 border-l-4 border-l-emerald-500">
+            <p className="text-xs text-gray-600">Pagados</p>
+            <p className="text-xl font-bold text-emerald-600">{conteoGiros.pagados}</p>
+          </div>
+          <div className="card p-3 border-l-4 border-l-red-500">
+            <p className="text-xs text-gray-600">Vencidos</p>
+            <p className="text-xl font-bold text-red-600">{conteoGiros.vencidos}</p>
+          </div>
         </div>
 
         {/* Card principal */}
@@ -357,14 +350,29 @@ export const GirosList: React.FC = () => {
               value={filtros.numeroGiro}
               onChange={(e) => handleFiltroChange('numeroGiro', e.target.value)}
             />
-            <InputField
-              label="RUT Deudor"
-              id="rutDeudor"
-              type="text"
-              placeholder="12.345.678-9"
-              value={filtros.rutDeudor}
-              onChange={(e) => handleFiltroChange('rutDeudor', e.target.value)}
-            />
+            {/* ID Deudor anidado */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ID del Deudor</label>
+              <div className="flex gap-2">
+                <select
+                  className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul text-sm"
+                  value={filtros.tipoIdDeudor}
+                  onChange={(e) => handleFiltroChange('tipoIdDeudor', e.target.value)}
+                >
+                  <option value="">Tipo</option>
+                  {tiposIdentificador.map(tipo => (
+                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul text-sm"
+                  placeholder="N° ID"
+                  value={filtros.numeroIdDeudor}
+                  onChange={(e) => handleFiltroChange('numeroIdDeudor', e.target.value)}
+                />
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
               <select

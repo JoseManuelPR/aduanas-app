@@ -29,6 +29,32 @@ import {
   type DenunciaInvolucrado,
 } from '../../data';
 
+// Tipos de identificador disponibles
+const tiposIdentificador = [
+  { value: 'RUT', label: 'RUT' },
+  { value: 'PASAPORTE', label: 'Pasaporte' },
+  { value: 'DNI', label: 'DNI' },
+  { value: 'RUC', label: 'RUC' },
+  { value: 'OTRO', label: 'Otro' },
+];
+
+// Tipos de clasificación de documentos
+const tiposClasificacionDocumento = [
+  { value: 'DIN', label: 'DIN - Declaración de Ingreso' },
+  { value: 'DUS', label: 'DUS - Declaración Única de Salida' },
+  { value: 'MIC_DTA', label: 'MIC/DTA - Manifiesto Internacional' },
+  { value: 'BL', label: 'B/L - Bill of Lading' },
+  { value: 'FACTURA', label: 'Factura Comercial' },
+  { value: 'OTROS', label: 'Otros' },
+];
+
+// Generar número de radicado aleatorio
+const generarNumeroRadicado = (): string => {
+  const year = new Date().getFullYear();
+  const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  return `RAD-${year}-${random}`;
+};
+
 // Función para convertir fecha DD-MM-YYYY a YYYY-MM-DD (formato HTML date input)
 const convertirFechaParaInput = (fecha: string): string => {
   if (!fecha) return '';
@@ -87,6 +113,7 @@ interface FormularioDenunciaData {
   // Origen
   hallazgoOrigen?: string;
   hallazgoId?: string;
+  origenDenuncia: 'Manual' | 'APP_SATELITE_1' | 'APP_SATELITE_2' | 'FISCALIZACION' | '';
   
   // Datos Generales
   aduanaOrigen: string;
@@ -123,8 +150,9 @@ interface FormularioDenunciaData {
   // Involucrados
   involucrados: DenunciaInvolucrado[];
   
-  // Datos del denunciado principal (legacy)
-  rutDenunciado: string;
+  // Datos del denunciado principal - ID anidado
+  tipoIdDenunciado: string;
+  numeroIdDenunciado: string;
   nombreDenunciado: string;
   direccionDenunciado: string;
   emailDenunciado: string;
@@ -138,10 +166,13 @@ interface FormularioDenunciaData {
   // Documentos
   documentoAduanero?: string;
   tipoDocumento?: string;
+  clasificacionDocumento: string;
+  numeroRadicado?: string;
   documentosAdjuntos: DocumentoAdjunto[];
 }
 
 const initialFormData: FormularioDenunciaData = {
+  origenDenuncia: 'Manual',
   aduanaOrigen: '',
   aduanaEmision: '',
   seccion: '',
@@ -169,7 +200,8 @@ const initialFormData: FormularioDenunciaData = {
   numeroOficio: '',
   fechaOficio: '',
   involucrados: [],
-  rutDenunciado: '',
+  tipoIdDenunciado: 'RUT',
+  numeroIdDenunciado: '',
   nombreDenunciado: '',
   direccionDenunciado: '',
   emailDenunciado: '',
@@ -179,6 +211,8 @@ const initialFormData: FormularioDenunciaData = {
   nombreAgente: '',
   documentoAduanero: '',
   tipoDocumento: '',
+  clasificacionDocumento: '',
+  numeroRadicado: '',
   documentosAdjuntos: [],
 };
 
@@ -196,6 +230,9 @@ export const DenunciasForm: React.FC = () => {
   const [isLoadingHallazgo, setIsLoadingHallazgo] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showModalFormalizar, setShowModalFormalizar] = useState(false);
+  // Modales para acciones después de crear denuncia
+  const [showModalInfraccional, setShowModalInfraccional] = useState(false);
+  const [showModalPenal, setShowModalPenal] = useState(false);
   
   // Artículo seleccionado
   const articuloSeleccionado = useMemo(() => {
@@ -307,21 +344,26 @@ export const DenunciasForm: React.FC = () => {
         [field]: value,
       };
       
-      // Si cambia el tipo de denuncia, limpiar artículo
-      if (field === 'tipoDenuncia') {
-        newData.codigoArticulo = '';
-        newData.multa = '';
-        newData.multaAllanamiento = '';
-        newData.tipoDenuncia = value;
-      }
-      
-      // Si cambia el artículo, actualizar multa máxima
+      // Si cambia el artículo, determinar automáticamente el tipo de denuncia (penal/infraccional)
       if (field === 'codigoArticulo') {
         const articulo = articulos.find(a => a.codigo === value);
-        if (articulo && articulo.multaMinima) {
+        if (articulo) {
+          // Clasificación automática basada en el artículo seleccionado (motor de reglas)
+          newData.tipoDenuncia = articulo.tipo === 'Penal' ? 'Penal' : 'Infraccional';
           newData.codigoArticulo = value;
-          newData.multa = articulo.multaMinima || '';
+          if (articulo.multaMinima) {
+            newData.multa = articulo.multaMinima;
+          }
+          // Auto-rellenar norma infringida si el artículo la tiene
+          if (articulo.descripcion) {
+            newData.normaInfringida = `Art. ${articulo.codigo} - ${articulo.nombre}`;
+          }
         }
+      }
+      
+      // Si cambia la clasificación de documento a "Otros", generar número de radicado
+      if (field === 'clasificacionDocumento' && value === 'OTROS') {
+        newData.numeroRadicado = generarNumeroRadicado();
       }
       
       return newData;
@@ -378,9 +420,13 @@ export const DenunciasForm: React.FC = () => {
     handleInputChange('montoNoDeclarado', e.target.value ? parseInt(e.target.value) : '');
   }, [handleInputChange]);
 
-  // Infractor Principal
-  const handleRutDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleInputChange('rutDenunciado', e.target.value);
+  // Infractor Principal - ID anidado
+  const handleTipoIdDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    handleInputChange('tipoIdDenunciado', e.target.value);
+  }, [handleInputChange]);
+
+  const handleNumeroIdDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('numeroIdDenunciado', e.target.value);
   }, [handleInputChange]);
 
   const handleNombreDenunciadoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -452,8 +498,8 @@ export const DenunciasForm: React.FC = () => {
         break;
         
       case 3: // Involucrados
-        if (formData.involucrados.length === 0 && !formData.rutDenunciado) {
-          newErrors.rutDenunciado = 'Debe agregar al menos un involucrado';
+        if (formData.involucrados.length === 0 && !formData.numeroIdDenunciado) {
+          newErrors.numeroIdDenunciado = 'Debe agregar al menos un involucrado';
         }
         break;
         
@@ -760,32 +806,11 @@ export const DenunciasForm: React.FC = () => {
       </div>
     </div>
   ), [
-    // Incluimos todas las dependencias necesarias
-    // React.memo en InputField y handlers memoizados evitarán la pérdida de foco
     formData,
     errors,
     handleInputChange,
     handleMercanciaChange,
-    handleMontoChange,
-    handleFundamentoLegalChange,
-    handleNormaInfringidaChange,
-    handleMultaChange,
-    handleMultaAllanamientoChange,
-    handleMontoDerechosChange,
-    handleMontoRetencionChange,
-    handleMontoNoDeclaradoChange,
-    handleRutDenunciadoChange,
-    handleNombreDenunciadoChange,
-    handleDireccionDenunciadoChange,
-    handleEmailDenunciadoChange,
-    handleTelefonoDenunciadoChange,
-    handleRepresentanteLegalChange,
-    handleCodigoAgenteChange,
-    handleNombreAgenteChange,
-    handleNumeroOficioChange,
-    handleFechaOficioChange,
-    handleDocumentoAduaneroChange,
-    handleDescripcionHechosChange
+    handleMontoChange
   ]);
 
   // Paso 2: Tipificación - Memoizado para evitar recreación que causa pérdida de foco
@@ -1038,16 +1063,28 @@ export const DenunciasForm: React.FC = () => {
           )}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InputField
-            key="rut-denunciado"
-            label="RUT"
-            id="rutDenunciado"
-            type="text"
-            placeholder="12.345.678-9"
-            value={formData.rutDenunciado}
-            onChange={handleRutDenunciadoChange}
-            required
-          />
+          {/* ID del Infractor - Campos anidados */}
+          <div className="md:col-span-2">
+            <label className="form-label">ID del Infractor *</label>
+            <div className="flex gap-2">
+              <select
+                className="form-input w-1/3"
+                value={formData.tipoIdDenunciado}
+                onChange={handleTipoIdDenunciadoChange}
+              >
+                {tiposIdentificador.map(tipo => (
+                  <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                className={`form-input flex-1 ${errors.numeroIdDenunciado ? 'border-red-500' : ''}`}
+                placeholder={formData.tipoIdDenunciado === 'RUT' ? '12.345.678-9' : 'Número de ID'}
+                value={formData.numeroIdDenunciado}
+                onChange={handleNumeroIdDenunciadoChange}
+              />
+            </div>
+          </div>
           <InputField
             key="nombre-denunciado"
             label="Nombre/Razón Social"
@@ -1095,7 +1132,7 @@ export const DenunciasForm: React.FC = () => {
             onChange={handleRepresentanteLegalChange}
           />
         </div>
-        {errors.rutDenunciado && <p className="text-red-500 text-sm mt-2">{errors.rutDenunciado}</p>}
+        {errors.numeroIdDenunciado && <p className="text-red-500 text-sm mt-2">{errors.numeroIdDenunciado}</p>}
       </div>
 
       <div className="card p-5 border-l-4 border-l-emerald-500">
@@ -1135,7 +1172,8 @@ export const DenunciasForm: React.FC = () => {
     errors,
     isDesdeHallazgo,
     handleInputChange,
-    handleRutDenunciadoChange,
+    handleTipoIdDenunciadoChange,
+    handleNumeroIdDenunciadoChange,
     handleNombreDenunciadoChange,
     handleDireccionDenunciadoChange,
     handleEmailDenunciadoChange,
@@ -1229,6 +1267,40 @@ export const DenunciasForm: React.FC = () => {
           </select>
         </div>
       </div>
+
+      {/* Clasificación de documentos */}
+      <div className="card p-4 bg-gray-50">
+        <h4 className="font-medium text-gray-900 mb-3">Clasificación de Documentos</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="form-label">Clasificación</label>
+            <select
+              className="form-input"
+              value={formData.clasificacionDocumento || ''}
+              onChange={(e) => handleInputChange('clasificacionDocumento', e.target.value)}
+            >
+              <option value="">Seleccione clasificación</option>
+              {tiposClasificacionDocumento.map(tipo => (
+                <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+              ))}
+            </select>
+          </div>
+          {formData.clasificacionDocumento === 'OTROS' && (
+            <div>
+              <label className="form-label">N° de Radicado (Auto-generado)</label>
+              <input
+                type="text"
+                className="form-input bg-gray-100"
+                value={formData.numeroRadicado || ''}
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Este número se genera automáticamente al seleccionar "Otros"
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -1314,8 +1386,12 @@ export const DenunciasForm: React.FC = () => {
             <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Infractor Principal</h4>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-500">RUT:</dt>
-                <dd className="font-medium">{formData.rutDenunciado || 'No especificado'}</dd>
+                <dt className="text-gray-500">Tipo ID:</dt>
+                <dd className="font-medium">{formData.tipoIdDenunciado || 'RUT'}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">N° ID:</dt>
+                <dd className="font-medium">{formData.numeroIdDenunciado || 'No especificado'}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500">Nombre:</dt>
@@ -1432,6 +1508,49 @@ export const DenunciasForm: React.FC = () => {
     });
     
     setShowModalFormalizar(false);
+    
+    // Mostrar modal según tipo de denuncia
+    if (formData.tipoDenuncia === 'Infraccional') {
+      setShowModalInfraccional(true);
+    } else if (formData.tipoDenuncia === 'Penal') {
+      setShowModalPenal(true);
+    } else {
+      setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
+    }
+  };
+
+  // Handlers para acciones post-creación
+  const handleRegistrarAudiencia = () => {
+    setShowModalInfraccional(false);
+    showToast({
+      type: 'info',
+      title: 'Registrar Audiencia',
+      message: 'Redirigiendo a registro de audiencia...',
+      duration: 2000,
+    });
+    // TODO: Navegar a formulario de audiencia
+    setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
+  };
+
+  const handleGenerarCargo = () => {
+    setShowModalInfraccional(false);
+    showToast({
+      type: 'info',
+      title: 'Generar Cargo',
+      message: 'Redirigiendo a formulario de cargo...',
+      duration: 2000,
+    });
+    setTimeout(() => navigate(ERoutePaths.CARGOS_NUEVO), 500);
+  };
+
+  const handleDerivarMinisterioPublico = () => {
+    setShowModalPenal(false);
+    showToast({
+      type: 'info',
+      title: 'Derivar a Ministerio Público',
+      message: 'La denuncia ha sido derivada al Ministerio Público.',
+      duration: 3000,
+    });
     setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
   };
 
@@ -1568,6 +1687,76 @@ export const DenunciasForm: React.FC = () => {
           <div className="flex justify-between">
             <span className="text-gray-500">Infractor:</span>
             <span className="font-medium">{formData.nombreDenunciado}</span>
+          </div>
+        </div>
+      </ModalConfirmacion>
+
+      {/* Modal para Denuncia Infraccional - Opciones post-creación */}
+      <ModalConfirmacion
+        isOpen={showModalInfraccional}
+        onClose={() => {
+          setShowModalInfraccional(false);
+          navigate(ERoutePaths.DENUNCIAS);
+        }}
+        onConfirm={handleGenerarCargo}
+        titulo="Denuncia Infraccional Registrada"
+        mensaje="La denuncia infraccional ha sido registrada exitosamente. ¿Qué acción desea realizar?"
+        tipo="info"
+        textoConfirmar="Generar Cargo"
+        textoCancelar="Registrar Audiencia"
+      >
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Generar Cargo:</strong> Crear un cargo asociado a esta denuncia para la determinación de la deuda.
+            </p>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm text-amber-800">
+              <strong>Registrar Audiencia:</strong> Programar una audiencia con el infractor para resolver la situación.
+            </p>
+          </div>
+          <button
+            onClick={handleRegistrarAudiencia}
+            className="w-full py-2 px-4 border border-amber-500 text-amber-700 rounded-lg hover:bg-amber-50 flex items-center justify-center gap-2"
+          >
+            <Icon name="Calendar" size={18} />
+            Registrar Audiencia
+          </button>
+        </div>
+      </ModalConfirmacion>
+
+      {/* Modal para Denuncia Penal - Derivar a Ministerio Público */}
+      <ModalConfirmacion
+        isOpen={showModalPenal}
+        onClose={() => {
+          setShowModalPenal(false);
+          navigate(ERoutePaths.DENUNCIAS);
+        }}
+        onConfirm={handleDerivarMinisterioPublico}
+        titulo="Denuncia Penal Registrada"
+        mensaje="La denuncia ha sido clasificada como PENAL. ¿Desea derivarla al Ministerio Público?"
+        tipo="warning"
+        textoConfirmar="Derivar a Ministerio Público"
+        textoCancelar="Cerrar"
+      >
+        <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Icon name="AlertTriangle" size={24} className="text-red-500 mt-0.5" />
+              <div>
+                <p className="font-medium text-red-900">Denuncia de Carácter Penal</p>
+                <p className="text-sm text-red-700 mt-1">
+                  Esta denuncia involucra conductas que podrían constituir delito. 
+                  Se recomienda derivar al Ministerio Público para su investigación.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-xs text-gray-600">
+              Al derivar, se generará un oficio automático y se notificará al área jurídica.
+            </p>
           </div>
         </div>
       </ModalConfirmacion>
