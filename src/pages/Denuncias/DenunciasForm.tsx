@@ -349,7 +349,7 @@ export const DenunciasForm: React.FC = () => {
         const articulo = articulos.find(a => a.codigo === value);
         if (articulo) {
           // Clasificación automática basada en el artículo seleccionado (motor de reglas)
-          newData.tipoDenuncia = articulo.tipo === 'Penal' ? 'Penal' : 'Infraccional';
+          newData.tipoDenuncia = articulo.tipoArticulo === 'Penal' ? 'Penal' : 'Infraccional';
           newData.codigoArticulo = value;
           if (articulo.multaMinima) {
             newData.multa = articulo.multaMinima;

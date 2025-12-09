@@ -341,7 +341,7 @@ export type EstadoCargo =
   | 'Cerrado'
   | 'Anulado';
 
-export type OrigenCargo = 'DENUNCIA' | 'FISCALIZACION' | 'OTRO';
+export type OrigenCargo = 'DENUNCIA' | 'TRAMITE_ADUANERO' | 'OTRO';
 
 // Tipo de cuenta de cargo (CARGO_CUENTA)
 export interface CargoCuenta {

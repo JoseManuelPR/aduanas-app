@@ -11,18 +11,15 @@ import { ERoutePaths } from '../../routes/routes';
 
 // Datos centralizados
 import {
-  notificacionesHallazgos,
   notificacionesDenuncias,
   notificacionesReclamos,
   notificacionesCargos,
   getTodasLasNotificaciones,
   getConteoNotificaciones,
   usuarioActual,
-  getHallazgoPorNumero,
 } from '../../data';
 
 import type { 
-  NotificacionHallazgo, 
   NotificacionDenuncia, 
   NotificacionReclamo, 
   NotificacionCargo 
@@ -31,15 +28,7 @@ import type {
 // Sidebar menu (solo para el menú del sidebar)
 import CONSTANTS_APP from '../../constants/sidebar-menu';
 
-type TabType = 'denuncias' | 'reclamos' | 'cargos' | 'general';
-
-// Tipos de origen de notificación
-const tiposOrigen = [
-  { value: 'MANUAL', label: 'Manual' },
-  { value: 'APP_SATELITE_1', label: 'APP Satélite 1' },
-  { value: 'APP_SATELITE_2', label: 'APP Satélite 2' },
-  { value: 'SISTEMA', label: 'Sistema' },
-];
+type TabType = 'denuncias' | 'reclamos' | 'cargos';
 
 export const NotificacionesList: React.FC = () => {
   const navigate = useNavigate();
@@ -82,8 +71,7 @@ export const NotificacionesList: React.FC = () => {
         !searchTerm ||
         item.numeroNotificacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (('numeroHallazgo' in item && String(item.numeroHallazgo).toLowerCase().includes(searchTerm.toLowerCase())) ||
-         ('numeroDenuncia' in item && String(item.numeroDenuncia).toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (('numeroDenuncia' in item && String(item.numeroDenuncia).toLowerCase().includes(searchTerm.toLowerCase())) ||
          ('numeroReclamo' in item && String(item.numeroReclamo).toLowerCase().includes(searchTerm.toLowerCase())) ||
          ('numeroCargo' in item && String(item.numeroCargo).toLowerCase().includes(searchTerm.toLowerCase())));
 
@@ -138,11 +126,6 @@ export const NotificacionesList: React.FC = () => {
   };
 
   // Datos por tab - usando datos centralizados
-  const hallazgosData = useMemo(() => 
-    getFilteredAndPaginatedData(notificacionesHallazgos),
-    [searchTerm, fechaDesde, fechaHasta, estadoFiltro, currentPage]
-  );
-
   const denunciasData = useMemo(() => 
     getFilteredAndPaginatedData(notificacionesDenuncias),
     [searchTerm, fechaDesde, fechaHasta, estadoFiltro, currentPage]
@@ -166,24 +149,6 @@ export const NotificacionesList: React.FC = () => {
 
   // Preparar notificaciones para el dropdown del header
   const allNotifications = getTodasLasNotificaciones();
-
-  // Columnas para Hallazgos
-  const columnsHallazgos = [
-    { key: 'numeroNotificacion' as const, label: 'Número de Notificación', sortable: true },
-    { key: 'descripcion' as const, label: 'Descripción de la notificación', sortable: true },
-    { key: 'numeroHallazgo' as const, label: 'Número de Hallazgo', sortable: true },
-    { key: 'fechaGeneracion' as const, label: 'Fecha de generación', sortable: true },
-    { 
-      key: 'tipoHallazgo' as const, 
-      label: 'Tipo de Hallazgo', 
-      sortable: true,
-      render: (row: NotificacionHallazgo) => (
-        <Badge variant={row.tipoHallazgo === 'Infraccional' ? 'info' : 'danger'}>
-          {row.tipoHallazgo}
-        </Badge>
-      ),
-    },
-  ];
 
   // Columnas para Denuncias - Con columna de origen
   const columnsDenuncias = [
@@ -240,7 +205,7 @@ export const NotificacionesList: React.FC = () => {
   ];
 
   // Acciones para cada tipo - Navegar a gestionar denuncia
-  const handleGestionar = (tipo: TabType, referencia: string) => {
+  const handleGestionar = (tipo: TabType, _referencia: string) => {
     switch (tipo) {
       case 'denuncias':
         // Navegar directamente a la lista de denuncias o al detalle si hay referencia
@@ -252,15 +217,11 @@ export const NotificacionesList: React.FC = () => {
       case 'cargos':
         navigate(ERoutePaths.CARGOS);
         break;
-      case 'general':
-        // Para notificaciones generales, navegar a denuncias por defecto
-        navigate(ERoutePaths.DENUNCIAS);
-        break;
     }
   };
 
   const getActions = (tipo: TabType) => {
-    return (row: NotificacionHallazgo | NotificacionDenuncia | NotificacionReclamo | NotificacionCargo) => (
+    return (row: NotificacionDenuncia | NotificacionReclamo | NotificacionCargo) => (
       <div className="flex justify-center items-center w-full">
         <CustomButton
           variant="primary"
@@ -269,8 +230,7 @@ export const NotificacionesList: React.FC = () => {
             const referencia = 
               'numeroDenuncia' in row ? row.numeroDenuncia :
               'numeroReclamo' in row ? row.numeroReclamo :
-              'numeroCargo' in row ? row.numeroCargo : 
-              'numeroHallazgo' in row ? row.numeroHallazgo : '';
+              'numeroCargo' in row ? row.numeroCargo : '';
             handleGestionar(tipo, referencia);
           }}
         >
@@ -282,18 +242,15 @@ export const NotificacionesList: React.FC = () => {
 
   // Función para obtener el contenido de cada tab dinámicamente
   const getTabContent = (tabId: TabType) => {
-    const tabData = tabId === 'hallazgos' ? hallazgosData :
-                    tabId === 'denuncias' ? denunciasData :
+    const tabData = tabId === 'denuncias' ? denunciasData :
                     tabId === 'reclamos' ? reclamosData :
                     cargosData;
     
-    const columns = tabId === 'hallazgos' ? columnsHallazgos :
-                   tabId === 'denuncias' ? columnsDenuncias :
+    const columns = tabId === 'denuncias' ? columnsDenuncias :
                    tabId === 'reclamos' ? columnsReclamos :
                    columnsCargos;
 
     const emptyMessages = {
-      hallazgos: { title: 'No hay notificaciones de hallazgos', description: 'No se encontraron notificaciones que coincidan con los filtros aplicados.' },
       denuncias: { title: 'No hay notificaciones de denuncias', description: 'No se encontraron notificaciones que coincidan con los filtros aplicados.' },
       reclamos: { title: 'No hay notificaciones de reclamos', description: 'No se encontraron notificaciones que coincidan con los filtros aplicados.' },
       cargos: { title: 'No hay notificaciones de cargos', description: 'No se encontraron notificaciones que coincidan con los filtros aplicados.' },

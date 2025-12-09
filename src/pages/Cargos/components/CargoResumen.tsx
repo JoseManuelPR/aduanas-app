@@ -57,7 +57,7 @@ export const CargoResumen: React.FC<CargoResumenProps> = ({
           <div className="bg-gray-50 rounded-lg p-4">
             <p className="text-sm text-gray-500 mb-1">Origen</p>
             <Badge variant={cargo.origen === 'DENUNCIA' ? 'info' : 'warning'}>
-              {cargo.origen === 'DENUNCIA' ? 'Denuncia' : cargo.origen === 'FISCALIZACION' ? 'Fiscalización' : 'Otro'}
+              {cargo.origen === 'DENUNCIA' ? 'Denuncia' : cargo.origen === 'TRAMITE_ADUANERO' ? 'Trámite Aduanero' : 'Otro'}
             </Badge>
           </div>
           

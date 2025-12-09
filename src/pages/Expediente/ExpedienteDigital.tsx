@@ -4,7 +4,7 @@ import { Icon } from 'he-button-custom-library';
 import CONSTANTS_APP from '../../constants/sidebar-menu';
 import CustomLayout from '../../Layout/Layout';
 import { CustomButton } from '../../components/Button/Button';
-import { Badge, Tabs, Timeline, ProgressBar, getEstadoBadgeVariant, Modal } from '../../components/UI';
+import { Badge, Tabs, Timeline, getEstadoBadgeVariant, Modal } from '../../components/UI';
 import { DocumentoAduaneroViewer } from '../../components/DocumentoAduaneroViewer';
 import { ArchivoViewer } from '../../components/ArchivoViewer';
 import { FileUploader, UploadedFileInfo } from '../../components/FileUploader';
@@ -53,7 +53,7 @@ export const ExpedienteDigital: React.FC = () => {
   const documentosAduaneros = getDocumentosAduanerosPorDenuncia(denunciaData?.id || 'den-001');
 
   // Calcular completitud del expediente
-  const { porcentaje: completitud, faltantes: documentosFaltantes } = calcularCompletitud(expediente);
+  const { porcentaje: completitud } = calcularCompletitud(expediente);
 
   // Permisos del usuario actual
   const permisos = {

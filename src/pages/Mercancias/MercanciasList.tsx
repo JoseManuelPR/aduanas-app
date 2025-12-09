@@ -10,7 +10,7 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge, StatCard } from "../../components/UI";
+import { Badge } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -19,10 +19,8 @@ import {
   getConteoMercancias,
   getTodasLasNotificaciones,
   usuarioActual,
-  aduanas,
   type Mercancia,
   type EstadoMercancia,
-  type TipoEventoMercancia,
 } from '../../data';
 
 // Estados de mercancía para filtros
@@ -32,11 +30,6 @@ const estadosMercancia: EstadoMercancia[] = [
   'Pendiente Disposición', 'Retenida'
 ];
 
-// Tipos de evento para filtros
-const tiposEvento: TipoEventoMercancia[] = [
-  'Ingreso', 'Retención', 'Incautación', 'Comiso', 'Devolución',
-  'Destrucción', 'Subasta', 'Donación', 'Entrega RAP'
-];
 
 export const MercanciasList: React.FC = () => {
   const navigate = useNavigate();

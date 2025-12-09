@@ -41,7 +41,7 @@ interface CargoFormData {
   fechaEmision: string;
   fechaOcurrencia: string;
   fechaIngreso: string;
-  origen: 'DENUNCIA' | 'FISCALIZACION' | 'OTRO';
+  origen: 'DENUNCIA' | 'TRAMITE_ADUANERO' | 'OTRO';
   codigoAduana: string;
   codigoAduanaDestino: string;
   codigoSeccion: string;
@@ -73,7 +73,7 @@ const initialFormData: CargoFormData = {
   fechaEmision: new Date().toISOString().split('T')[0],
   fechaOcurrencia: '',
   fechaIngreso: new Date().toISOString().split('T')[0],
-  origen: 'FISCALIZACION',
+  origen: 'TRAMITE_ADUANERO',
   codigoAduana: '',
   codigoAduanaDestino: '',
   codigoSeccion: '',
@@ -116,7 +116,7 @@ export const CargoForm: React.FC = () => {
           fechaEmision: cargo.fechaEmision || '',
           fechaOcurrencia: cargo.fechaOcurrencia || '',
           fechaIngreso: cargo.fechaIngreso,
-          origen: cargo.origen || 'FISCALIZACION',
+          origen: cargo.origen || 'TRAMITE_ADUANERO',
           codigoAduana: cargo.codigoAduana || '',
           codigoAduanaDestino: cargo.codigoAduanaDestino || '',
           codigoSeccion: cargo.codigoSeccion || '',
@@ -524,8 +524,8 @@ export const CargoForm: React.FC = () => {
                       denunciaIdParam ? 'bg-gray-100' : ''
                     }`}
                   >
-                    <option value="FISCALIZACION">Fiscalización</option>
                     <option value="DENUNCIA">Denuncia</option>
+                    <option value="TRAMITE_ADUANERO">Trámite Aduanero</option>
                     <option value="OTRO">Otro</option>
                   </select>
                 </div>

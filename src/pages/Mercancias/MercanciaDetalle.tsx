@@ -24,7 +24,6 @@ import {
 import { ERoutePaths } from '../../routes/routes';
 import {
   MercanciaResumen,
-  MercanciaItems,
   MercanciaSeguimiento,
   MercanciaDocumentos,
   ModalRegistrarEvento,

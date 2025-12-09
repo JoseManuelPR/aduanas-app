@@ -122,7 +122,7 @@ export const Dashboard: React.FC = () => {
   const denunciasActivas = KPI_DASHBOARD.denuncias.pendientes + KPI_DASHBOARD.denuncias.enProceso;
   const cargosProceso = KPI_DASHBOARD.cargos.pendientes;
   const girosEmitidos = KPI_DASHBOARD.giros.emitidos;
-  const casosResueltos = KPI_DASHBOARD.denuncias.resueltas + KPI_DASHBOARD.cargos.resueltos;
+  const casosResueltos = KPI_DASHBOARD.denuncias.resueltas + (KPI_DASHBOARD.cargos.aprobados || 0);
 
   return (
     <CustomLayout
