@@ -45,6 +45,12 @@ interface CargoFormData {
   codigoAduana: string;
   codigoAduanaDestino: string;
   codigoSeccion: string;
+  aduanaNotificacion: string;
+  jefeRevisor: string;
+  seccionInfraccion: string;
+  area: string;
+  subarea: string;
+  tieneReclamoAsociado: boolean;
   
   // Tipificación
   norma: string;
@@ -77,6 +83,12 @@ const initialFormData: CargoFormData = {
   codigoAduana: '',
   codigoAduanaDestino: '',
   codigoSeccion: '',
+  aduanaNotificacion: '',
+  jefeRevisor: '',
+  seccionInfraccion: '',
+  area: '',
+  subarea: '',
+  tieneReclamoAsociado: false,
   norma: '',
   fundamento: '',
   descripcionHechos: '',
@@ -88,6 +100,16 @@ const initialFormData: CargoFormData = {
   infractores: [],
   documentosAduaneros: [],
   observaciones: '',
+};
+
+const toInputDate = (fecha: string): string => {
+  if (!fecha) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
+  const partes = fecha.split('-');
+  if (partes.length === 3) {
+    return `${partes[2]}-${partes[1]}-${partes[0]}`;
+  }
+  return fecha;
 };
 
 export const CargoForm: React.FC = () => {
@@ -113,13 +135,19 @@ export const CargoForm: React.FC = () => {
       if (cargo) {
         setFormData({
           numeroInterno: cargo.numeroInterno || '',
-          fechaEmision: cargo.fechaEmision || '',
-          fechaOcurrencia: cargo.fechaOcurrencia || '',
-          fechaIngreso: cargo.fechaIngreso,
+          fechaEmision: toInputDate(cargo.fechaEmision || ''),
+          fechaOcurrencia: toInputDate(cargo.fechaOcurrencia || ''),
+          fechaIngreso: toInputDate(cargo.fechaIngreso),
           origen: cargo.origen || 'TRAMITE_ADUANERO',
           codigoAduana: cargo.codigoAduana || '',
           codigoAduanaDestino: cargo.codigoAduanaDestino || '',
           codigoSeccion: cargo.codigoSeccion || '',
+          aduanaNotificacion: cargo.codigoAduanaDestino || cargo.codigoAduana || '',
+          jefeRevisor: '',
+          seccionInfraccion: '',
+          area: '',
+          subarea: '',
+          tieneReclamoAsociado: false,
           norma: cargo.norma || '',
           fundamento: cargo.fundamento || '',
           descripcionHechos: cargo.descripcionHechos || '',
@@ -145,8 +173,12 @@ export const CargoForm: React.FC = () => {
           ...prev,
           origen: 'DENUNCIA',
           denunciaAsociada: denuncia.id,
-          codigoAduana: denuncia.aduana,
+          fechaIngreso: toInputDate(denuncia.fechaIngreso),
+          codigoAduana: aduanas.find(a => a.nombre === denuncia.aduana)?.codigo || denuncia.aduana,
           codigoSeccion: denuncia.seccion || '',
+          aduanaNotificacion: aduanas.find(a => a.nombre === denuncia.aduanaEmision)?.codigo || '',
+          seccionInfraccion: denuncia.tipoInfraccion || '',
+          tieneReclamoAsociado: !!(denuncia.reclamosAsociados && denuncia.reclamosAsociados.length > 0),
           rutDeudor: denuncia.rutDeudor,
           nombreDeudor: denuncia.nombreDeudor,
           descripcionHechos: denuncia.descripcionHechos || '',
@@ -185,6 +217,26 @@ export const CargoForm: React.FC = () => {
     if (!formData.denunciaAsociada) return null;
     return getDenunciaPorId(formData.denunciaAsociada);
   }, [formData.denunciaAsociada]);
+
+  const buildObservaciones = useMemo(() => {
+    const meta = [
+      formData.aduanaNotificacion && `Aduana Notificación: ${formData.aduanaNotificacion}`,
+      formData.seccionInfraccion && `Sección infracción: ${formData.seccionInfraccion}`,
+      formData.area && `Área: ${formData.area}`,
+      formData.subarea && `Subárea: ${formData.subarea}`,
+      formData.jefeRevisor && `Jefe revisor: ${formData.jefeRevisor}`,
+      formData.tieneReclamoAsociado ? 'Tiene reclamo asociado' : '',
+    ].filter(Boolean).join(' | ');
+    return [formData.observaciones || '', meta].filter(Boolean).join(' • ');
+  }, [
+    formData.aduanaNotificacion,
+    formData.seccionInfraccion,
+    formData.area,
+    formData.subarea,
+    formData.jefeRevisor,
+    formData.tieneReclamoAsociado,
+    formData.observaciones,
+  ]);
   
   // Handlers
   const handleChange = (field: keyof CargoFormData, value: any) => {
@@ -312,7 +364,7 @@ export const CargoForm: React.FC = () => {
       cuentas: formData.cuentas,
       infractores: formData.infractores,
       documentosAduaneros: formData.documentosAduaneros,
-      observaciones: formData.observaciones,
+      observaciones: buildObservaciones,
       montoTotal: formatMonto(totalCuentas),
       estado: 'Borrador',
     };
@@ -365,7 +417,7 @@ export const CargoForm: React.FC = () => {
       cuentas: formData.cuentas,
       infractores: formData.infractores,
       documentosAduaneros: formData.documentosAduaneros,
-      observaciones: formData.observaciones,
+      observaciones: buildObservaciones,
       montoTotal: formatMonto(totalCuentas),
       estado: 'Emitido',
     };
@@ -427,6 +479,11 @@ export const CargoForm: React.FC = () => {
               <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
                 <Icon name="Link" size={14} />
                 Desde Denuncia: {denunciaAsociada.numeroDenuncia}
+              </p>
+            )}
+            {denunciaAsociada && (
+              <p className="text-xs text-gray-500 ml-7">
+                ID denuncia: {denunciaAsociada.id}
               </p>
             )}
           </div>
@@ -511,6 +568,15 @@ export const CargoForm: React.FC = () => {
                   value={formData.fechaOcurrencia}
                   onChange={(e) => handleChange('fechaOcurrencia', e.target.value)}
                 />
+            
+            <InputField
+              label="Fecha Ingreso"
+              id="fechaIngreso"
+              type="date"
+              value={formData.fechaIngreso}
+              onChange={(e) => handleChange('fechaIngreso', e.target.value)}
+              disabled
+            />
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -555,6 +621,24 @@ export const CargoForm: React.FC = () => {
                     <p className="text-sm text-red-500 mt-1">{errors.codigoAduana}</p>
                   )}
                 </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Aduana Notificación
+                </label>
+                <select
+                  value={formData.aduanaNotificacion}
+                  onChange={(e) => handleChange('aduanaNotificacion', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                >
+                  <option value="">Seleccione aduana...</option>
+                  {aduanas.map(aduana => (
+                    <option key={aduana.id} value={aduana.codigo}>
+                      {aduana.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -574,6 +658,42 @@ export const CargoForm: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              
+              <InputField
+                label="Sección Infracción"
+                id="seccionInfraccion"
+                type="text"
+                value={formData.seccionInfraccion}
+                onChange={(e) => handleChange('seccionInfraccion', e.target.value)}
+                placeholder="Pre-cargado desde denuncia"
+              />
+              
+              <InputField
+                label="Jefe Revisor"
+                id="jefeRevisor"
+                type="text"
+                value={formData.jefeRevisor}
+                onChange={(e) => handleChange('jefeRevisor', e.target.value)}
+                placeholder="Nombre del jefe revisor"
+              />
+              
+              <InputField
+                label="Área"
+                id="area"
+                type="text"
+                value={formData.area}
+                onChange={(e) => handleChange('area', e.target.value)}
+                placeholder="Área responsable"
+              />
+              
+              <InputField
+                label="Subárea"
+                id="subarea"
+                type="text"
+                value={formData.subarea}
+                onChange={(e) => handleChange('subarea', e.target.value)}
+                placeholder="Subárea responsable"
+              />
               </div>
               
               {/* Deudor */}
@@ -610,12 +730,31 @@ export const CargoForm: React.FC = () => {
               {/* Mercancía */}
               {formData.mercanciaId && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800 flex items-center gap-2">
-                    <Icon name="Package" size={16} />
-                    Mercancía asociada: <span className="font-medium">{formData.mercanciaId}</span>
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-blue-800 flex items-center gap-2">
+                      <Icon name="Package" size={16} />
+                      Mercancía asociada: <span className="font-medium">{formData.mercanciaId}</span>
+                    </p>
+                    <CustomButton
+                      variant="secondary"
+                      onClick={() => navigate(ERoutePaths.MERCANCIAS_DETALLE.replace(':id', formData.mercanciaId))}
+                    >
+                      <Icon name="ExternalLink" size={14} />
+                      Ver mercancía
+                    </CustomButton>
+                  </div>
                 </div>
               )}
+              
+              <div className="flex items-center gap-2 mt-4">
+                <input
+                  type="checkbox"
+                  checked={formData.tieneReclamoAsociado}
+                  onChange={(e) => handleChange('tieneReclamoAsociado', e.target.checked)}
+                  className="rounded border-gray-300 text-aduana-azul focus:ring-aduana-azul"
+                />
+                <span className="text-sm text-gray-700">Tiene reclamo asociado</span>
+              </div>
             </div>
           )}
           

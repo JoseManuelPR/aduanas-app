@@ -24,6 +24,7 @@ import {
   denunciantes,
   monedas,
   getArticulosPorTipo,
+  getDenunciaPorId,
   type Hallazgo,
   type DocumentoAdjunto,
   type DenunciaInvolucrado,
@@ -314,6 +315,7 @@ export const DenunciasForm: React.FC = () => {
               codigoDenunciante: hallazgo.tipoHallazgo === 'Penal' ? 'SNA' : '',
               numeroOficio: hallazgo.tipoHallazgo === 'Penal' ? `OF-2025-${hallazgo.numeroHallazgo.replace('PFI-', '')}` : '',
               fechaOficio: hallazgo.tipoHallazgo === 'Penal' ? new Date().toISOString().split('T')[0] : '',
+              descripcionHechos: hallazgo.descripcion || datosFormulario.descripcionHechos || '',
               // Involucrados
               involucrados: [{
                 id: 'inv-new-1',
@@ -336,6 +338,75 @@ export const DenunciasForm: React.FC = () => {
     }
   }, [hallazgoId, isDesdeHallazgo]);
 
+  // Cargar datos existentes cuando se edita una denuncia
+  useEffect(() => {
+    if (isEditing && id) {
+      const denunciaExistente = getDenunciaPorId(id);
+      if (!denunciaExistente) return;
+
+      const fechaIngresoConvertida = convertirFechaParaInput(denunciaExistente.fechaIngreso);
+      const fechaOcurrenciaConvertida = convertirFechaParaInput(
+        denunciaExistente.fechaOcurrencia || denunciaExistente.fechaIngreso
+      );
+      const fechaEmisionConvertida = convertirFechaParaInput(
+        denunciaExistente.fechaEmision || denunciaExistente.fechaIngreso
+      );
+
+      const articuloCodigo =
+        denunciaExistente.codigoArticulo ||
+        obtenerArticuloPorInfraccion(denunciaExistente.tipoInfraccion, denunciaExistente.tipoDenuncia);
+      const articuloDatos = articuloCodigo
+        ? articulos.find((a) => a.codigo === articuloCodigo)
+        : undefined;
+
+      const involucradoPrincipal = denunciaExistente.involucrados?.[0];
+
+      setFormData({
+        ...initialFormData,
+        origenDenuncia: 'Manual',
+        aduanaOrigen: denunciaExistente.aduana,
+        aduanaEmision: denunciaExistente.aduanaEmision || denunciaExistente.aduana,
+        seccion: denunciaExistente.seccion || '',
+        fechaIngreso: fechaIngresoConvertida,
+        fechaOcurrencia: fechaOcurrenciaConvertida,
+        fechaEmision: fechaEmisionConvertida,
+        tipoInfraccion: denunciaExistente.tipoInfraccion,
+        tipoDenuncia: articuloDatos?.tipoArticulo === 'Penal' ? 'Penal' : denunciaExistente.tipoDenuncia,
+        normaInfringida:
+          articuloDatos?.normaLegal ||
+          denunciaExistente.normaInfringida ||
+          (articuloCodigo ? `Art. ${articuloCodigo}` : ''),
+        fundamentoLegal: articuloDatos?.normaLegal || denunciaExistente.fundamentoLegal || '',
+        descripcionHechos: denunciaExistente.descripcionHechos || '',
+        montoEstimado: denunciaExistente.montoEstimado,
+        mercanciaInvolucrada: denunciaExistente.mercanciaDescripcion || '',
+        codigoArticulo: articuloCodigo || '',
+        multa: denunciaExistente.multa ?? '',
+        multaAllanamiento: denunciaExistente.multaAllanamiento ?? '',
+        montoDerechos: denunciaExistente.montoDerechos ?? '',
+        montoRetencion: denunciaExistente.montoRetencion ?? '',
+        montoNoDeclarado: denunciaExistente.montoNoDeclarado ?? '',
+        codigoMoneda: denunciaExistente.codigoMoneda || 'CLP',
+        autodenuncio: !!denunciaExistente.autodenuncio,
+        retencion: !!denunciaExistente.retencion,
+        mercanciaAfecta: !!denunciaExistente.mercanciaAfecta,
+        codigoDenunciante: denunciaExistente.codigoDenunciante || '',
+        numeroOficio: denunciaExistente.numeroOficio || '',
+        fechaOficio: convertirFechaParaInput(denunciaExistente.fechaOficio || ''),
+        involucrados: denunciaExistente.involucrados || [],
+        tipoIdDenunciado: 'RUT',
+        numeroIdDenunciado: denunciaExistente.rutDeudor || involucradoPrincipal?.rut || '',
+        nombreDenunciado: denunciaExistente.nombreDeudor || involucradoPrincipal?.nombre || '',
+        direccionDenunciado: involucradoPrincipal?.direccion || '',
+        emailDenunciado: involucradoPrincipal?.email || '',
+        telefonoDenunciado: involucradoPrincipal?.telefono || '',
+        representanteLegal: involucradoPrincipal?.representanteLegal || '',
+        documentoAduanero: denunciaExistente.documentosAduaneros?.[0]?.numeroDocumento || '',
+        tipoDocumento: denunciaExistente.documentosAduaneros?.[0]?.tipoDocumento || '',
+      });
+    }
+  }, [isEditing, id]);
+
   // Handler para actualizar campos del formulario (memoizado para evitar re-renders)
   const handleInputChange = useCallback((field: keyof FormularioDenunciaData, value: any) => {
     setFormData(prev => {
@@ -344,7 +415,22 @@ export const DenunciasForm: React.FC = () => {
         [field]: value,
       };
       
-      // Si cambia el artículo, determinar automáticamente el tipo de denuncia (penal/infraccional)
+      // Si cambia el tipo de infracción, sugerir artículo y clasificación automáticamente
+      if (field === 'tipoInfraccion') {
+        const codigoSugerido = obtenerArticuloPorInfraccion(value, prev.tipoDenuncia || '');
+        if (codigoSugerido) {
+          const articulo = articulos.find(a => a.codigo === codigoSugerido);
+          newData.codigoArticulo = codigoSugerido;
+          newData.tipoDenuncia = articulo?.tipoArticulo === 'Penal' ? 'Penal' : 'Infraccional';
+          newData.normaInfringida = articulo?.normaLegal || `Art. ${codigoSugerido} - ${articulo?.nombre || ''}`;
+          newData.fundamentoLegal = articulo?.normaLegal || '';
+          if (articulo?.multaMinima) {
+            newData.multa = articulo.multaMinima;
+          }
+        }
+      }
+
+      // Si cambia el artículo, determinar automáticamente el tipo de denuncia (penal/infraccional) y las normas
       if (field === 'codigoArticulo') {
         const articulo = articulos.find(a => a.codigo === value);
         if (articulo) {
@@ -354,10 +440,9 @@ export const DenunciasForm: React.FC = () => {
           if (articulo.multaMinima) {
             newData.multa = articulo.multaMinima;
           }
-          // Auto-rellenar norma infringida si el artículo la tiene
-          if (articulo.descripcion) {
-            newData.normaInfringida = `Art. ${articulo.codigo} - ${articulo.nombre}`;
-          }
+          // Auto-rellenar norma/fundamento si el artículo la tiene
+          newData.normaInfringida = articulo.normaLegal || `Art. ${articulo.codigo} - ${articulo.nombre}`;
+          newData.fundamentoLegal = articulo.normaLegal || '';
         }
       }
       
@@ -388,15 +473,6 @@ export const DenunciasForm: React.FC = () => {
 
   const handleMontoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     handleInputChange('montoEstimado', e.target.value);
-  }, [handleInputChange]);
-
-  // Tipificación
-  const handleFundamentoLegalChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleInputChange('fundamentoLegal', e.target.value);
-  }, [handleInputChange]);
-
-  const handleNormaInfringidaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleInputChange('normaInfringida', e.target.value);
   }, [handleInputChange]);
 
   // Tipificación Infraccional - Montos
@@ -482,13 +558,18 @@ export const DenunciasForm: React.FC = () => {
     
     switch (currentStep) {
       case 1: // Datos Generales
-        if (!formData.tipoDenuncia) newErrors.tipoDenuncia = 'Seleccione el tipo de denuncia';
         if (!formData.aduanaOrigen) newErrors.aduanaOrigen = 'Seleccione la aduana';
         if (!formData.fechaOcurrencia) newErrors.fechaOcurrencia = 'Ingrese la fecha de ocurrencia';
         break;
         
       case 2: // Tipificación
         if (!formData.tipoInfraccion) newErrors.tipoInfraccion = 'Seleccione el tipo de infracción';
+        if (!formData.descripcionHechos || formData.descripcionHechos.length < 50) {
+          newErrors.descripcionHechos = 'La descripción debe tener al menos 50 caracteres';
+        }
+        if (!formData.tipoDenuncia) {
+          newErrors.tipoDenuncia = 'Seleccione un artículo para clasificar la denuncia';
+        }
         if (formData.tipoDenuncia === 'Infraccional' && !formData.codigoArticulo) {
           newErrors.codigoArticulo = 'Seleccione un artículo';
         }
@@ -508,9 +589,6 @@ export const DenunciasForm: React.FC = () => {
         break;
         
       case 5: // Revisión
-        if (!formData.descripcionHechos || formData.descripcionHechos.length < 50) {
-          newErrors.descripcionHechos = 'La descripción debe tener al menos 50 caracteres';
-        }
         break;
     }
     
@@ -601,66 +679,6 @@ export const DenunciasForm: React.FC = () => {
   // Paso 1: Datos Generales - Memoizado para evitar recreación que causa pérdida de foco
   const DatosGenerales = useMemo(() => (
     <div className="space-y-6">
-      {/* Tipo de denuncia */}
-      <div className="card p-5 border-l-4 border-l-aduana-azul">
-        <h4 className="font-semibold text-gray-900 mb-4">Tipo de Denuncia *</h4>
-        <div className="flex gap-4">
-          <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
-            formData.tipoDenuncia === 'Infraccional' 
-              ? 'border-blue-500 bg-blue-50' 
-              : 'border-gray-200 hover:border-gray-300'
-          }`}>
-            <input
-              type="radio"
-              name="tipoDenuncia"
-              value="Infraccional"
-              checked={formData.tipoDenuncia === 'Infraccional'}
-              onChange={(e) => handleInputChange('tipoDenuncia', e.target.value)}
-              className="sr-only"
-            />
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                formData.tipoDenuncia === 'Infraccional' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-              }`}>
-                <Icon name="FileText" size={20} />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">Infraccional</p>
-                <p className="text-sm text-gray-500">Multas y sanciones administrativas</p>
-              </div>
-            </div>
-          </label>
-          <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
-            formData.tipoDenuncia === 'Penal' 
-              ? 'border-red-500 bg-red-50' 
-              : 'border-gray-200 hover:border-gray-300'
-          }`}>
-            <input
-              type="radio"
-              name="tipoDenuncia"
-              value="Penal"
-              checked={formData.tipoDenuncia === 'Penal'}
-              onChange={(e) => handleInputChange('tipoDenuncia', e.target.value)}
-              className="sr-only"
-            />
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                formData.tipoDenuncia === 'Penal' ? 'bg-red-500 text-white' : 'bg-gray-200'
-              }`}>
-                <Icon name="Scale" size={20} />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">Penal</p>
-                <p className="text-sm text-gray-500">Delitos aduaneros</p>
-              </div>
-            </div>
-          </label>
-        </div>
-        {errors.tipoDenuncia && (
-          <p className="text-red-500 text-sm mt-2">{errors.tipoDenuncia}</p>
-        )}
-      </div>
-
       {/* Datos de ubicación */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -816,45 +834,108 @@ export const DenunciasForm: React.FC = () => {
   // Paso 2: Tipificación - Memoizado para evitar recreación que causa pérdida de foco
   const Tipificacion = useMemo(() => (
     <div className="space-y-6">
-      {/* Tipo de Infracción */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="form-label">Tipo de Infracción *</label>
-          <select
-            className={`form-input ${errors.tipoInfraccion ? 'border-red-500' : ''}`}
-            value={formData.tipoInfraccion}
-            onChange={(e) => handleInputChange('tipoInfraccion', e.target.value)}
-          >
-            <option value="">Seleccione tipo</option>
-            {tiposInfraccion.map(tipo => (
-              <option key={tipo.id} value={tipo.nombre}>{tipo.nombre}</option>
-            ))}
-          </select>
-          {errors.tipoInfraccion && <p className="text-red-500 text-sm mt-1">{errors.tipoInfraccion}</p>}
-        </div>
-        <div>
-          <label className="form-label">Norma Infringida</label>
-          <input
-            key="norma-infringida"
-            type="text"
-            className="form-input"
-            placeholder="Ej: Art. 174 Ordenanza de Aduanas"
-            value={formData.normaInfringida}
-            onChange={handleNormaInfringidaChange}
-          />
+      {/* Tipo de denuncia */}
+      <div className="card p-5 border-l-4 border-l-aduana-azul">
+        <h4 className="font-semibold text-gray-900 mb-4">Tipo de Denuncia *</h4>
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-4">
+            <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              formData.tipoDenuncia === 'Infraccional' 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-200 hover:border-gray-300'
+            }`}>
+              <input
+                type="radio"
+                name="tipoDenuncia"
+                value="Infraccional"
+                checked={formData.tipoDenuncia === 'Infraccional'}
+                onChange={(e) => handleInputChange('tipoDenuncia', e.target.value)}
+                disabled
+                className="sr-only"
+              />
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  formData.tipoDenuncia === 'Infraccional' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                }`}>
+                  <Icon name="FileText" size={20} />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Infraccional</p>
+                  <p className="text-sm text-gray-500">Multas y sanciones administrativas</p>
+                </div>
+              </div>
+            </label>
+            <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              formData.tipoDenuncia === 'Penal' 
+                ? 'border-red-500 bg-red-50' 
+                : 'border-gray-200 hover:border-gray-300'
+            }`}>
+              <input
+                type="radio"
+                name="tipoDenuncia"
+                value="Penal"
+                checked={formData.tipoDenuncia === 'Penal'}
+                onChange={(e) => handleInputChange('tipoDenuncia', e.target.value)}
+                disabled
+                className="sr-only"
+              />
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  formData.tipoDenuncia === 'Penal' ? 'bg-red-500 text-white' : 'bg-gray-200'
+                }`}>
+                  <Icon name="Scale" size={20} />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Penal</p>
+                  <p className="text-sm text-gray-500">Delitos aduaneros</p>
+                </div>
+              </div>
+            </label>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Badge variant={(formData.tipoDenuncia === 'Penal' ? 'error' : 'info') as BadgeVariant}>
+              {formData.tipoDenuncia || 'Pendiente'}
+            </Badge>
+            <span className="text-xs text-gray-500">
+              Se actualiza automáticamente al elegir el artículo en esta sección.
+            </span>
+          </div>
+          {errors.tipoDenuncia && (
+            <p className="text-red-500 text-sm">{errors.tipoDenuncia}</p>
+          )}
         </div>
       </div>
 
+      {/* Tipo de Infracción */}
       <div>
-        <label className="form-label">Fundamento Legal</label>
-        <input
-          key="fundamento-legal"
-          type="text"
-          className="form-input"
-          placeholder="Ej: Ley 18.483 Art. 168"
-          value={formData.fundamentoLegal}
-          onChange={handleFundamentoLegalChange}
+        <label className="form-label">Tipo de Infracción *</label>
+        <select
+          className={`form-input ${errors.tipoInfraccion ? 'border-red-500' : ''}`}
+          value={formData.tipoInfraccion}
+          onChange={(e) => handleInputChange('tipoInfraccion', e.target.value)}
+        >
+          <option value="">Seleccione tipo</option>
+          {tiposInfraccion.map(tipo => (
+            <option key={tipo.id} value={tipo.nombre}>{tipo.nombre}</option>
+          ))}
+        </select>
+        {errors.tipoInfraccion && <p className="text-red-500 text-sm mt-1">{errors.tipoInfraccion}</p>}
+      </div>
+
+      {/* Descripción de los hechos */}
+      <div>
+        <label className="form-label">Descripción de los Hechos *</label>
+        <textarea
+          key="descripcion-hechos-tipificacion"
+          className={`form-input min-h-[150px] ${errors.descripcionHechos ? 'border-red-500' : ''}`}
+          placeholder="Describa detalladamente los hechos que motivan la denuncia (mínimo 50 caracteres)..."
+          value={formData.descripcionHechos}
+          onChange={handleDescripcionHechosChange}
         />
+        <p className="text-xs text-gray-500 mt-1">
+          {formData.descripcionHechos.length} caracteres (mínimo 50)
+        </p>
+        {errors.descripcionHechos && <p className="text-red-500 text-sm mt-1">{errors.descripcionHechos}</p>}
       </div>
 
       {/* Sección Infraccional */}
@@ -884,14 +965,36 @@ export const DenunciasForm: React.FC = () => {
             </div>
             
             {articuloSeleccionado && (
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800 font-medium">{articuloSeleccionado.nombre}</p>
-                <p className="text-xs text-blue-600 mt-1">{articuloSeleccionado.descripcion}</p>
-                {articuloSeleccionado.multaMinima && (
-                  <p className="text-xs text-blue-700 mt-2">
-                    Multa: ${articuloSeleccionado.multaMinima?.toLocaleString('es-CL')} - ${articuloSeleccionado.multaMaxima?.toLocaleString('es-CL')}
-                  </p>
-                )}
+              <div className="grid grid-cols-1 gap-3">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800 font-medium">{articuloSeleccionado.nombre}</p>
+                  <p className="text-xs text-blue-600 mt-1">{articuloSeleccionado.descripcion}</p>
+                  {articuloSeleccionado.multaMinima && (
+                    <p className="text-xs text-blue-700 mt-2">
+                      Multa: ${articuloSeleccionado.multaMinima?.toLocaleString('es-CL')} - ${articuloSeleccionado.multaMaxima?.toLocaleString('es-CL')}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="form-label">Norma aplicable</label>
+                    <input
+                      type="text"
+                      className="form-input bg-gray-50"
+                      value={formData.normaInfringida}
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Fundamento</label>
+                    <input
+                      type="text"
+                      className="form-input bg-gray-50"
+                      value={formData.fundamentoLegal}
+                      readOnly
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1032,6 +1135,29 @@ export const DenunciasForm: React.FC = () => {
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
             />
           </div>
+
+          {formData.codigoArticulo && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="form-label">Norma aplicable</label>
+                <input
+                  type="text"
+                  className="form-input bg-gray-50"
+                  value={formData.normaInfringida}
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="form-label">Fundamento</label>
+                <input
+                  type="text"
+                  className="form-input bg-gray-50"
+                  value={formData.fundamentoLegal}
+                  readOnly
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1040,8 +1166,7 @@ export const DenunciasForm: React.FC = () => {
     errors,
     articuloSeleccionado,
     handleInputChange,
-    handleFundamentoLegalChange,
-    handleNormaInfringidaChange,
+    handleDescripcionHechosChange,
     handleMultaChange,
     handleMultaAllanamientoChange,
     handleMontoDerechosChange,
@@ -1413,17 +1538,9 @@ export const DenunciasForm: React.FC = () => {
 
         <div className="card p-5">
           <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Descripción de los Hechos *</h4>
-          <textarea
-            key="descripcion-hechos"
-            className={`form-input min-h-[150px] ${errors.descripcionHechos ? 'border-red-500' : ''}`}
-            placeholder="Describa detalladamente los hechos que motivan la denuncia (mínimo 50 caracteres)..."
-            value={formData.descripcionHechos}
-            onChange={handleDescripcionHechosChange}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            {formData.descripcionHechos.length} caracteres (mínimo 50)
+          <p className="text-gray-700 whitespace-pre-wrap">
+            {formData.descripcionHechos || 'Sin descripción registrada'}
           </p>
-          {errors.descripcionHechos && <p className="text-red-500 text-sm mt-1">{errors.descripcionHechos}</p>}
         </div>
 
         <div className="card p-5">

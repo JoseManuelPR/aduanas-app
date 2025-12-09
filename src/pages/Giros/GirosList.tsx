@@ -296,24 +296,20 @@ export const GirosList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Estadísticas - Reducidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="card p-3 border-l-4 border-l-aduana-azul">
-            <p className="text-xs text-gray-600">Total</p>
-            <p className="text-xl font-bold text-aduana-azul">{conteoGiros.total}</p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-amber-500">
-            <p className="text-xs text-gray-600">Pendientes</p>
-            <p className="text-xl font-bold text-amber-600">{conteoGiros.pendientes}</p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-emerald-500">
-            <p className="text-xs text-gray-600">Pagados</p>
-            <p className="text-xl font-bold text-emerald-600">{conteoGiros.pagados}</p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-red-500">
-            <p className="text-xs text-gray-600">Vencidos</p>
-            <p className="text-xl font-bold text-red-600">{conteoGiros.vencidos}</p>
-          </div>
+        {/* Estadísticas compactas */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
+            Total: <strong>{conteoGiros.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            Pendientes: <strong>{conteoGiros.pendientes}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Pagados: <strong>{conteoGiros.pagados}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            Vencidos: <strong>{conteoGiros.vencidos}</strong>
+          </span>
         </div>
 
         {/* Card principal */}

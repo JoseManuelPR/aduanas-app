@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
@@ -7,109 +8,52 @@ import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
 import {
+  cargos,
+  denuncias,
+  giros,
+  reclamos,
+  getAlertasCriticas,
+  getCargosPorVencer,
+  getDenunciasPorVencer,
+  getGirosPorVencer,
   getKPIDashboard,
   getTodasLasNotificaciones,
   usuarioActual,
 } from '../../data';
 
-// Datos mock para alertas y actividad
-const alertasYPlazos = [
-  {
-    id: '1',
-    tipo: 'vencimiento',
-    titulo: 'Plazo por vencer',
-    descripcion: 'Denuncia #2024-00123 vence en 6 horas',
-    tiempo: 'Vence hoy',
-    icono: 'Clock',
-    color: 'text-red-500',
-    bgColor: 'bg-red-100',
-  },
-  {
-    id: '2',
-    tipo: 'documento',
-    titulo: 'Documento pendiente',
-    descripcion: 'Cargo #2024-00456 requiere resolución',
-    tiempo: 'Hace 2 días',
-    icono: 'FileText',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-100',
-  },
-  {
-    id: '3',
-    tipo: 'reclamo',
-    titulo: 'Reclamo sin asignar',
-    descripcion: 'Reclamo TTA #2024-00789 sin revisor',
-    tiempo: 'Hace 5 horas',
-    icono: 'AlertTriangle',
-    color: 'text-red-500',
-    bgColor: 'bg-red-100',
-  },
-];
+type EstadoColor = 'success' | 'warning' | 'info' | 'error';
 
-const actividadReciente = [
-  {
-    id: '1',
-    accion: 'Denuncia creada',
-    referencia: '#2024-00890',
-    usuario: 'María González',
-    tiempo: 'Hace 15 min',
-    estado: 'Pendiente',
-    estadoColor: 'warning',
-  },
-  {
-    id: '2',
-    accion: 'Cargo aprobado',
-    referencia: '#2024-00888',
-    usuario: 'Carlos Ramírez',
-    tiempo: 'Hace 1 hora',
-    estado: 'Completado',
-    estadoColor: 'success',
-  },
-  {
-    id: '3',
-    accion: 'Reclamo en revisión',
-    referencia: '#2024-00885',
-    usuario: 'Ana Silva',
-    tiempo: 'Hace 2 horas',
-    estado: 'En proceso',
-    estadoColor: 'info',
-  },
-  {
-    id: '4',
-    accion: 'Documento adjuntado',
-    referencia: '#2024-00880',
-    usuario: 'Pedro Morales',
-    tiempo: 'Hace 3 horas',
-    estado: 'En proceso',
-    estadoColor: 'info',
-  },
-  {
-    id: '5',
-    accion: 'Giro emitido',
-    referencia: '#2024-00875',
-    usuario: 'Laura Torres',
-    tiempo: 'Hace 4 horas',
-    estado: 'Completado',
-    estadoColor: 'success',
-  },
-];
+const estadoColorMap: Record<string, EstadoColor> = {
+  Borrador: 'info',
+  Ingresada: 'info',
+  'En Revisión': 'warning',
+  Formulada: 'info',
+  Notificada: 'warning',
+  'En Proceso': 'warning',
+  Observada: 'error',
+  Cerrada: 'success',
+  Archivada: 'info',
+  'Pendiente Aprobación': 'warning',
+  'En Revisión Cargo': 'warning',
+  Emitido: 'info',
+  Aprobado: 'success',
+  Notificado: 'warning',
+  Cerrado: 'success',
+  Anulado: 'error',
+  Vencido: 'error',
+  Pagado: 'success',
+};
 
-const plazosCriticos = [
-  {
-    id: '1',
-    tipo: 'Denuncia',
-    numero: '#2024-00123',
-    tiempo: 'Vence en 6 horas',
-    horas: '6h',
-  },
-  {
-    id: '2',
-    tipo: 'Cargo',
-    numero: '#2024-00456',
-    tiempo: 'Vence en 18 horas',
-    horas: '18h',
-  },
-];
+const parseFecha = (fecha?: string): number => {
+  if (!fecha) return 0;
+  const parts = fecha.split('-');
+  if (parts.length === 3) {
+    const [dd, mm, yyyy] = parts;
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd)).getTime();
+  }
+  const parsed = Date.parse(fecha);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -117,6 +61,120 @@ export const Dashboard: React.FC = () => {
   // Obtener KPIs desde los datos centralizados
   const KPI_DASHBOARD = getKPIDashboard();
   const allNotifications = getTodasLasNotificaciones();
+
+  // Alertas y plazos críticos desde mock base
+  const alertasCriticas = useMemo(() => getAlertasCriticas(), []);
+  const alertasYPlazos = useMemo(() => {
+    const iconByTipo: Record<string, string> = {
+      critico: 'AlertTriangle',
+      vencido: 'Clock',
+      advertencia: 'AlertCircle',
+      informativo: 'Info',
+    };
+    const colorByTipo: Record<string, string> = {
+      critico: 'text-red-600',
+      vencido: 'text-red-600',
+      advertencia: 'text-amber-600',
+      informativo: 'text-sky-600',
+    };
+    const bgByTipo: Record<string, string> = {
+      critico: 'bg-red-100',
+      vencido: 'bg-red-100',
+      advertencia: 'bg-amber-100',
+      informativo: 'bg-sky-100',
+    };
+    return alertasCriticas.map((a) => ({
+      id: a.id,
+      titulo: a.titulo,
+      descripcion: a.descripcion,
+      tiempo: a.fechaVencimiento || '—',
+      icono: iconByTipo[a.tipo] || 'Info',
+      color: colorByTipo[a.tipo] || 'text-gray-600',
+      bgColor: bgByTipo[a.tipo] || 'bg-gray-100',
+    }));
+  }, [alertasCriticas]);
+
+  const actividadReciente = useMemo(() => {
+    const eventos = [
+      ...denuncias.map((d) => ({
+        id: `den-${d.numeroDenuncia}`,
+        accion: 'Denuncia creada',
+        referencia: d.numeroDenuncia,
+        usuario: d.usuarioCreacion || 'Sistema',
+        tiempo: d.fechaCreacion || d.fechaIngreso,
+        estado: d.estado,
+        estadoColor: estadoColorMap[d.estado] || 'info',
+        fecha: parseFecha(d.fechaCreacion || d.fechaIngreso),
+      })),
+      ...cargos.map((c) => ({
+        id: `car-${c.numeroCargo}`,
+        accion: 'Cargo registrado',
+        referencia: c.numeroCargo,
+        usuario: c.usuarioCreacion || 'Sistema',
+        tiempo: c.fechaCreacion || c.fechaIngreso,
+        estado: c.estado,
+        estadoColor: estadoColorMap[c.estado] || 'info',
+        fecha: parseFecha(c.fechaCreacion || c.fechaIngreso),
+      })),
+      ...giros.map((g) => ({
+        id: `gir-${g.numeroGiro}`,
+        accion: 'Giro emitido',
+        referencia: g.numeroGiro,
+        usuario: g.usuarioCreacion || 'Sistema',
+        tiempo: g.fechaCreacion || g.fechaEmision,
+        estado: g.estado,
+        estadoColor: estadoColorMap[g.estado] || 'info',
+        fecha: parseFecha(g.fechaCreacion || g.fechaEmision),
+      })),
+      ...reclamos.map((r) => ({
+        id: `rec-${r.numeroReclamo}`,
+        accion: 'Reclamo ingresado',
+        referencia: r.numeroReclamo,
+        usuario: r.usuarioCreacion || 'Sistema',
+        tiempo: r.fechaCreacion || r.fechaIngreso,
+        estado: r.estado,
+        estadoColor: estadoColorMap[r.estado] || 'info',
+        fecha: parseFecha(r.fechaCreacion || r.fechaIngreso),
+      })),
+    ];
+    return eventos
+      .sort((a, b) => b.fecha - a.fecha)
+      .slice(0, 5);
+  }, []);
+
+  const plazosCriticos = useMemo(() => {
+    const proximasDenuncias = getDenunciasPorVencer(1).map((d) => ({
+      id: `pd-${d.numeroDenuncia}`,
+      tipo: 'Denuncia',
+      numero: d.numeroDenuncia,
+      dias: d.diasVencimiento,
+    }));
+    const proximosCargos = getCargosPorVencer(1).map((c) => ({
+      id: `pc-${c.numeroCargo}`,
+      tipo: 'Cargo',
+      numero: c.numeroCargo,
+      dias: c.diasVencimiento,
+    }));
+    const proximosGiros = getGirosPorVencer(1).map((g) => ({
+      id: `pg-${g.numeroGiro}`,
+      tipo: 'Giro',
+      numero: g.numeroGiro,
+      dias: g.diasVencimiento ?? 0,
+    }));
+
+    const formatTiempo = (dias: number) => {
+      if (dias < 0) return `Vencido hace ${Math.abs(dias)}d`;
+      if (dias === 0) return 'Vence hoy';
+      if (dias === 1) return 'Vence en 1 día';
+      return `Vence en ${dias} días`;
+    };
+
+    return [...proximasDenuncias, ...proximosCargos, ...proximosGiros].map((p) => ({
+      ...p,
+      tiempo: formatTiempo(p.dias),
+      horas: p.dias === 0 ? 'hoy' : `${p.dias}d`,
+    }));
+  }, []);
 
   // Calcular totales para las cards
   const denunciasActivas = KPI_DASHBOARD.denuncias.pendientes + KPI_DASHBOARD.denuncias.enProceso;
@@ -224,7 +282,7 @@ export const Dashboard: React.FC = () => {
           <div className="card">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Alertas y Plazos</h3>
-              <Badge variant="error">{alertasYPlazos.length} urgentes</Badge>
+            <Badge variant="error">{alertasYPlazos.length} urgentes</Badge>
             </div>
             <div className="divide-y divide-gray-100">
               {alertasYPlazos.map((alerta) => (

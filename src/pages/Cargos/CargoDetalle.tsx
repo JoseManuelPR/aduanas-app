@@ -266,47 +266,6 @@ export const CargoDetalle: React.FC = () => {
           </div>
         </div>
         
-        {/* Card resumen Total */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="card p-4 border-l-4 border-l-aduana-azul bg-gradient-to-r from-blue-50 to-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Cargo</p>
-                <p className="text-2xl font-bold text-aduana-azul">{formatMonto(totalCuentas)}</p>
-              </div>
-              <div className="p-3 bg-aduana-azul/10 rounded-full">
-                <Icon name="DollarSign" size={24} className="text-aduana-azul" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="card p-4 border-l-4 border-l-emerald-500">
-            <p className="text-sm text-gray-600">Derechos</p>
-            <p className="text-xl font-bold text-emerald-600">{formatMonto(cargo.montoDerechos || 0)}</p>
-          </div>
-          
-          <div className="card p-4 border-l-4 border-l-amber-500">
-            <p className="text-sm text-gray-600">Multas</p>
-            <p className="text-xl font-bold text-amber-600">{formatMonto(cargo.montoMulta || 0)}</p>
-          </div>
-          
-          <div className="card p-4 border-l-4 border-l-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Plazo</p>
-                <Badge variant={getDiasVencimientoBadgeVariant(cargo.diasVencimiento)} pulse={cargo.diasVencimiento < 0}>
-                  {cargo.diasVencimiento < 0 
-                    ? `${Math.abs(cargo.diasVencimiento)} días vencido` 
-                    : cargo.diasVencimiento === 0 
-                      ? 'Vence hoy' 
-                      : `${cargo.diasVencimiento} días`}
-                </Badge>
-              </div>
-              <Icon name="Calendar" size={20} className="text-purple-500" />
-            </div>
-          </div>
-        </div>
-        
         {/* Alertas de validación */}
         {permisos?.puedeEmitir && !validacionEmision.valido && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">

@@ -315,26 +315,6 @@ export const ExpedienteDigital: React.FC = () => {
       }}
     >
       <div className="min-h-full space-y-4 animate-fade-in">
-        {/* Búsqueda por N° de Denuncia */}
-        <div className="card p-4 bg-gray-50">
-          <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Consultar por N° de Denuncia:</label>
-            <div className="flex gap-2 flex-1 max-w-md">
-              <input
-                type="text"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-                placeholder="Ej: 993519"
-                value={numeroDenunciaBusqueda}
-                onChange={(e) => setNumeroDenunciaBusqueda(e.target.value)}
-              />
-              <CustomButton variant="primary" className="flex items-center gap-2">
-                <Icon name="Search" size={16} />
-                Buscar
-              </CustomButton>
-            </div>
-          </div>
-        </div>
-
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex items-start gap-3">

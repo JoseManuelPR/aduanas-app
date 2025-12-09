@@ -2,6 +2,8 @@ import { Icon } from "he-button-custom-library";
 import { Badge, getEstadoBadgeVariant } from "../../../components/UI";
 import type { BadgeVariant } from "../../../components/UI";
 import type { Denuncia, Articulo, PermisosEstado } from '../../../data/types';
+import { useNavigate } from "react-router-dom";
+import { ERoutePaths } from "../../../routes/routes";
 
 interface DenunciaResumenProps {
   denuncia: Denuncia;
@@ -14,6 +16,7 @@ export const DenunciaResumen: React.FC<DenunciaResumenProps> = ({
   articulo,
   permisos: _permisos,
 }) => {
+  const navigate = useNavigate();
   void _permisos; // Mark as intentionally unused
   return (
     <div className="space-y-6">
@@ -257,7 +260,10 @@ export const DenunciaResumen: React.FC<DenunciaResumenProps> = ({
           </h4>
           <p className="text-gray-700">{denuncia.mercanciaDescripcion}</p>
           {denuncia.mercanciaId && (
-            <button className="mt-3 text-aduana-azul hover:underline text-sm flex items-center gap-1">
+            <button
+              className="mt-3 text-aduana-azul hover:underline text-sm flex items-center gap-1"
+              onClick={() => navigate(ERoutePaths.MERCANCIAS_DETALLE.replace(':id', denuncia.mercanciaId!))}
+            >
               <Icon name="ExternalLink" size={14} />
               Ver detalle de mercancía
             </button>

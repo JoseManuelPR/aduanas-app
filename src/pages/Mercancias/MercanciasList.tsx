@@ -39,6 +39,11 @@ export const MercanciasList: React.FC = () => {
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroDenunciaAsociada, setFiltroDenunciaAsociada] = useState('');
 
+  const tiposMercancia = useMemo(() => {
+    const tipos = mercancias.map((m) => m.descripcion.split(' - ')[0] || m.descripcion);
+    return Array.from(new Set(tipos));
+  }, []);
+
   // Obtener conteos desde datos centralizados
   const conteoMercancias = getConteoMercancias();
   const allNotifications = getTodasLasNotificaciones();
@@ -218,24 +223,20 @@ export const MercanciasList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Estadísticas - Reducidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="card p-3 border-l-4 border-l-aduana-azul">
-            <p className="text-xs text-gray-600">Total</p>
-            <p className="text-xl font-bold text-aduana-azul">{conteoMercancias.total}</p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-amber-500">
-            <p className="text-xs text-gray-600">En Custodia</p>
-            <p className="text-xl font-bold text-amber-600">{conteoMercancias.porEstado.enCustodia}</p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-red-500">
-            <p className="text-xs text-gray-600">Comisadas</p>
-            <p className="text-xl font-bold text-red-600">{conteoMercancias.porEstado.comisada}</p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-emerald-500">
-            <p className="text-xs text-gray-600">Con Alerta</p>
-            <p className="text-xl font-bold text-emerald-600">{conteoMercancias.conAlerta}</p>
-          </div>
+        {/* Estadísticas compactas */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
+            Total: <strong>{conteoMercancias.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            En custodia: <strong>{conteoMercancias.porEstado.enCustodia}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            Comisadas: <strong>{conteoMercancias.porEstado.comisada}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Con alerta: <strong>{conteoMercancias.conAlerta}</strong>
+          </span>
         </div>
 
         {/* Alertas */}
@@ -268,14 +269,19 @@ export const MercanciasList: React.FC = () => {
 
           {/* Filtros - Por tipo de mercancía, estado, denuncia asociada */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
-            <InputField
-              label="Tipo de Mercancía"
-              id="tipoMercancia"
-              type="text"
-              placeholder="Buscar por tipo..."
-              value={filtroTipoMercancia}
-              onChange={(e) => setFiltroTipoMercancia(e.target.value)}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Mercancía</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                value={filtroTipoMercancia}
+                onChange={(e) => setFiltroTipoMercancia(e.target.value)}
+              >
+                <option value="">Todos los tipos</option>
+                {tiposMercancia.map((tipo) => (
+                  <option key={tipo} value={tipo}>{tipo}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
               <select 

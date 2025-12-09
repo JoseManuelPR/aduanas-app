@@ -168,9 +168,14 @@ export const DenunciasList: React.FC = () => {
       key: 'mercanciaAfecta' as const,
       label: '',
       render: (row: Denuncia) => row.mercanciaAfecta ? (
-        <span title="Mercancía Afecta">
-          <Icon name="Package" size={16} className="text-amber-500" />
-        </span>
+        <button
+          title="Ver mercancía asociada"
+          onClick={() => row.mercanciaId && navigate(ERoutePaths.MERCANCIAS_DETALLE.replace(':id', row.mercanciaId))}
+          className="text-amber-600 hover:text-amber-700"
+          disabled={!row.mercanciaId}
+        >
+          <Icon name="Package" size={16} className="inline" />
+        </button>
       ) : null
     },
   ];
