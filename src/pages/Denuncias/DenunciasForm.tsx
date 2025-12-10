@@ -5,7 +5,7 @@ import CONSTANTS_APP from "../../constants/sidebar-menu";
 import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
-import { Badge, useToast } from "../../components/UI";
+import { Badge, Stepper, useToast } from "../../components/UI";
 import type { BadgeVariant } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
@@ -609,44 +609,12 @@ export const DenunciasForm: React.FC = () => {
     }
   };
 
-  const StepIndicator = () => (
-    <div className="flex items-center justify-center mb-6">
-      {[1, 2, 3, 4, 5].map((step) => (
-        <div key={step} className="flex items-center">
-          <div
-            className={`
-              w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
-              ${currentStep === step 
-                ? 'bg-aduana-azul text-white' 
-                : currentStep > step 
-                  ? 'bg-emerald-500 text-white' 
-                  : 'bg-gray-200 text-gray-500'}
-            `}
-          >
-            {currentStep > step ? (
-              <Icon name="Check" size={18} />
-            ) : (
-              step
-            )}
-          </div>
-          {step < totalSteps && (
-            <div
-              className={`w-12 h-1 mx-2 rounded ${
-                currentStep > step ? 'bg-emerald-500' : 'bg-gray-200'
-              }`}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-
-  const stepLabels = [
-    'Datos Generales',
-    'Tipificación',
-    'Involucrados',
-    'Documentos',
-    'Revisión'
+  const steps = [
+    { id: 1, label: 'Datos Generales', icon: <Icon name="FileText" size={16} /> },
+    { id: 2, label: 'Tipificación', icon: <Icon name="Scale" size={16} /> },
+    { id: 3, label: 'Involucrados', icon: <Icon name="Users" size={16} /> },
+    { id: 4, label: 'Documentos', icon: <Icon name="FileText" size={16} /> },
+    { id: 5, label: 'Revisión', icon: <Icon name="CheckCircle" size={16} /> },
   ];
 
   // Banner de hallazgo origen
@@ -1715,28 +1683,13 @@ export const DenunciasForm: React.FC = () => {
         {isDesdeHallazgo && <HallazgoBanner />}
 
         <div className="card p-6">
-          {/* Step Indicator */}
-          <StepIndicator />
-          
-          {/* Step Labels */}
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-6 text-sm">
-              {stepLabels.map((label, index) => (
-                <span
-                  key={index}
-                  className={`
-                    ${currentStep === index + 1 
-                      ? 'text-aduana-azul font-semibold' 
-                      : currentStep > index + 1 
-                        ? 'text-emerald-600' 
-                        : 'text-gray-400'}
-                  `}
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
+          <Stepper
+            steps={steps}
+            activeStep={currentStep}
+            onStepChange={(stepId) => setCurrentStep(Number(stepId))}
+            showDescription={false}
+            className="mb-8"
+          />
 
           {/* Content */}
           <div className="min-h-[400px]">

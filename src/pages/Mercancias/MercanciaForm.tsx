@@ -7,7 +7,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from 'he-button-custom-library';
 import CONSTANTS_APP from "../../constants/sidebar-menu";
 import CustomLayout from "../../Layout/Layout";
-import { Badge } from '../../components/UI';
+import { Badge, Stepper } from '../../components/UI';
 import {
   getMercanciaPorId,
   crearMercancia,
@@ -18,6 +18,7 @@ import {
   type EstadoMercancia,
 } from '../../data';
 import { ERoutePaths } from '../../routes/routes';
+import { CustomButton } from '../../components/Button/Button';
 
 const estadosIniciales: EstadoMercancia[] = ['En Custodia', 'Retenida', 'Pendiente Disposición'];
 
@@ -104,11 +105,11 @@ const MercanciaForm: React.FC = () => {
     }
   };
   
-  const steps: { number: number; title: string; icon: "Package" | "Scale" | "DollarSign" | "Check" }[] = [
-    { number: 1, title: 'Descripción', icon: 'Package' },
-    { number: 2, title: 'Cantidades', icon: 'Scale' },
-    { number: 3, title: 'Valores', icon: 'DollarSign' },
-    { number: 4, title: 'Revisión', icon: 'Check' },
+  const steps = [
+    { id: 1, label: 'Descripción', icon: <Icon name="Package" size={16} /> },
+    { id: 2, label: 'Cantidades', icon: <Icon name="Scale" size={16} /> },
+    { id: 3, label: 'Valores', icon: <Icon name="DollarSign" size={16} /> },
+    { id: 4, label: 'Revisión', icon: <Icon name="Check" size={16} /> },
   ];
 
   return (
@@ -147,47 +148,22 @@ const MercanciaForm: React.FC = () => {
         </div>
         
         {/* Steps Indicator */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 -mx-6">
-          <div className="flex items-center justify-center">
-            {steps.map((step, index) => (
-              <React.Fragment key={step.number}>
-                <div 
-                  className={`flex items-center gap-2 cursor-pointer ${
-                    currentStep === step.number 
-                      ? 'text-aduana-azul' 
-                      : currentStep > step.number 
-                        ? 'text-emerald-600' 
-                        : 'text-gray-400'
-                  }`}
-                  onClick={() => currentStep > step.number && setCurrentStep(step.number)}
-                >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                    currentStep === step.number 
-                      ? 'border-aduana-azul bg-aduana-azul text-white' 
-                      : currentStep > step.number 
-                        ? 'border-emerald-600 bg-emerald-600 text-white' 
-                        : 'border-gray-300'
-                  }`}>
-                    {currentStep > step.number ? (
-                      <Icon name="Check" size={20} />
-                    ) : (
-                      <Icon name={step.icon} size={20} />
-                    )}
-                  </div>
-                  <span className="font-medium hidden md:inline">{step.title}</span>
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={`w-16 md:w-24 h-0.5 mx-2 ${
-                    currentStep > step.number ? 'bg-emerald-600' : 'bg-gray-300'
-                  }`} />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+        <div className="card p-4">
+          <Stepper
+            steps={steps}
+            activeStep={currentStep}
+            onStepChange={(stepId) => {
+              const target = Number(stepId);
+              if (target <= currentStep) {
+                setCurrentStep(target);
+              }
+            }}
+            showDescription={false}
+          />
         </div>
         
         {/* Form Content */}
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="card p-6">
           {/* Step 1: Descripción */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -483,33 +459,42 @@ const MercanciaForm: React.FC = () => {
         </div>
         
         {/* Footer Actions */}
-        <div className="max-w-4xl mx-auto flex justify-between py-4">
-          <button
-            onClick={currentStep === 1 ? () => navigate(ERoutePaths.MERCANCIAS) : handleBack}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+        <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+          <CustomButton
+            variant="secondary"
+            onClick={() => currentStep === 1 ? navigate(ERoutePaths.MERCANCIAS) : handleBack()}
+            className="flex items-center gap-2"
           >
-            <Icon name="ArrowLeft" size={18} />
+            <Icon name="ChevronLeft" size={16} />
             {currentStep === 1 ? 'Cancelar' : 'Anterior'}
-          </button>
-          
-          {currentStep < 4 ? (
-            <button
-              onClick={handleNext}
-              className="px-6 py-2 bg-aduana-azul text-white rounded-lg hover:bg-aduana-azul-dark flex items-center gap-2"
-            >
-              Siguiente
-              <Icon name="ArrowRight" size={18} />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSaving}
-              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
-            >
-              <Icon name={isSaving ? 'Loader' : 'Check'} size={18} className={isSaving ? 'animate-spin' : ''} />
-              Crear Mercancía
-            </button>
-          )}
+          </CustomButton>
+
+          <div className="flex gap-3">
+            <CustomButton variant="secondary">
+              Guardar Borrador
+            </CustomButton>
+
+            {currentStep < 4 ? (
+              <CustomButton
+                variant="primary"
+                onClick={handleNext}
+                className="flex items-center gap-2"
+              >
+                Siguiente
+                <Icon name="ChevronRight" size={16} />
+              </CustomButton>
+            ) : (
+              <CustomButton
+                variant="primary"
+                onClick={handleSubmit}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                disabled={isSaving}
+              >
+                <Icon name={isSaving ? 'Loader' : 'Send'} size={16} className={isSaving ? 'animate-spin' : ''} />
+                Crear Mercancía
+              </CustomButton>
+            )}
+          </div>
         </div>
       </div>
     </CustomLayout>

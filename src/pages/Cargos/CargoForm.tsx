@@ -10,7 +10,7 @@ import CONSTANTS_APP from '../../constants/sidebar-menu';
 import CustomLayout from '../../Layout/Layout';
 import { CustomButton } from '../../components/Button/Button';
 import InputField from '../../organisms/InputField/InputField';
-import { Badge } from '../../components/UI';
+import { Badge, Stepper } from '../../components/UI';
 import { ERoutePaths } from '../../routes/routes';
 
 // Datos centralizados
@@ -435,11 +435,11 @@ export const CargoForm: React.FC = () => {
   
   // Steps
   const steps = [
-    { id: 0, label: 'Datos Generales', icon: 'FileText' },
-    { id: 1, label: 'Tipificación', icon: 'Scale' },
-    { id: 2, label: 'Cuentas', icon: 'Calculator' },
-    { id: 3, label: 'Infractores', icon: 'Users' },
-    { id: 4, label: 'Revisión', icon: 'CheckCircle' },
+    { id: 0, label: 'Datos Generales', icon: <Icon name="FileText" size={16} /> },
+    { id: 1, label: 'Tipificación', icon: <Icon name="Scale" size={16} /> },
+    { id: 2, label: 'Cuentas', icon: <Icon name="Calculator" size={16} /> },
+    { id: 3, label: 'Infractores', icon: <Icon name="Users" size={16} /> },
+    { id: 4, label: 'Revisión', icon: <Icon name="CheckCircle" size={16} /> },
   ];
   
   return (
@@ -498,38 +498,11 @@ export const CargoForm: React.FC = () => {
         
         {/* Stepper */}
         <div className="card p-4">
-          <div className="flex items-center justify-between">
-            {steps.map((step, idx) => (
-              <React.Fragment key={step.id}>
-                <button
-                  onClick={() => setActiveStep(step.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    activeStep === step.id
-                      ? 'bg-aduana-azul text-white'
-                      : activeStep > step.id
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    activeStep === step.id
-                      ? 'bg-white text-aduana-azul'
-                      : activeStep > step.id
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-gray-300 text-gray-600'
-                  }`}>
-                    {activeStep > step.id ? <Icon name="Check" size={14} /> : step.id + 1}
-                  </div>
-                  <span className="hidden md:inline text-sm font-medium">{step.label}</span>
-                </button>
-                {idx < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-2 ${
-                    activeStep > idx ? 'bg-emerald-500' : 'bg-gray-200'
-                  }`} />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+          <Stepper
+            steps={steps}
+            activeStep={activeStep}
+            onStepChange={(stepId) => setActiveStep(Number(stepId))}
+          />
         </div>
         
         {/* Contenido del step */}

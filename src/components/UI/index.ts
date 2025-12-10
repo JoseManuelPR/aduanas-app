@@ -9,4 +9,6 @@ export { Timeline } from './Timeline';
 export { ToastProvider, useToast, toast } from './Toast';
 export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
+export { Stepper } from './Stepper';
+export type { StepperStep, StepStatus } from './Stepper';
 
