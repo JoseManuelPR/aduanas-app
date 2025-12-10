@@ -14,6 +14,11 @@ import {
   type Involucrado,
   type TipoInvolucrado,
 } from '../../data';
+import {
+  TIPOS_IDENTIFICACION_DTTA,
+  getPlaceholderPorTipoId,
+  type TipoIdentificacionDTTA,
+} from '../../constants/tipos-identificacion';
 
 interface SidePanelInvolucradoProps {
   isOpen: boolean;
@@ -42,7 +47,9 @@ export const SidePanelInvolucrado: React.FC<SidePanelInvolucradoProps> = ({
   mode = 'select',
   tipoInvolucradoDefault = 'Infractor Principal',
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [tipoIdBusqueda, setTipoIdBusqueda] = useState<TipoIdentificacionDTTA | ''>('');
+  const [numeroIdBusqueda, setNumeroIdBusqueda] = useState('');
+  const [textoLibre, setTextoLibre] = useState('');
   const [selectedInvolucrado, setSelectedInvolucrado] = useState<Involucrado | null>(() => {
     if (selectedId) return getInvolucradoPorId(selectedId) || null;
     return null;
@@ -53,9 +60,21 @@ export const SidePanelInvolucrado: React.FC<SidePanelInvolucradoProps> = ({
   // Filtrar involucrados activos
   const involucradosFiltrados = useMemo(() => {
     const activos = involucrados.filter(i => i.estado === 'Activo');
-    if (!searchTerm.trim()) return activos;
-    return buscarInvolucrados(searchTerm).filter(i => i.estado === 'Activo');
-  }, [searchTerm]);
+    const base = textoLibre.trim()
+      ? buscarInvolucrados(textoLibre).filter(i => i.estado === 'Activo')
+      : activos;
+
+    const normalizarId = (valor: string) => valor.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+
+    return base.filter(i => {
+      if (tipoIdBusqueda && i.tipoIdentificacion !== tipoIdBusqueda) return false;
+      if (tipoIdBusqueda && numeroIdBusqueda) {
+        const idInv = normalizarId(`${i.numeroIdentificacion}${i.digitoVerificador || ''}`);
+        if (!idInv.includes(normalizarId(numeroIdBusqueda))) return false;
+      }
+      return true;
+    });
+  }, [textoLibre, tipoIdBusqueda, numeroIdBusqueda]);
 
   const handleSelect = (inv: Involucrado) => {
     setSelectedInvolucrado(inv);
@@ -118,15 +137,48 @@ export const SidePanelInvolucrado: React.FC<SidePanelInvolucradoProps> = ({
             // Lista de involucrados
             <div className="p-4 space-y-4">
               {/* Búsqueda */}
-              <div className="relative">
-                <Icon name="Search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por RUT, nombre o email..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
-                />
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Documento de identidad</label>
+                  <div className="flex gap-2">
+                    <select
+                      className="w-1/3 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                      value={tipoIdBusqueda}
+                      onChange={(e) => {
+                        const valor = e.target.value as TipoIdentificacionDTTA | '';
+                        setTipoIdBusqueda(valor);
+                        if (!valor) setNumeroIdBusqueda('');
+                      }}
+                    >
+                      <option value="">Tipo ID</option>
+                      {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
+                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
+                      placeholder={getPlaceholderPorTipoId(tipoIdBusqueda)}
+                      disabled={!tipoIdBusqueda}
+                      value={numeroIdBusqueda}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNumeroIdBusqueda(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selecciona el tipo de documento y luego ingresa el número.
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <Icon name="Search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={textoLibre}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setTextoLibre(e.target.value)}
+                    placeholder="Buscar por nombre o email..."
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
               </div>
               
               {/* Lista */}

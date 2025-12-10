@@ -21,15 +21,11 @@ import {
   tiposInfraccion,
   type Denuncia,
 } from '../../data';
-
-// Tipos de ID disponibles
-const tiposIdentificador = [
-  { value: 'RUT', label: 'RUT' },
-  { value: 'PASAPORTE', label: 'Pasaporte' },
-  { value: 'DNI', label: 'DNI' },
-  { value: 'RUC', label: 'RUC' },
-  { value: 'OTRO', label: 'Otro' },
-];
+import {
+  TIPOS_IDENTIFICACION_DTTA,
+  getPlaceholderPorTipoId,
+  type TipoIdentificacionDTTA,
+} from '../../constants/tipos-identificacion';
 
 // Tipos de filtros
 interface FiltrosDenuncia {
@@ -39,7 +35,7 @@ interface FiltrosDenuncia {
   estado: string;
   aduana: string;
   tipoInfraccion: string;
-  tipoIdInfractor: string;
+  tipoIdInfractor: TipoIdentificacionDTTA | '';
   numeroIdInfractor: string;
   fechaDesde: string;
   fechaHasta: string;
@@ -84,8 +80,9 @@ export const DenunciasList: React.FC = () => {
       if (filtros.estado && d.estado !== filtros.estado) return false;
       if (filtros.aduana && d.aduana !== filtros.aduana) return false;
       if (filtros.tipoInfraccion && d.tipoInfraccion !== filtros.tipoInfraccion) return false;
-      // Filtro por ID del infractor (busca en RUT por compatibilidad)
-      if (filtros.numeroIdInfractor && !d.rutDeudor.includes(filtros.numeroIdInfractor)) return false;
+      // Filtro por ID del infractor (se exige tipo de ID antes de aplicar)
+      const aplicaFiltroId = Boolean(filtros.tipoIdInfractor && filtros.numeroIdInfractor);
+      if (aplicaFiltroId && !d.rutDeudor.includes(filtros.numeroIdInfractor)) return false;
       if (filtros.mercanciaAfecta === 'si' && !d.mercanciaAfecta) return false;
       if (filtros.mercanciaAfecta === 'no' && d.mercanciaAfecta) return false;
       return true;
@@ -94,6 +91,15 @@ export const DenunciasList: React.FC = () => {
 
   const handleFiltroChange = (campo: keyof FiltrosDenuncia, valor: string) => {
     setFiltros(prev => ({ ...prev, [campo]: valor }));
+  };
+
+  const handleTipoIdChange = (valor: TipoIdentificacionDTTA | '') => {
+    setFiltros(prev => ({
+      ...prev,
+      tipoIdInfractor: valor,
+      // Si se borra el tipo, vaciar el número para evitar búsquedas inconsistentes
+      numeroIdInfractor: valor ? prev.numeroIdInfractor : '',
+    }));
   };
 
   const limpiarFiltros = () => {
@@ -346,21 +352,25 @@ export const DenunciasList: React.FC = () => {
                   <select
                     className="form-input w-1/3"
                     value={filtros.tipoIdInfractor}
-                    onChange={(e) => handleFiltroChange('tipoIdInfractor', e.target.value)}
+                    onChange={(e) => handleTipoIdChange(e.target.value as TipoIdentificacionDTTA | '')}
                   >
                     <option value="">Tipo ID</option>
-                    {tiposIdentificador.map(tipo => (
+                    {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
                       <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
                     ))}
                   </select>
                   <input
                     type="text"
-                    className="form-input flex-1"
-                    placeholder="Número de ID"
+                    className="form-input flex-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                    placeholder={getPlaceholderPorTipoId(filtros.tipoIdInfractor)}
+                    disabled={!filtros.tipoIdInfractor}
                     value={filtros.numeroIdInfractor}
                     onChange={(e) => handleFiltroChange('numeroIdInfractor', e.target.value)}
                   />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Primero selecciona el tipo de documento y luego ingresa el número.
+                </p>
               </div>
               <div>
                 <label className="block font-medium text-sm text-gray-700 mb-1">Tipo Infracción</label>

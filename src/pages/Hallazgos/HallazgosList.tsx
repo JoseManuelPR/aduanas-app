@@ -8,6 +8,11 @@ import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
 import { Badge, getDiasVencimientoBadgeVariant } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
+import {
+  TIPOS_IDENTIFICACION_DTTA,
+  getPlaceholderPorTipoId,
+  type TipoIdentificacionDTTA,
+} from '../../constants/tipos-identificacion';
 
 // Datos centralizados
 import {
@@ -42,6 +47,8 @@ const getEstadoHallazgoBadgeVariant = (estado: EstadoHallazgo): "default" | "suc
 export const HallazgosList: React.FC = () => {
   const navigate = useNavigate();
   const [selectedRows] = useState<string[]>([]);
+  const [tipoIdInvolucrado, setTipoIdInvolucrado] = useState<TipoIdentificacionDTTA | ''>('');
+  const [numeroIdInvolucrado, setNumeroIdInvolucrado] = useState('');
 
   // Obtener conteos desde datos centralizados
   const conteoHallazgos = getConteoHallazgos();
@@ -129,14 +136,13 @@ export const HallazgosList: React.FC = () => {
     },
   ];
 
-  // Filtros de hallazgos
-  const filtrosHallazgos = [
+  // Filtros de hallazgos (sin ID, que se maneja aparte para exigir tipo de documento)
+  const filtrosHallazgosBasicos = [
     { id: "numeroHallazgo", label: "N° Hallazgo", type: "text" as const, placeholder: "PFI-XXX", labelClassName: "text-xs font-medium text-gray-700" },
     { id: "fechaDesde", label: "Fecha Desde", type: "date" as const, labelClassName: "text-xs font-medium text-gray-700", icon: "CalendarDays" },
     { id: "fechaHasta", label: "Fecha Hasta", type: "date" as const, labelClassName: "text-xs font-medium text-gray-700", icon: "CalendarDays" },
     { id: "estado", label: "Estado", type: "text" as const, placeholder: "Todos los estados", labelClassName: "text-xs font-medium text-gray-700" },
     { id: "tipoHallazgo", label: "Tipo", type: "text" as const, placeholder: "Todos los tipos", labelClassName: "text-xs font-medium text-gray-700" },
-    { id: "rutInvolucrado", label: "RUT Involucrado", type: "text" as const, placeholder: "12.345.678-9", labelClassName: "text-xs font-medium text-gray-700" },
   ];
 
   return (
@@ -236,7 +242,7 @@ export const HallazgosList: React.FC = () => {
 
           {/* Filtros */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
-            {filtrosHallazgos.map((filter) => (
+          {filtrosHallazgosBasicos.map((filter) => (
               <InputField
                 key={filter.id}
                 label={filter.label}
@@ -247,6 +253,36 @@ export const HallazgosList: React.FC = () => {
                 icon={filter.icon === "CalendarDays" ? <Icon name="CalendarDays" size={18} color="#6B7280" /> : undefined}
               />
             ))}
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">ID del Involucrado</label>
+            <div className="flex gap-2">
+              <select
+                className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul text-sm"
+                value={tipoIdInvolucrado}
+                onChange={(e) => {
+                  const valor = e.target.value as TipoIdentificacionDTTA | '';
+                  setTipoIdInvolucrado(valor);
+                  if (!valor) setNumeroIdInvolucrado('');
+                }}
+              >
+                <option value="">Tipo ID</option>
+                {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
+                  <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                placeholder={getPlaceholderPorTipoId(tipoIdInvolucrado)}
+                disabled={!tipoIdInvolucrado}
+                value={numeroIdInvolucrado}
+                onChange={(e) => setNumeroIdInvolucrado(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Selecciona el tipo de documento antes de ingresar el número.
+            </p>
+          </div>
           </div>
 
           {/* Acciones */}

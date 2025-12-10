@@ -26,23 +26,19 @@ import {
   type EstadoCargo,
   type OrigenCargo,
 } from '../../data';
+import {
+  TIPOS_IDENTIFICACION_DTTA,
+  getPlaceholderPorTipoId,
+  type TipoIdentificacionDTTA,
+} from '../../constants/tipos-identificacion';
 
 export const CargosList: React.FC = () => {
   const navigate = useNavigate();
 
-  // Tipos de identificador disponibles
-  const tiposIdentificador = [
-    { value: 'RUT', label: 'RUT' },
-    { value: 'PASAPORTE', label: 'Pasaporte' },
-    { value: 'DNI', label: 'DNI' },
-    { value: 'RUC', label: 'RUC' },
-    { value: 'OTRO', label: 'Otro' },
-  ];
-
   // Estados de filtros
   const [filtros, setFiltros] = useState({
     numeroCargo: '',
-    tipoIdDeudor: '',
+    tipoIdDeudor: '' as TipoIdentificacionDTTA | '',
     numeroIdDeudor: '',
     estado: '' as EstadoCargo | '',
     aduana: '',
@@ -63,8 +59,9 @@ export const CargosList: React.FC = () => {
       if (filtros.numeroCargo && !cargo.numeroCargo.toLowerCase().includes(filtros.numeroCargo.toLowerCase())) {
         return false;
       }
-      // Filtro por ID del deudor (busca en RUT por compatibilidad)
-      if (filtros.numeroIdDeudor && !cargo.rutDeudor.includes(filtros.numeroIdDeudor)) {
+      // Filtro por ID del deudor: se exige seleccionar tipo antes de ingresar número
+      const aplicaFiltroId = Boolean(filtros.tipoIdDeudor && filtros.numeroIdDeudor);
+      if (aplicaFiltroId && !cargo.rutDeudor.includes(filtros.numeroIdDeudor)) {
         return false;
       }
       if (filtros.estado && cargo.estado !== filtros.estado) {
@@ -91,6 +88,14 @@ export const CargosList: React.FC = () => {
 
   const handleFiltroChange = (campo: string, valor: string) => {
     setFiltros(prev => ({ ...prev, [campo]: valor }));
+  };
+
+  const handleTipoIdChange = (valor: TipoIdentificacionDTTA | '') => {
+    setFiltros(prev => ({
+      ...prev,
+      tipoIdDeudor: valor,
+      numeroIdDeudor: valor ? prev.numeroIdDeudor : '',
+    }));
   };
 
   const limpiarFiltros = () => {
@@ -316,21 +321,25 @@ export const CargosList: React.FC = () => {
                 <select
                   className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
                   value={filtros.tipoIdDeudor}
-                  onChange={(e) => handleFiltroChange('tipoIdDeudor', e.target.value)}
+                  onChange={(e) => handleTipoIdChange(e.target.value as TipoIdentificacionDTTA | '')}
                 >
                   <option value="">Tipo ID</option>
-                  {tiposIdentificador.map(tipo => (
+                  {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
                     <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
                   ))}
                 </select>
                 <input
                   type="text"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-                  placeholder="Número de ID"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul disabled:opacity-60 disabled:cursor-not-allowed"
+                  placeholder={getPlaceholderPorTipoId(filtros.tipoIdDeudor)}
+                  disabled={!filtros.tipoIdDeudor}
                   value={filtros.numeroIdDeudor}
                   onChange={(e) => handleFiltroChange('numeroIdDeudor', e.target.value)}
                 />
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Selecciona el tipo de documento antes de escribir el número.
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>

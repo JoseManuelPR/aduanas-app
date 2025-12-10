@@ -12,6 +12,11 @@ import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
 import { Badge, StatCard } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
+import {
+  TIPOS_IDENTIFICACION_DTTA,
+  getPlaceholderPorTipoId,
+  type TipoIdentificacionDTTA,
+} from '../../constants/tipos-identificacion';
 
 import {
   involucrados,
@@ -28,7 +33,8 @@ export const InvolucradosList: React.FC = () => {
   const navigate = useNavigate();
   
   // Estados de filtros
-  const [filtroId, setFiltroId] = useState('');
+  const [filtroTipoId, setFiltroTipoId] = useState<TipoIdentificacionDTTA | ''>('');
+  const [filtroNumeroId, setFiltroNumeroId] = useState('');
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroTipoPersona, setFiltroTipoPersona] = useState<TipoPersona | ''>('');
   const [filtroEstado, setFiltroEstado] = useState<EstadoInvolucrado | ''>('');
@@ -38,17 +44,26 @@ export const InvolucradosList: React.FC = () => {
 
   // Filtrar involucrados
   const involucradosFiltrados = useMemo(() => {
+    const normalizarId = (valor: string) => valor.replace(/\./g, '').replace(/-/g, '').toUpperCase();
     return involucrados.filter(inv => {
-      if (filtroId && !inv.numeroIdentificacion.includes(filtroId) && !inv.id.includes(filtroId)) return false;
+      if (filtroTipoId && inv.tipoIdentificacion !== filtroTipoId) return false;
+
+      const aplicaFiltroId = Boolean(filtroTipoId && filtroNumeroId);
+      if (aplicaFiltroId) {
+        const idInv = normalizarId(`${inv.numeroIdentificacion}${inv.digitoVerificador || ''}`);
+        if (!idInv.includes(normalizarId(filtroNumeroId))) return false;
+      }
+
       if (filtroNombre && !inv.nombreCompleto.toLowerCase().includes(filtroNombre.toLowerCase())) return false;
       if (filtroTipoPersona && inv.tipoPersona !== filtroTipoPersona) return false;
       if (filtroEstado && inv.estado !== filtroEstado) return false;
       return true;
     });
-  }, [filtroId, filtroNombre, filtroTipoPersona, filtroEstado]);
+  }, [filtroTipoId, filtroNumeroId, filtroNombre, filtroTipoPersona, filtroEstado]);
 
   const limpiarFiltros = () => {
-    setFiltroId('');
+    setFiltroTipoId('');
+    setFiltroNumeroId('');
     setFiltroNombre('');
     setFiltroTipoPersona('');
     setFiltroEstado('');
@@ -259,14 +274,36 @@ export const InvolucradosList: React.FC = () => {
 
           {/* Filtros */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
-            <InputField
-              label="ID / RUT"
-              id="filtroId"
-              type="text"
-              placeholder="Ej: 12.345.678-9"
-              value={filtroId}
-              onChange={(e) => setFiltroId(e.target.value)}
-            />
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Documento de identidad</label>
+              <div className="flex gap-2">
+                <select
+                  className="w-1/3 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  value={filtroTipoId}
+                  onChange={(e) => {
+                    const valor = e.target.value as TipoIdentificacionDTTA | '';
+                    setFiltroTipoId(valor);
+                    if (!valor) setFiltroNumeroId('');
+                  }}
+                >
+                  <option value="">Tipo ID</option>
+                  {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
+                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
+                  placeholder={getPlaceholderPorTipoId(filtroTipoId)}
+                  disabled={!filtroTipoId}
+                  value={filtroNumeroId}
+                  onChange={(e) => setFiltroNumeroId(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Selecciona el tipo de documento antes de ingresar el número.
+              </p>
+            </div>
             <InputField
               label="Nombre / Razón Social"
               id="filtroNombre"

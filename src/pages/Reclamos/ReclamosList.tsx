@@ -8,6 +8,11 @@ import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
 import { Badge, StatCard, getDiasVencimientoBadgeVariant } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
+import {
+  TIPOS_IDENTIFICACION_DTTA,
+  getPlaceholderPorTipoId,
+  type TipoIdentificacionDTTA,
+} from '../../constants/tipos-identificacion';
 
 // Datos centralizados
 import {
@@ -40,7 +45,9 @@ export const ReclamosList: React.FC = () => {
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroOrigen, setFiltroOrigen] = useState('');
-  const [filtroReclamante, setFiltroReclamante] = useState('');
+  const [filtroTipoIdReclamante, setFiltroTipoIdReclamante] = useState<TipoIdentificacionDTTA | ''>('');
+  const [filtroIdReclamante, setFiltroIdReclamante] = useState('');
+  const [filtroNombreReclamante, setFiltroNombreReclamante] = useState('');
   const [filtroAduana, setFiltroAduana] = useState('');
 
   // Obtener conteos desde datos centralizados
@@ -49,24 +56,42 @@ export const ReclamosList: React.FC = () => {
 
   // Filtrar reclamos
   const reclamosFiltrados = useMemo(() => {
+    const normalizarId = (valor: string) => valor.replace(/\./g, '').replace(/-/g, '').toUpperCase();
     return reclamos.filter(r => {
       if (filtroNumero && !r.numeroReclamo.toLowerCase().includes(filtroNumero.toLowerCase())) return false;
       if (filtroTipo && r.tipoReclamo !== filtroTipo) return false;
       if (filtroEstado && r.estado !== filtroEstado) return false;
       if (filtroOrigen && r.origenReclamo !== filtroOrigen) return false;
-      if (filtroReclamante && !r.reclamante.toLowerCase().includes(filtroReclamante.toLowerCase()) && 
-          !r.rutReclamante.includes(filtroReclamante)) return false;
+      if (filtroNombreReclamante && !r.reclamante.toLowerCase().includes(filtroNombreReclamante.toLowerCase())) return false;
+
+      const aplicaFiltroId = Boolean(filtroTipoIdReclamante && filtroIdReclamante);
+      if (aplicaFiltroId) {
+        const rutNormalizado = normalizarId(r.rutReclamante);
+        if (!rutNormalizado.includes(normalizarId(filtroIdReclamante))) return false;
+      }
+
       if (filtroAduana && r.codigoAduana !== filtroAduana && r.aduana !== filtroAduana) return false;
       return true;
     });
-  }, [filtroNumero, filtroTipo, filtroEstado, filtroOrigen, filtroReclamante, filtroAduana]);
+  }, [
+    filtroNumero,
+    filtroTipo,
+    filtroEstado,
+    filtroOrigen,
+    filtroTipoIdReclamante,
+    filtroIdReclamante,
+    filtroNombreReclamante,
+    filtroAduana
+  ]);
 
   const limpiarFiltros = () => {
     setFiltroNumero('');
     setFiltroTipo('');
     setFiltroEstado('');
     setFiltroOrigen('');
-    setFiltroReclamante('');
+    setFiltroTipoIdReclamante('');
+    setFiltroIdReclamante('');
+    setFiltroNombreReclamante('');
     setFiltroAduana('');
   };
 
@@ -330,13 +355,43 @@ export const ReclamosList: React.FC = () => {
                 ))}
               </select>
             </div>
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Documento del Reclamante</label>
+              <div className="flex gap-2">
+                <select 
+                  className="w-1/3 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  value={filtroTipoIdReclamante}
+                  onChange={(e) => {
+                    const valor = e.target.value as TipoIdentificacionDTTA | '';
+                    setFiltroTipoIdReclamante(valor);
+                    if (!valor) setFiltroIdReclamante('');
+                  }}
+                >
+                  <option value="">Tipo ID</option>
+                  {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
+                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
+                  placeholder={getPlaceholderPorTipoId(filtroTipoIdReclamante)}
+                  disabled={!filtroTipoIdReclamante}
+                  value={filtroIdReclamante}
+                  onChange={(e) => setFiltroIdReclamante(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Selecciona el tipo de documento y luego ingresa el número.
+              </p>
+            </div>
             <InputField
-              label="Reclamante"
+              label="Nombre / Razón Social"
               id="reclamante"
               type="text"
-              placeholder="Nombre o RUT"
-              value={filtroReclamante}
-              onChange={(e) => setFiltroReclamante(e.target.value)}
+              placeholder="Buscar por nombre"
+              value={filtroNombreReclamante}
+              onChange={(e) => setFiltroNombreReclamante(e.target.value)}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Aduana</label>
