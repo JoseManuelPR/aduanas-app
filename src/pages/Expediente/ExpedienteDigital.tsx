@@ -36,7 +36,7 @@ export const ExpedienteDigital: React.FC = () => {
   });
 
   // Estado para búsqueda por N° de denuncia
-  const [numeroDenunciaBusqueda, setNumeroDenunciaBusqueda] = useState('');
+  const [numeroDenunciaBusqueda] = useState('');
 
   // Obtener notificaciones para el header
   const allNotifications = getTodasLasNotificaciones();

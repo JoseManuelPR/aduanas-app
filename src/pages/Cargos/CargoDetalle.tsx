@@ -9,7 +9,7 @@ import { Icon } from 'he-button-custom-library';
 import CONSTANTS_APP from '../../constants/sidebar-menu';
 import CustomLayout from '../../Layout/Layout';
 import { CustomButton } from '../../components/Button/Button';
-import { Badge, getEstadoBadgeVariant, getDiasVencimientoBadgeVariant, Tabs } from '../../components/UI';
+import { Badge, getEstadoBadgeVariant, Tabs } from '../../components/UI';
 import { ERoutePaths } from '../../routes/routes';
 
 // Datos centralizados

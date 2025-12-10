@@ -204,6 +204,11 @@
     text-wrap: balance;
   }
 
+  /* Grid util para que las tarjetas se autoajusten según ancho disponible */
+  .auto-grid {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+
   .animate-delay-100 {
     animation-delay: 100ms;
   }

@@ -224,7 +224,7 @@ export const DenunciasList: React.FC = () => {
         </div>
 
         {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="grid auto-grid gap-4">
           <div className="card p-4 border-l-4 border-l-gray-400">
             <p className="text-sm text-gray-600">Borrador</p>
             <p className="text-2xl font-bold text-gray-600">
