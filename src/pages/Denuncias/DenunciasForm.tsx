@@ -965,36 +965,19 @@ export const DenunciasForm: React.FC = () => {
             </div>
             
             {articuloSeleccionado && (
-              <div className="grid grid-cols-1 gap-3">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800 font-medium">{articuloSeleccionado.nombre}</p>
-                  <p className="text-xs text-blue-600 mt-1">{articuloSeleccionado.descripcion}</p>
-                  {articuloSeleccionado.multaMinima && (
-                    <p className="text-xs text-blue-700 mt-2">
-                      Multa: ${articuloSeleccionado.multaMinima?.toLocaleString('es-CL')} - ${articuloSeleccionado.multaMaxima?.toLocaleString('es-CL')}
-                    </p>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="form-label">Norma aplicable</label>
-                    <input
-                      type="text"
-                      className="form-input bg-gray-50"
-                      value={formData.normaInfringida}
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Fundamento</label>
-                    <input
-                      type="text"
-                      className="form-input bg-gray-50"
-                      value={formData.fundamentoLegal}
-                      readOnly
-                    />
-                  </div>
-                </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">{articuloSeleccionado.nombre}</p>
+                <p className="text-xs text-blue-600 mt-1">{articuloSeleccionado.descripcion}</p>
+                {articuloSeleccionado.normaLegal && (
+                  <p className="text-xs text-blue-700 mt-1">
+                    Norma aplicable: {articuloSeleccionado.normaLegal}
+                  </p>
+                )}
+                {articuloSeleccionado.multaMinima && (
+                  <p className="text-xs text-blue-700 mt-2">
+                    Multa: ${articuloSeleccionado.multaMinima?.toLocaleString('es-CL')} - ${articuloSeleccionado.multaMaxima?.toLocaleString('es-CL')}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -1137,25 +1120,14 @@ export const DenunciasForm: React.FC = () => {
           </div>
 
           {formData.codigoArticulo && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="form-label">Norma aplicable</label>
-                <input
-                  type="text"
-                  className="form-input bg-gray-50"
-                  value={formData.normaInfringida}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label className="form-label">Fundamento</label>
-                <input
-                  type="text"
-                  className="form-input bg-gray-50"
-                  value={formData.fundamentoLegal}
-                  readOnly
-                />
-              </div>
+            <div className="mt-4 p-3 bg-red-50 rounded-lg text-sm text-red-800">
+              <p className="font-medium">Norma aplicable</p>
+              <p className="mt-1">{formData.normaInfringida || 'Pendiente de definir'}</p>
+              {formData.fundamentoLegal && (
+                <p className="mt-2 text-red-700">
+                  Fundamento: {formData.fundamentoLegal}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -1506,6 +1478,38 @@ export const DenunciasForm: React.FC = () => {
               )}
             </dl>
           </div>
+
+        <div className="card p-5">
+          <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Tipificación</h4>
+          <dl className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Tipo de Denuncia:</dt>
+              <dd className="font-medium">{formData.tipoDenuncia || 'No definida'}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Tipo de Infracción:</dt>
+              <dd className="font-medium">{formData.tipoInfraccion || 'No especificada'}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Artículo:</dt>
+              <dd className="font-medium">
+                {articuloSeleccionado?.nombre || formData.codigoArticulo || 'No seleccionado'}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Norma Infringida:</dt>
+              <dd className="font-medium text-xs text-right">
+                {formData.normaInfringida || 'No especificada'}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Fundamento Legal:</dt>
+              <dd className="font-medium text-xs text-right">
+                {formData.fundamentoLegal || 'No especificado'}
+              </dd>
+            </div>
+          </dl>
+        </div>
 
           <div className="card p-5">
             <h4 className="font-semibold text-gray-900 mb-4 border-b pb-2">Infractor Principal</h4>

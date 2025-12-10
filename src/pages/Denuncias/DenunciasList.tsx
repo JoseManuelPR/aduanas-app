@@ -224,40 +224,40 @@ export const DenunciasList: React.FC = () => {
         </div>
 
         {/* Tarjetas de resumen */}
-        <div className="grid auto-grid gap-4">
-          <div className="card p-4 border-l-4 border-l-gray-400">
-            <p className="text-sm text-gray-600">Borrador</p>
-            <p className="text-2xl font-bold text-gray-600">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+          <div className="card p-3 border-l-4 border-l-gray-400">
+            <p className="text-xs text-gray-600">Borrador</p>
+            <p className="text-xl font-bold text-gray-600">
               {conteoDenuncias.porEstado.borrador}
             </p>
           </div>
-          <div className="card p-4 border-l-4 border-l-blue-500">
-            <p className="text-sm text-gray-600">Ingresadas</p>
-            <p className="text-2xl font-bold text-blue-600">
+          <div className="card p-3 border-l-4 border-l-blue-500">
+            <p className="text-xs text-gray-600">Ingresadas</p>
+            <p className="text-xl font-bold text-blue-600">
               {conteoDenuncias.porEstado.ingresada + conteoDenuncias.porEstado.enRevision}
             </p>
           </div>
-          <div className="card p-4 border-l-4 border-l-indigo-500">
-            <p className="text-sm text-gray-600">En Proceso</p>
-            <p className="text-2xl font-bold text-indigo-600">
+          <div className="card p-3 border-l-4 border-l-indigo-500">
+            <p className="text-xs text-gray-600">En Proceso</p>
+            <p className="text-xl font-bold text-indigo-600">
               {conteoDenuncias.enProceso}
             </p>
           </div>
-          <div className="card p-4 border-l-4 border-l-amber-500">
-            <p className="text-sm text-gray-600">Por Vencer</p>
-            <p className="text-2xl font-bold text-amber-600">
+          <div className="card p-3 border-l-4 border-l-amber-500">
+            <p className="text-xs text-gray-600">Por Vencer</p>
+            <p className="text-xl font-bold text-amber-600">
               {conteoDenuncias.porVencer}
             </p>
           </div>
-          <div className="card p-4 border-l-4 border-l-red-500">
-            <p className="text-sm text-gray-600">Vencidas</p>
-            <p className="text-2xl font-bold text-red-600">
+          <div className="card p-3 border-l-4 border-l-red-500">
+            <p className="text-xs text-gray-600">Vencidas</p>
+            <p className="text-xl font-bold text-red-600">
               {conteoDenuncias.vencidas}
             </p>
           </div>
-          <div className="card p-4 border-l-4 border-l-emerald-500">
-            <p className="text-sm text-gray-600">Cerradas</p>
-            <p className="text-2xl font-bold text-emerald-600">
+          <div className="card p-3 border-l-4 border-l-emerald-500">
+            <p className="text-xs text-gray-600">Cerradas</p>
+            <p className="text-xl font-bold text-emerald-600">
               {conteoDenuncias.resueltas}
             </p>
           </div>
