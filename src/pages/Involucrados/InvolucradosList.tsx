@@ -38,6 +38,8 @@ export const InvolucradosList: React.FC = () => {
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroTipoPersona, setFiltroTipoPersona] = useState<TipoPersona | ''>('');
   const [filtroEstado, setFiltroEstado] = useState<EstadoInvolucrado | ''>('');
+  const labelBaseClass = "block text-sm font-semibold text-black";
+  const inputContainerClass = "!flex-col !items-start gap-1 lg:!flex-col lg:!items-start lg:!gap-1";
 
   const conteoInvolucrados = getConteoInvolucrados();
   const allNotifications = getTodasLasNotificaciones();
@@ -253,9 +255,9 @@ export const InvolucradosList: React.FC = () => {
           </div>
 
           {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Documento de identidad</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+            <div className="md:col-span-2 xl:col-span-2">
+              <label className={`${labelBaseClass} mb-1`}>Documento de identidad</label>
               <div className="flex gap-2">
                 <select
                   className="w-1/3 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
@@ -289,11 +291,13 @@ export const InvolucradosList: React.FC = () => {
               id="filtroNombre"
               type="text"
               placeholder="Buscar..."
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtroNombre}
               onChange={(e) => setFiltroNombre(e.target.value)}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Persona</label>
+              <label className={`${labelBaseClass} mb-1`}>Tipo Persona</label>
               <select 
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroTipoPersona}
@@ -305,7 +309,7 @@ export const InvolucradosList: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <label className={`${labelBaseClass} mb-1`}>Estado</label>
               <select 
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroEstado}

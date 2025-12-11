@@ -48,6 +48,8 @@ export const GirosList: React.FC = () => {
     fechaDesde: '',
     fechaHasta: '',
   });
+  const labelBaseClass = "block text-sm font-semibold text-black";
+  const inputContainerClass = "!flex-col !items-start gap-1 lg:!flex-col lg:!items-start lg:!gap-1";
 
   // Obtener conteos desde datos centralizados
   const conteoGiros = getConteoGiros();
@@ -342,18 +344,72 @@ export const GirosList: React.FC = () => {
           </div>
 
           {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
             <InputField
               label="N° Giro"
               id="nroGiro"
               type="text"
               placeholder="F09-2024-XXXXX"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtros.numeroGiro}
               onChange={(e) => handleFiltroChange('numeroGiro', e.target.value)}
             />
-            {/* ID Deudor anidado */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ID del Deudor</label>
+              <label className={`${labelBaseClass} mb-1`}>Tipo</label>
+              <select
+                value={filtros.tipo}
+                onChange={(e) => handleFiltroChange('tipo', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todos los tipos</option>
+                <option value="F09">F09 - Desde Cargo</option>
+                <option value="F16">F16 - Desde Denuncia</option>
+                <option value="F17">F17 - Otros</option>
+              </select>
+            </div>
+            <div>
+              <label className={`${labelBaseClass} mb-1`}>Estado</label>
+              <select
+                value={filtros.estado}
+                onChange={(e) => handleFiltroChange('estado', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todos los estados</option>
+                {estadosGiro.map(estado => (
+                  <option key={estado} value={estado}>{estado}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={`${labelBaseClass} mb-1`}>Origen</label>
+              <select
+                value={filtros.origen}
+                onChange={(e) => handleFiltroChange('origen', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todos los orígenes</option>
+                <option value="CARGO">Desde Cargo</option>
+                <option value="DENUNCIA">Desde Denuncia</option>
+                <option value="MANUAL">Manual</option>
+              </select>
+            </div>
+            <div>
+              <label className={`${labelBaseClass} mb-1`}>Aduana</label>
+              <select
+                value={filtros.aduana}
+                onChange={(e) => handleFiltroChange('aduana', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todas las aduanas</option>
+                {aduanas.map(aduana => (
+                  <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
+                ))}
+              </select>
+            </div>
+            {/* ID Deudor anidado */}
+            <div className="md:col-span-2 xl:col-span-2">
+              <label className={`${labelBaseClass} mb-1`}>ID del Deudor</label>
               <div className="flex gap-2">
                 <select
                   className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul text-sm"
@@ -378,62 +434,12 @@ export const GirosList: React.FC = () => {
                 Selecciona el tipo de documento antes de escribir el número.
               </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-              <select
-                value={filtros.tipo}
-                onChange={(e) => handleFiltroChange('tipo', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-              >
-                <option value="">Todos los tipos</option>
-                <option value="F09">F09 - Desde Cargo</option>
-                <option value="F16">F16 - Desde Denuncia</option>
-                <option value="F17">F17 - Otros</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-              <select
-                value={filtros.estado}
-                onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-              >
-                <option value="">Todos los estados</option>
-                {estadosGiro.map(estado => (
-                  <option key={estado} value={estado}>{estado}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
-              <select
-                value={filtros.origen}
-                onChange={(e) => handleFiltroChange('origen', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-              >
-                <option value="">Todos los orígenes</option>
-                <option value="CARGO">Desde Cargo</option>
-                <option value="DENUNCIA">Desde Denuncia</option>
-                <option value="MANUAL">Manual</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Aduana</label>
-              <select
-                value={filtros.aduana}
-                onChange={(e) => handleFiltroChange('aduana', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-              >
-                <option value="">Todas las aduanas</option>
-                {aduanas.map(aduana => (
-                  <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
-                ))}
-              </select>
-            </div>
             <InputField
               label="Fecha desde"
               id="fechaDesde"
               type="date"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtros.fechaDesde}
               onChange={(e) => handleFiltroChange('fechaDesde', e.target.value)}
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
@@ -442,6 +448,8 @@ export const GirosList: React.FC = () => {
               label="Fecha hasta"
               id="fechaHasta"
               type="date"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtros.fechaHasta}
               onChange={(e) => handleFiltroChange('fechaHasta', e.target.value)}
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}

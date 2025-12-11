@@ -49,6 +49,8 @@ export const ReclamosList: React.FC = () => {
   const [filtroIdReclamante, setFiltroIdReclamante] = useState('');
   const [filtroNombreReclamante, setFiltroNombreReclamante] = useState('');
   const [filtroAduana, setFiltroAduana] = useState('');
+  const labelBaseClass = "block text-sm font-semibold text-black";
+  const inputContainerClass = "!flex-col !items-start gap-1 lg:!flex-col lg:!items-start lg:!gap-1";
 
   // Obtener conteos desde datos centralizados
   const conteoReclamos = getConteoReclamos();
@@ -297,17 +299,19 @@ export const ReclamosList: React.FC = () => {
           </div>
 
           {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
             <InputField
               label="N° Reclamo"
               id="nroReclamo"
               type="text"
               placeholder="REC-XXX-2024-XXXX"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtroNumero}
               onChange={(e) => setFiltroNumero(e.target.value)}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Reclamo</label>
+              <label className={`${labelBaseClass} mb-1`}>Tipo de Reclamo</label>
               <select 
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroTipo}
@@ -320,7 +324,7 @@ export const ReclamosList: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <label className={`${labelBaseClass} mb-1`}>Estado</label>
               <select 
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroEstado}
@@ -333,7 +337,7 @@ export const ReclamosList: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
+              <label className={`${labelBaseClass} mb-1`}>Origen</label>
               <select 
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroOrigen}
@@ -345,8 +349,8 @@ export const ReclamosList: React.FC = () => {
                 ))}
               </select>
             </div>
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Documento del Reclamante</label>
+            <div className="md:col-span-2 xl:col-span-2">
+              <label className={`${labelBaseClass} mb-1`}>Documento del Reclamante</label>
               <div className="flex gap-2">
                 <select 
                   className="w-1/3 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
@@ -380,11 +384,13 @@ export const ReclamosList: React.FC = () => {
               id="reclamante"
               type="text"
               placeholder="Buscar por nombre"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtroNombreReclamante}
               onChange={(e) => setFiltroNombreReclamante(e.target.value)}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Aduana</label>
+              <label className={`${labelBaseClass} mb-1`}>Aduana</label>
               <select 
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroAduana}

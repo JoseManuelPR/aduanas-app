@@ -38,6 +38,8 @@ export const MercanciasList: React.FC = () => {
   const [filtroTipoMercancia, setFiltroTipoMercancia] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroDenunciaAsociada, setFiltroDenunciaAsociada] = useState('');
+  const labelBaseClass = "block text-sm font-semibold text-black";
+  const inputContainerClass = "!flex-col !items-start gap-1 lg:!flex-col lg:!items-start lg:!gap-1";
 
   const tiposMercancia = useMemo(() => {
     const tipos = mercancias.map((m) => m.descripcion.split(' - ')[0] || m.descripcion);
@@ -268,9 +270,9 @@ export const MercanciasList: React.FC = () => {
           </div>
 
           {/* Filtros - Por tipo de mercancía, estado, denuncia asociada */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Mercancía</label>
+              <label className={`${labelBaseClass} mb-1`}>Tipo de Mercancía</label>
               <select
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroTipoMercancia}
@@ -283,7 +285,7 @@ export const MercanciasList: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <label className={`${labelBaseClass} mb-1`}>Estado</label>
               <select 
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                 value={filtroEstado}
@@ -300,6 +302,8 @@ export const MercanciasList: React.FC = () => {
               id="denunciaAsociada"
               type="text"
               placeholder="N° de denuncia..."
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtroDenunciaAsociada}
               onChange={(e) => setFiltroDenunciaAsociada(e.target.value)}
             />

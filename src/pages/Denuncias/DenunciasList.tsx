@@ -66,6 +66,8 @@ export const DenunciasList: React.FC = () => {
   void _setSelectedRows; // For future use with bulk actions
   const [filtros, setFiltros] = useState<FiltrosDenuncia>(initialFiltros);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const labelBaseClass = "block text-sm font-semibold text-black";
+  const inputContainerClass = "!flex-col !items-start gap-1 lg:!flex-col lg:!items-start lg:!gap-1";
 
   // Obtener conteos desde datos centralizados
   const conteoDenuncias = getConteoDenuncias();
@@ -268,18 +270,19 @@ export const DenunciasList: React.FC = () => {
           </div>
 
           {/* Filtros básicos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
             <InputField
               label="N° Denuncia"
               id="numeroDenuncia"
               type="text"
               placeholder="Ej: 993519"
-              labelClassName="font-medium text-sm text-gray-700"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtros.numeroDenuncia}
               onChange={(e) => handleFiltroChange('numeroDenuncia', e.target.value)}
             />
             <div>
-              <label className="block font-medium text-sm text-gray-700 mb-1">Tipo</label>
+              <label className={`${labelBaseClass} mb-1`}>Tipo</label>
               <select
                 className="form-input"
                 value={filtros.tipoDenuncia}
@@ -291,7 +294,7 @@ export const DenunciasList: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block font-medium text-sm text-gray-700 mb-1">Estado</label>
+              <label className={`${labelBaseClass} mb-1`}>Estado</label>
               <select
                 className="form-input"
                 value={filtros.estado}
@@ -304,7 +307,7 @@ export const DenunciasList: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block font-medium text-sm text-gray-700 mb-1">Aduana</label>
+              <label className={`${labelBaseClass} mb-1`}>Aduana</label>
               <select
                 className="form-input"
                 value={filtros.aduana}
@@ -320,19 +323,45 @@ export const DenunciasList: React.FC = () => {
 
           {/* Filtros avanzados */}
           {showAdvancedFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-100 border-b border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-100 border-b border-gray-200">
               <InputField
                 label="N° Interno"
                 id="numeroInterno"
                 type="text"
                 placeholder="INT-2025-XXXXXX"
-                labelClassName="font-medium text-sm text-gray-700"
+                labelClassName={labelBaseClass}
+                containerClassName={inputContainerClass}
                 value={filtros.numeroInterno}
                 onChange={(e) => handleFiltroChange('numeroInterno', e.target.value)}
               />
+              <div>
+                <label className={`${labelBaseClass} mb-1`}>Tipo Infracción</label>
+                <select
+                  className="form-input"
+                  value={filtros.tipoInfraccion}
+                  onChange={(e) => handleFiltroChange('tipoInfraccion', e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {tiposInfraccion.map(tipo => (
+                    <option key={tipo.id} value={tipo.nombre}>{tipo.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={`${labelBaseClass} mb-1`}>Mercancía Afecta</label>
+                <select
+                  className="form-input"
+                  value={filtros.mercanciaAfecta}
+                  onChange={(e) => handleFiltroChange('mercanciaAfecta', e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  <option value="si">Sí</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
               {/* ID Infractor anidado */}
-              <div className="lg:col-span-2">
-                <label className="block font-medium text-sm text-gray-700 mb-1">ID del Infractor</label>
+              <div className="md:col-span-2 xl:col-span-2">
+                <label className={`${labelBaseClass} mb-1`}>ID del Infractor</label>
                 <div className="flex gap-2">
                   <select
                     className="form-input w-1/3"
@@ -357,36 +386,12 @@ export const DenunciasList: React.FC = () => {
                   Primero selecciona el tipo de documento y luego ingresa el número.
                 </p>
               </div>
-              <div>
-                <label className="block font-medium text-sm text-gray-700 mb-1">Tipo Infracción</label>
-                <select
-                  className="form-input"
-                  value={filtros.tipoInfraccion}
-                  onChange={(e) => handleFiltroChange('tipoInfraccion', e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  {tiposInfraccion.map(tipo => (
-                    <option key={tipo.id} value={tipo.nombre}>{tipo.nombre}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block font-medium text-sm text-gray-700 mb-1">Mercancía Afecta</label>
-                <select
-                  className="form-input"
-                  value={filtros.mercanciaAfecta}
-                  onChange={(e) => handleFiltroChange('mercanciaAfecta', e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  <option value="si">Sí</option>
-                  <option value="no">No</option>
-                </select>
-              </div>
               <InputField
                 label="Fecha Desde"
                 id="fechaDesde"
                 type="date"
-                labelClassName="font-medium text-sm text-gray-700"
+                labelClassName={labelBaseClass}
+                containerClassName={inputContainerClass}
                 value={filtros.fechaDesde}
                 onChange={(e) => handleFiltroChange('fechaDesde', e.target.value)}
               />
@@ -394,7 +399,8 @@ export const DenunciasList: React.FC = () => {
                 label="Fecha Hasta"
                 id="fechaHasta"
                 type="date"
-                labelClassName="font-medium text-sm text-gray-700"
+                labelClassName={labelBaseClass}
+                containerClassName={inputContainerClass}
                 value={filtros.fechaHasta}
                 onChange={(e) => handleFiltroChange('fechaHasta', e.target.value)}
               />
@@ -403,7 +409,8 @@ export const DenunciasList: React.FC = () => {
                 id="montoMinimo"
                 type="number"
                 placeholder="0"
-                labelClassName="font-medium text-sm text-gray-700"
+                labelClassName={labelBaseClass}
+                containerClassName={inputContainerClass}
                 value={filtros.montoMinimo}
                 onChange={(e) => handleFiltroChange('montoMinimo', e.target.value)}
               />
@@ -412,7 +419,8 @@ export const DenunciasList: React.FC = () => {
                 id="montoMaximo"
                 type="number"
                 placeholder="999.999.999"
-                labelClassName="font-medium text-sm text-gray-700"
+                labelClassName={labelBaseClass}
+                containerClassName={inputContainerClass}
                 value={filtros.montoMaximo}
                 onChange={(e) => handleFiltroChange('montoMaximo', e.target.value)}
               />

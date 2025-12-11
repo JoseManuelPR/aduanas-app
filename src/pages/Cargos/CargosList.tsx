@@ -48,6 +48,8 @@ export const CargosList: React.FC = () => {
     montoMinimo: '',
     montoMaximo: '',
   });
+  const labelBaseClass = "block text-sm font-semibold text-black";
+  const inputContainerClass = "!flex-col !items-start gap-1 lg:!flex-col lg:!items-start lg:!gap-1";
 
   // Obtener conteos desde datos centralizados
   const conteoCargos = getConteoCargos();
@@ -303,18 +305,59 @@ export const CargosList: React.FC = () => {
           </div>
 
           {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
             <InputField
               label="N° Cargo"
               id="nroCargo"
               type="text"
               placeholder="CAR-2024-XXXXX"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtros.numeroCargo}
               onChange={(e) => handleFiltroChange('numeroCargo', e.target.value)}
             />
+            <div>
+              <label className={`${labelBaseClass} mb-1`}>Estado</label>
+              <select
+                value={filtros.estado}
+                onChange={(e) => handleFiltroChange('estado', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todos los estados</option>
+                {estadosCargo.map(estado => (
+                  <option key={estado} value={estado}>{estado}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={`${labelBaseClass} mb-1`}>Aduana</label>
+              <select
+                value={filtros.aduana}
+                onChange={(e) => handleFiltroChange('aduana', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todas las aduanas</option>
+                {aduanas.map(aduana => (
+                  <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={`${labelBaseClass} mb-1`}>Origen</label>
+              <select
+                value={filtros.origen}
+                onChange={(e) => handleFiltroChange('origen', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
+              >
+                <option value="">Todos los orígenes</option>
+                <option value="DENUNCIA">Denuncia</option>
+                <option value="TRAMITE_ADUANERO">Trámite Aduanero</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
             {/* ID Deudor anidado */}
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">ID del Deudor</label>
+            <div className="md:col-span-2 xl:col-span-2">
+              <label className={`${labelBaseClass} mb-1`}>ID del Deudor</label>
               <div className="flex gap-2">
                 <select
                   className="w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
@@ -339,49 +382,12 @@ export const CargosList: React.FC = () => {
                 Selecciona el tipo de documento antes de escribir el número.
               </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-              <select
-                value={filtros.estado}
-                onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-              >
-                <option value="">Todos los estados</option>
-                {estadosCargo.map(estado => (
-                  <option key={estado} value={estado}>{estado}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Aduana</label>
-              <select
-                value={filtros.aduana}
-                onChange={(e) => handleFiltroChange('aduana', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-              >
-                <option value="">Todas las aduanas</option>
-                {aduanas.map(aduana => (
-                  <option key={aduana.id} value={aduana.nombre}>{aduana.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
-              <select
-                value={filtros.origen}
-                onChange={(e) => handleFiltroChange('origen', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul"
-              >
-                <option value="">Todos los orígenes</option>
-                <option value="DENUNCIA">Denuncia</option>
-                <option value="TRAMITE_ADUANERO">Trámite Aduanero</option>
-                <option value="OTRO">Otro</option>
-              </select>
-            </div>
             <InputField
               label="Fecha desde"
               id="fechaDesde"
               type="date"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtros.fechaDesde}
               onChange={(e) => handleFiltroChange('fechaDesde', e.target.value)}
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
@@ -390,28 +396,32 @@ export const CargosList: React.FC = () => {
               label="Fecha hasta"
               id="fechaHasta"
               type="date"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
               value={filtros.fechaHasta}
               onChange={(e) => handleFiltroChange('fechaHasta', e.target.value)}
               icon={<Icon name="CalendarDays" size={18} color="#6B7280" />}
             />
-            <div className="grid grid-cols-2 gap-2">
-              <InputField
-                label="Monto desde"
-                id="montoMinimo"
-                type="number"
-                placeholder="0"
-                value={filtros.montoMinimo}
-                onChange={(e) => handleFiltroChange('montoMinimo', e.target.value)}
-              />
-              <InputField
-                label="Monto hasta"
-                id="montoMaximo"
-                type="number"
-                placeholder="∞"
-                value={filtros.montoMaximo}
-                onChange={(e) => handleFiltroChange('montoMaximo', e.target.value)}
-              />
-            </div>
+            <InputField
+              label="Monto desde"
+              id="montoMinimo"
+              type="number"
+              placeholder="0"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
+              value={filtros.montoMinimo}
+              onChange={(e) => handleFiltroChange('montoMinimo', e.target.value)}
+            />
+            <InputField
+              label="Monto hasta"
+              id="montoMaximo"
+              type="number"
+              placeholder="∞"
+              labelClassName={labelBaseClass}
+              containerClassName={inputContainerClass}
+              value={filtros.montoMaximo}
+              onChange={(e) => handleFiltroChange('montoMaximo', e.target.value)}
+            />
           </div>
 
           {/* Acciones de filtro */}
