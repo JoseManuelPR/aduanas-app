@@ -24,6 +24,7 @@ interface LayoutProps {
 
 const CustomLayout = ({ children, user, options, sidebarItems, onLogout, platformName = "ARKHO UI", notifications = [] }: LayoutProps) => {
   const [openSidebar, setOpenSidebar] = useState(false)
+  const headerUser = { ...user, name: user.initials }
   
   // Calcular notificaciones sin leer
   const unreadCount = notifications.filter(n => !n.leido).length;
@@ -34,17 +35,18 @@ const CustomLayout = ({ children, user, options, sidebarItems, onLogout, platfor
       <div className="relative">
         <Header
           showThemeToggle={false}
-          user={user}
+          user={headerUser}
           options={options}
           onLogout={onLogout}
+          rightContent={
+            <div className="flex items-center">
+              <NotificationDropdown 
+                notifications={notifications} 
+                unreadCount={unreadCount}
+              />
+            </div>
+          }
         />
-        {/* Notification dropdown positioned absolutely over header */}
-        <div className="absolute top-1/2 right-28 -translate-y-1/2 z-50">
-          <NotificationDropdown 
-            notifications={notifications} 
-            unreadCount={unreadCount}
-          />
-        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">

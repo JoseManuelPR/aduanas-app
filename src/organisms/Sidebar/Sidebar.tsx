@@ -55,12 +55,12 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
         </button>
 
         {/* Logo/Platform name */}
-        <div className={`border-b border-gray-100 ${isOpen ? 'px-4 py-4' : 'hidden md:flex justify-center items-center py-4 px-2'}`}>
+        <div className={`border-b border-gray-100 ${isOpen ? 'px-4 py-4 justify-center' : 'flex justify-center items-center py-4 px-2'}`}>
           {platformLogo ? (
             <img
               src={platformLogo}
               alt={platformName}
-              className={`${platformLogoClass} ${isOpen ? '' : 'w-8 h-8 object-contain'}`}
+              className={`${platformLogoClass} ${isOpen ? '' : 'w-8 h-8 object-contain'} shrink-0`}
             />
           ) : (
             <div className={`font-bold text-aduana-azul ${isOpen ? 'text-xl' : 'text-xs text-center'}`}>
@@ -150,10 +150,10 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
         {isOpen && (
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50">
             <p className="text-xs text-gray-500 text-center">
-              DECARE v3.16.0
+              Aduana App v1.0.0
             </p>
             <p className="text-xs text-gray-400 text-center">
-              © 2024 Servicio Nacional de Aduanas
+              © 2026 Servicio Nacional de Aduanas
             </p>
           </div>
         )}
