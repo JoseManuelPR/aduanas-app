@@ -54,7 +54,7 @@ const InputFieldComponent = React.forwardRef<HTMLInputElement, InputFieldProps>(
             htmlFor={id}
             required={required}
             requiredOrientation={requiredOrientation}
-            className={labelClassName}
+            className={cn("text-black !text-black text-sm font-medium", labelClassName)}
           >
             {label}
           </Label>
