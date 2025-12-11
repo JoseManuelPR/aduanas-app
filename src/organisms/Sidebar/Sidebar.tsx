@@ -42,7 +42,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
         {/* Toggle button */}
         <button
           onClick={onToggle}
-          className="absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:bg-gray-50 transition-colors hidden md:flex"
+          className="absolute -right-3 top-20 z-50 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:bg-gray-50 transition-colors flex md:flex"
         >
           <svg
             className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${isOpen ? '' : 'rotate-180'}`}

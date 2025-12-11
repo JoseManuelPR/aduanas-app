@@ -6,7 +6,7 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge, StatCard, getDiasVencimientoBadgeVariant } from "../../components/UI";
+import { Badge, getDiasVencimientoBadgeVariant } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 import {
   TIPOS_IDENTIFICACION_DTTA,
@@ -241,36 +241,26 @@ export const ReclamosList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Total Reclamos"
-            value={conteoReclamos.total}
-            subtitle="Este período"
-            colorScheme="azul"
-            icon={<Icon name="MessageCircle" size={24} />}
-          />
-          <StatCard
-            title="En Análisis"
-            value={conteoReclamos.enAnalisis}
-            subtitle="Pendientes resolución"
-            colorScheme="amarillo"
-            icon={<Icon name="Clock" size={24} />}
-          />
-          <StatCard
-            title="Resueltos"
-            value={conteoReclamos.resueltos}
-            subtitle="Finalizados"
-            colorScheme="verde"
-            icon={<Icon name="CheckCircle" size={24} />}
-          />
-          <StatCard
-            title="Derivados TTA"
-            value={conteoReclamos.derivadosTTA}
-            subtitle="Tribunal Tributario"
-            colorScheme="rojo"
-            icon={<Icon name="Scale" size={24} />}
-          />
+        {/* Estadísticas compactas (alineadas a Giros) */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
+            Total: <strong>{conteoReclamos.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            Pendientes: <strong>{conteoReclamos.pendientes}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+            En análisis: <strong>{conteoReclamos.enAnalisis}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Resueltos: <strong>{conteoReclamos.resueltos}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-purple-50 text-purple-700 border border-purple-200">
+            Derivados TTA: <strong>{conteoReclamos.derivadosTTA}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-slate-50 text-aduana-azul border border-slate-200">
+            Monto Total: <strong>{conteoReclamos.montoTotalFormateado}</strong>
+          </span>
         </div>
 
         {/* Info sobre tipos de reclamo */}

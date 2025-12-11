@@ -229,44 +229,29 @@ export const DenunciasList: React.FC = () => {
           </div>
         </div>
 
-        {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-          <div className="card p-3 border-l-4 border-l-gray-400">
-            <p className="text-xs text-gray-600">Borrador</p>
-            <p className="text-xl font-bold text-gray-600">
-              {conteoDenuncias.porEstado.borrador}
-            </p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-blue-500">
-            <p className="text-xs text-gray-600">Ingresadas</p>
-            <p className="text-xl font-bold text-blue-600">
-              {conteoDenuncias.porEstado.ingresada + conteoDenuncias.porEstado.enRevision}
-            </p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-indigo-500">
-            <p className="text-xs text-gray-600">En Proceso</p>
-            <p className="text-xl font-bold text-indigo-600">
-              {conteoDenuncias.enProceso}
-            </p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-amber-500">
-            <p className="text-xs text-gray-600">Por Vencer</p>
-            <p className="text-xl font-bold text-amber-600">
-              {conteoDenuncias.porVencer}
-            </p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-red-500">
-            <p className="text-xs text-gray-600">Vencidas</p>
-            <p className="text-xl font-bold text-red-600">
-              {conteoDenuncias.vencidas}
-            </p>
-          </div>
-          <div className="card p-3 border-l-4 border-l-emerald-500">
-            <p className="text-xs text-gray-600">Cerradas</p>
-            <p className="text-xl font-bold text-emerald-600">
-              {conteoDenuncias.resueltas}
-            </p>
-          </div>
+        {/* Estadísticas compactas (alineadas a Giros) */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
+            Total: <strong>{conteoDenuncias.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-slate-50 text-gray-700 border border-gray-200">
+            Borrador: <strong>{conteoDenuncias.porEstado.borrador}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+            Ingresadas: <strong>{conteoDenuncias.porEstado.ingresada + conteoDenuncias.porEstado.enRevision}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+            En proceso: <strong>{conteoDenuncias.enProceso}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            Por vencer: <strong>{conteoDenuncias.porVencer}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            Vencidas: <strong>{conteoDenuncias.vencidas}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Resueltas: <strong>{conteoDenuncias.resueltas}</strong>
+          </span>
         </div>
 
         {/* Card principal */}

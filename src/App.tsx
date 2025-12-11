@@ -77,14 +77,6 @@ function App() {
       <Route path={ERoutePaths.INDICADORES} element={<ReportesDashboard />} />
       <Route path={ERoutePaths.AUDITORIA} element={<ReportesDashboard />} />
       
-      {/* Mantenedores - placeholder */}
-      <Route path={ERoutePaths.MANTENEDORES} element={<Dashboard />} />
-      <Route path={ERoutePaths.MANTENEDORES_ADUANAS} element={<Dashboard />} />
-      <Route path={ERoutePaths.MANTENEDORES_SECCIONES} element={<Dashboard />} />
-      <Route path={ERoutePaths.MANTENEDORES_FUNDAMENTOS} element={<Dashboard />} />
-      <Route path={ERoutePaths.MANTENEDORES_NORMAS} element={<Dashboard />} />
-      <Route path={ERoutePaths.MANTENEDORES_USUARIOS} element={<Dashboard />} />
-      
       {/* Configuración */}
       <Route path={ERoutePaths.CONFIGURACION} element={<Dashboard />} />
       <Route path={ERoutePaths.PERFIL} element={<Dashboard />} />

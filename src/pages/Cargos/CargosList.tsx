@@ -267,28 +267,26 @@ export const CargosList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="card p-4 border-l-4 border-l-gray-400">
-            <p className="text-sm text-gray-600">Borradores</p>
-            <p className="text-2xl font-bold text-gray-600">{conteoCargos.porEstado.borrador}</p>
-          </div>
-          <div className="card p-4 border-l-4 border-l-amber-500">
-            <p className="text-sm text-gray-600">Pendientes</p>
-            <p className="text-2xl font-bold text-amber-600">{conteoCargos.pendientes}</p>
-          </div>
-          <div className="card p-4 border-l-4 border-l-emerald-500">
-            <p className="text-sm text-gray-600">Emitidos</p>
-            <p className="text-2xl font-bold text-emerald-600">{conteoCargos.aprobados}</p>
-          </div>
-          <div className="card p-4 border-l-4 border-l-red-500">
-            <p className="text-sm text-gray-600">Vencidos</p>
-            <p className="text-2xl font-bold text-red-600">{conteoCargos.vencidos}</p>
-          </div>
-          <div className="card p-4 border-l-4 border-l-aduana-azul">
-            <p className="text-sm text-gray-600">Monto Total</p>
-            <p className="text-xl font-bold text-aduana-azul">{formatMonto(conteoCargos.montoTotal)}</p>
-          </div>
+        {/* Estadísticas compactas (misma visual que Giros) */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
+            Total: <strong>{conteoCargos.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-slate-50 text-gray-700 border border-gray-200">
+            Borradores: <strong>{conteoCargos.porEstado.borrador}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            Pendientes: <strong>{conteoCargos.pendientes}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Emitidos/Aprobados: <strong>{conteoCargos.aprobados}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            Vencidos: <strong>{conteoCargos.vencidos}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-blue-50 text-aduana-azul border border-blue-100">
+            Monto Total: <strong>{formatMonto(conteoCargos.montoTotal)}</strong>
+          </span>
         </div>
 
         {/* Card principal */}

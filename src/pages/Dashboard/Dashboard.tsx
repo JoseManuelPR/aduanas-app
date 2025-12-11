@@ -13,8 +13,12 @@ import {
   giros,
   reclamos,
   getAlertasCriticas,
+  getCargoPorNumero,
+  getDenunciaPorNumero,
   getCargosPorVencer,
+  getGiroPorNumero,
   getDenunciasPorVencer,
+  getReclamoPorNumero,
   getGirosPorVencer,
   getKPIDashboard,
   getTodasLasNotificaciones,
@@ -57,6 +61,37 @@ const parseFecha = (fecha?: string): number => {
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+
+  const buildDetailPath = (template: string, id: string) =>
+    template.replace(':id', id);
+
+  const getDetallePath = (referencia?: string): string | null => {
+    if (!referencia) return null;
+    const ref = referencia.trim();
+
+    const denuncia = getDenunciaPorNumero(ref);
+    if (denuncia) return buildDetailPath(ERoutePaths.DENUNCIAS_DETALLE, denuncia.id);
+
+    const cargo = getCargoPorNumero(ref);
+    if (cargo) return buildDetailPath(ERoutePaths.CARGOS_DETALLE, cargo.id);
+
+    const reclamo = getReclamoPorNumero(ref);
+    if (reclamo) return buildDetailPath(ERoutePaths.RECLAMOS_DETALLE, reclamo.id);
+
+    const giro = getGiroPorNumero(ref);
+    if (giro) return buildDetailPath(ERoutePaths.GIROS_DETALLE, giro.id);
+
+    return null;
+  };
+
+  const handleNavigateToDetalle = (referencia?: string): boolean => {
+    const path = getDetallePath(referencia);
+    if (path) {
+      navigate(path);
+      return true;
+    }
+    return false;
+  };
   
   // Obtener KPIs desde los datos centralizados
   const KPI_DASHBOARD = getKPIDashboard();
@@ -87,6 +122,7 @@ export const Dashboard: React.FC = () => {
       id: a.id,
       titulo: a.titulo,
       descripcion: a.descripcion,
+      expediente: a.expediente,
       tiempo: a.fechaVencimiento || '—',
       icono: iconByTipo[a.tipo] || 'Info',
       color: colorByTipo[a.tipo] || 'text-gray-600',
@@ -298,7 +334,15 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-400">{alerta.tiempo}</span>
-                    <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-100">
+                    <button
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-100"
+                      onClick={() => {
+                        const navigated = handleNavigateToDetalle(alerta.expediente);
+                        if (!navigated) {
+                          navigate(ERoutePaths.NOTIFICACIONES);
+                        }
+                      }}
+                    >
                       Ver
                     </button>
                   </div>
@@ -326,7 +370,12 @@ export const Dashboard: React.FC = () => {
                   <div>
                     <p className="text-gray-900">
                       {actividad.accion}{' '}
-                      <span className="font-semibold text-aduana-azul">{actividad.referencia}</span>
+                      <button
+                        onClick={() => handleNavigateToDetalle(actividad.referencia)}
+                        className="font-semibold text-aduana-azul hover:underline"
+                      >
+                        {actividad.referencia}
+                      </button>
                     </p>
                     <p className="text-sm text-gray-500">
                       {actividad.usuario} • {actividad.tiempo}
@@ -356,9 +405,12 @@ export const Dashboard: React.FC = () => {
             {plazosCriticos.map((plazo) => (
               <div key={plazo.id} className="p-4 flex items-center justify-between hover:bg-red-50/50">
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <button
+                    onClick={() => handleNavigateToDetalle(plazo.numero)}
+                    className="font-medium text-aduana-azul hover:underline"
+                  >
                     {plazo.tipo} {plazo.numero}
-                  </p>
+                  </button>
                   <p className="text-sm text-gray-500">{plazo.tiempo}</p>
                 </div>
                 <span className="text-red-600 font-bold">{plazo.horas}</span>

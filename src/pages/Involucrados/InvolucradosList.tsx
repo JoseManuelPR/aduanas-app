@@ -10,7 +10,7 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge, StatCard } from "../../components/UI";
+import { Badge } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 import {
   TIPOS_IDENTIFICACION_DTTA,
@@ -220,43 +220,23 @@ export const InvolucradosList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard
-            title="Total"
-            value={conteoInvolucrados.total}
-            subtitle="Involucrados"
-            colorScheme="azul"
-            icon={<Icon name="Users" size={24} />}
-          />
-          <StatCard
-            title="Activos"
-            value={conteoInvolucrados.activos}
-            subtitle="Disponibles"
-            colorScheme="verde"
-            icon={<Icon name="UserCheck" size={24} />}
-          />
-          <StatCard
-            title="P. Naturales"
-            value={conteoInvolucrados.personasNaturales}
-            subtitle="Personas"
-            colorScheme="amarillo"
-            icon={<Icon name="User" size={24} />}
-          />
-          <StatCard
-            title="P. Jurídicas"
-            value={conteoInvolucrados.personasJuridicas}
-            subtitle="Empresas"
-            colorScheme="amarillo"
-            icon={<Icon name="Building" size={24} />}
-          />
-          <StatCard
-            title="Con Procesos"
-            value={conteoInvolucrados.conProcesos}
-            subtitle="Asociados"
-            colorScheme="rojo"
-            icon={<Icon name="FileWarning" size={24} />}
-          />
+        {/* Estadísticas compactas (alineadas a Giros) */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
+            Total: <strong>{conteoInvolucrados.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Activos: <strong>{conteoInvolucrados.activos}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+            P. Naturales: <strong>{conteoInvolucrados.personasNaturales}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+            P. Jurídicas: <strong>{conteoInvolucrados.personasJuridicas}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            Con procesos: <strong>{conteoInvolucrados.conProcesos}</strong>
+          </span>
         </div>
 
         {/* Card principal */}
