@@ -62,6 +62,12 @@ const IconReportes = () => (
   </svg>
 );
 
+const IconConfiguracion = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+    <path fillRule="evenodd" d="M11.078 2.25c-.68 0-1.267.468-1.418 1.129l-.153.67a7.5 7.5 0 0 0-1.52.876l-.61-.268a1.5 1.5 0 0 0-1.79.56l-.75 1.299a1.5 1.5 0 0 0 .333 1.93l.522.43a7.48 7.48 0 0 0 0 1.752l-.522.43a1.5 1.5 0 0 0-.333 1.93l.75 1.3a1.5 1.5 0 0 0 1.79.56l.61-.269c.47.34.98.636 1.52.877l.153.67c.151.66.738 1.128 1.418 1.128h1.844c.68 0 1.267-.468 1.418-1.129l.153-.67a7.5 7.5 0 0 0 1.52-.876l.61.268a1.5 1.5 0 0 0 1.79-.56l.75-1.299a1.5 1.5 0 0 0-.333-1.93l-.522-.43a7.48 7.48 0 0 0 0-1.752l.522-.43a1.5 1.5 0 0 0 .333-1.93l-.75-1.3a1.5 1.5 0 0 0-1.79-.56l-.61.269a7.5 7.5 0 0 0-1.52-.877l-.153-.67a1.5 1.5 0 0 0-1.418-1.128h-1.844ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" clipRule="evenodd" />
+  </svg>
+);
+
 const IconLogout = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
     <path fillRule="evenodd" d="M16.5 3.75a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5h-6a1.5 1.5 0 0 1-1.5-1.5V15a.75.75 0 0 0-1.5 0v3.75a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V5.25a3 3 0 0 0-3-3h-6a3 3 0 0 0-3 3V9A.75.75 0 0 0 9 9V5.25a1.5 1.5 0 0 1 1.5-1.5h6ZM5.78 8.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 0 0 0 1.06l3 3a.75.75 0 0 0 1.06-1.06l-1.72-1.72H15a.75.75 0 0 0 0-1.5H4.06l1.72-1.72a.75.75 0 0 0 0-1.06Z" clipRule="evenodd" />
@@ -126,6 +132,11 @@ const ITEMS_SIDEBAR_MENU = [
     label: "Reportes",
     to: ERoutePaths.REPORTES,
     icon: <IconReportes />,
+  },
+  {
+    label: "Configuración",
+    to: ERoutePaths.CONFIGURACION,
+    icon: <IconConfiguracion />,
   },
   {
     label: "Cerrar sesión",

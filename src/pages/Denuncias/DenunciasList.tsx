@@ -174,7 +174,7 @@ export const DenunciasList: React.FC = () => {
     },
     {
       key: 'mercanciaAfecta' as const,
-      label: '',
+      label: 'Mercancía',
       render: (row: Denuncia) => row.mercanciaAfecta ? (
         <button
           title="Ver mercancía asociada"

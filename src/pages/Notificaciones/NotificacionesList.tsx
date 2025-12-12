@@ -205,11 +205,37 @@ export const NotificacionesList: React.FC = () => {
   ];
 
   // Acciones para cada tipo - Navegar a gestionar denuncia
-  const handleGestionar = (tipo: TabType, _referencia: string) => {
+  const handleGestionar = (
+    tipo: TabType,
+    row: NotificacionDenuncia | NotificacionReclamo | NotificacionCargo
+  ) => {
     switch (tipo) {
       case 'denuncias':
-        // Navegar directamente a la lista de denuncias o al detalle si hay referencia
-        navigate(ERoutePaths.DENUNCIAS);
+        // Ir a "Crear Denuncia" con datos precargados (desde hallazgo asociado a la notificación)
+        {
+          const denuncia = row as NotificacionDenuncia;
+          const hallazgoId = denuncia.hallazgoId;
+          const numeroHallazgo =
+            denuncia.numeroHallazgo ||
+            (typeof denuncia.descripcion === 'string'
+              ? (denuncia.descripcion.match(/PFI-\d+/i)?.[0]?.toUpperCase() ?? undefined)
+              : undefined);
+
+          const path = hallazgoId
+            ? `${ERoutePaths.DENUNCIAS_NUEVA}?hallazgoId=${encodeURIComponent(hallazgoId)}`
+            : numeroHallazgo
+              ? `${ERoutePaths.DENUNCIAS_NUEVA}?numeroHallazgo=${encodeURIComponent(numeroHallazgo)}`
+              : ERoutePaths.DENUNCIAS_NUEVA;
+
+          navigate(path, {
+            state: {
+              origen: 'NOTIFICACION_DENUNCIA',
+              hallazgoId,
+              numeroHallazgo,
+              notificacionId: denuncia.id,
+            },
+          });
+        }
         break;
       case 'reclamos':
         navigate(ERoutePaths.RECLAMOS);
@@ -227,11 +253,7 @@ export const NotificacionesList: React.FC = () => {
           variant="primary"
           className="text-xs"
           onClick={() => {
-            const referencia = 
-              'numeroDenuncia' in row ? row.numeroDenuncia :
-              'numeroReclamo' in row ? row.numeroReclamo :
-              'numeroCargo' in row ? row.numeroCargo : '';
-            handleGestionar(tipo, referencia);
+            handleGestionar(tipo, row);
           }}
         >
           Gestionar Denuncia

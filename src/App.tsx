@@ -13,6 +13,7 @@ import { ReclamosList, ReclamoDetalle, ReclamoForm } from './pages/Reclamos';
 import { MercanciasList, MercanciaDetalle, MercanciaForm } from './pages/Mercancias';
 import { InvolucradosList, InvolucradoDetalle, InvolucradoForm } from './pages/Involucrados';
 import { ReportesDashboard } from './pages/Reportes';
+import { Configuracion } from './pages/Configuracion';
 
 function App() {
   return (
@@ -78,7 +79,7 @@ function App() {
       <Route path={ERoutePaths.AUDITORIA} element={<ReportesDashboard />} />
       
       {/* Configuración */}
-      <Route path={ERoutePaths.CONFIGURACION} element={<Dashboard />} />
+      <Route path={ERoutePaths.CONFIGURACION} element={<Configuracion />} />
       <Route path={ERoutePaths.PERFIL} element={<Dashboard />} />
       
       {/* 404 - Redirect to dashboard */}

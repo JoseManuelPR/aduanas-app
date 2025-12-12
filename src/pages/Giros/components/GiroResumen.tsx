@@ -131,7 +131,11 @@ export const GiroResumen: React.FC<GiroResumenProps> = ({
                 <p className="font-semibold">{giro.emitidoA}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">RUT</p>
+                <p className="text-sm text-gray-500 mb-1">Tipo ID</p>
+                <p className="font-semibold">{giro.tipoIdDeudor || 'RUT'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">N° ID</p>
                 <p className="font-semibold">{giro.rutDeudor}</p>
               </div>
               {giro.direccionDeudor && (

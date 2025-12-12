@@ -3,14 +3,16 @@
  * Sistema DECARE - Servicio Nacional de Aduanas de Chile
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from 'he-button-custom-library';
 import CONSTANTS_APP from '../../constants/sidebar-menu';
 import CustomLayout from '../../Layout/Layout';
 import { CustomButton } from '../../components/Button/Button';
-import { Badge, Tabs } from '../../components/UI';
+import { Badge, Modal, Tabs } from '../../components/UI';
 import { ERoutePaths } from '../../routes/routes';
+import { ArchivoViewer } from '../../components/ArchivoViewer';
+import { FileUploader, type UploadedFileInfo } from '../../components/FileUploader';
 
 // Datos centralizados
 import {
@@ -23,6 +25,13 @@ import {
   getCargoPorId,
   getDenunciaPorId,
   formatMonto,
+  getOrCrearExpedientePorEntidad,
+  agregarArchivosAExpediente,
+  eliminarArchivoDeExpediente,
+  getPermisosArchivo,
+  type ExpedienteDigital,
+  type ArchivoExpediente,
+  type TipoArchivoExpediente,
 } from '../../data';
 
 // Sub-componentes
@@ -39,14 +48,94 @@ export const GiroDetalle: React.FC = () => {
   const [activeTab, setActiveTab] = useState('resumen');
   const [showModalPago, setShowModalPago] = useState(false);
   const [showModalAnular, setShowModalAnular] = useState(false);
+  const [expediente, setExpediente] = useState<ExpedienteDigital | null>(null);
+  const [modalSubirArchivo, setModalSubirArchivo] = useState(false);
+  const [modalVisualizarArchivo, setModalVisualizarArchivo] = useState<{ isOpen: boolean; archivoId?: string }>({
+    isOpen: false,
+  });
   
   const allNotifications = getTodasLasNotificaciones();
+
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const inferTipoArchivo = (fileName: string): TipoArchivoExpediente => {
+    const extension = '.' + (fileName.split('.').pop()?.toLowerCase() || '');
+    switch (extension) {
+      case '.pdf':
+        return 'PDF';
+      case '.xml':
+        return 'XML';
+      case '.doc':
+        return 'DOC';
+      case '.docx':
+        return 'DOCX';
+      case '.xls':
+        return 'XLS';
+      case '.xlsx':
+        return 'XLSX';
+      case '.jpg':
+      case '.jpeg':
+        return 'JPG';
+      case '.png':
+        return 'PNG';
+      case '.zip':
+        return 'ZIP';
+      case '.rar':
+        return 'RAR';
+      case '.msg':
+        return 'MSG';
+      case '.eml':
+        return 'EML';
+      case '.txt':
+      default:
+        return 'TXT';
+    }
+  };
+
+  const getIconForArchivo = (archivo: ArchivoExpediente): string => {
+    switch (archivo.tipo) {
+      case 'PDF':
+      case 'DOC':
+      case 'DOCX':
+        return 'FileText';
+      case 'XML':
+        return 'Code';
+      case 'XLS':
+      case 'XLSX':
+        return 'FileSpreadsheet';
+      case 'JPG':
+      case 'PNG':
+        return 'Image';
+      case 'ZIP':
+      case 'RAR':
+        return 'FolderArchive';
+      default:
+        return 'File';
+    }
+  };
   
   // Obtener giro
   const giro = useMemo(() => {
     if (!id) return null;
     return getGiroPorId(id);
   }, [id]);
+
+  // Obtener/crear expediente digital del giro
+  useEffect(() => {
+    if (!giro) return;
+    const exp = getOrCrearExpedientePorEntidad(giro.id, 'GIRO', giro.numeroGiro);
+    setExpediente({
+      ...exp,
+      archivos: [...(exp.archivos || [])],
+      timeline: [...(exp.timeline || [])],
+    });
+  }, [giro]);
   
   // Obtener permisos según estado
   const permisos = useMemo(() => {
@@ -103,12 +192,18 @@ export const GiroDetalle: React.FC = () => {
       badge: giro?.pagos?.length || 0,
       badgeVariant: (giro?.pagos?.length || 0) > 0 ? 'success' as const : undefined,
     },
+    {
+      id: 'archivos',
+      label: 'Archivos',
+      icon: <Icon name="Paperclip" size={16} />,
+      badge: expediente?.archivos?.length || 0,
+    },
     { 
       id: 'historial', 
       label: 'Historial', 
       icon: <Icon name="Clock" size={16} /> 
     },
-  ], [giro]);
+  ], [giro, expediente?.archivos?.length]);
   
   // Handlers
   const handleRegistrarPago = () => {
@@ -125,6 +220,82 @@ export const GiroDetalle: React.FC = () => {
       return;
     }
     setShowModalAnular(true);
+  };
+
+  const handleUploadComplete = (files: UploadedFileInfo[]) => {
+    if (!expediente) return;
+
+    const ahora = new Date();
+    const fechaSubida = ahora.toISOString().split('T')[0];
+    const horaSubida = ahora.toTimeString().slice(0, 5);
+
+    const nuevosArchivos: ArchivoExpediente[] = files.map((fileInfo, idx) => {
+      const archivoId = `archivo-${Date.now()}-${idx}`;
+      const extension = fileInfo.file.name.split('.').pop()?.toLowerCase() || '';
+      const tipo = inferTipoArchivo(fileInfo.file.name);
+
+      return {
+        id: archivoId,
+        expedienteId: expediente.id,
+        nombre: fileInfo.file.name,
+        nombreOriginal: fileInfo.file.name,
+        tipo,
+        extension,
+        tamanio: formatFileSize(fileInfo.file.size),
+        tamanioBytes: fileInfo.file.size,
+        fechaSubida,
+        horaSubida,
+        usuarioSubida: usuarioActual.login || 'usuario',
+        nombreUsuarioSubida: usuarioActual.name,
+        estado: 'Vigente',
+        categoria: fileInfo.categoria,
+        origen: 'Manual',
+        descripcion: fileInfo.descripcion || undefined,
+        rutaArchivo: `/expedientes/${expediente.id}/${fileInfo.file.name}`,
+        urlDescarga: `/api/expedientes/archivos/${archivoId}/descargar`,
+        urlVisualizacion: `/api/expedientes/archivos/${archivoId}/visualizar`,
+      };
+    });
+
+    const actualizado = agregarArchivosAExpediente(
+      expediente.id,
+      nuevosArchivos,
+      usuarioActual.login || 'usuario'
+    );
+
+    if (actualizado) {
+      setExpediente({
+        ...actualizado,
+        archivos: [...(actualizado.archivos || [])],
+        timeline: [...(actualizado.timeline || [])],
+      });
+    }
+  };
+
+  const handleDescargarArchivo = (archivoId: string) => {
+    if (!expediente) return;
+    const archivo = expediente.archivos.find((a) => a.id === archivoId);
+    if (!archivo) return;
+    alert(`Descarga simulada: ${archivo.nombre}`);
+  };
+
+  const handleEliminarArchivo = (archivoId: string) => {
+    if (!expediente) return;
+    if (!confirm('¿Está seguro que desea eliminar este archivo?')) return;
+
+    const actualizado = eliminarArchivoDeExpediente(
+      expediente.id,
+      archivoId,
+      usuarioActual.login || 'usuario'
+    );
+
+    if (actualizado) {
+      setExpediente({
+        ...actualizado,
+        archivos: [...(actualizado.archivos || [])],
+        timeline: [...(actualizado.timeline || [])],
+      });
+    }
   };
   
   // Obtener badge variant según estado
@@ -240,7 +411,7 @@ export const GiroDetalle: React.FC = () => {
               </Badge>
             </h1>
             <p className="text-gray-600 mt-1">
-              {giro.emitidoA} • RUT: {giro.rutDeudor}
+              {giro.emitidoA} • {(giro.tipoIdDeudor || 'RUT')}: {giro.rutDeudor}
             </p>
           </div>
           
@@ -422,6 +593,129 @@ export const GiroDetalle: React.FC = () => {
                 onRegistrarPago={handleRegistrarPago}
               />
             )}
+
+            {activeTab === 'archivos' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-semibold text-gray-900">Archivos del Giro</h4>
+                  <CustomButton
+                    variant="primary"
+                    className="flex items-center gap-2 text-sm"
+                    onClick={() => setModalSubirArchivo(true)}
+                  >
+                    <Icon name="Upload" size={16} />
+                    Subir Archivo
+                  </CustomButton>
+                </div>
+
+                {!expediente ? (
+                  <div className="card p-8 text-center">
+                    <Icon name="Loader" size={40} className="mx-auto text-gray-300 mb-3 animate-spin" />
+                    <p className="text-gray-600">Cargando expediente...</p>
+                  </div>
+                ) : expediente.archivos.length === 0 ? (
+                  <div className="card p-8 text-center">
+                    <Icon name="FileX" size={48} className="mx-auto text-gray-300 mb-3" />
+                    <p className="text-gray-600">No hay archivos adjuntos en este giro.</p>
+                    <p className="text-sm text-gray-500 mt-1">Puedes subir comprobantes, notificaciones u otros documentos.</p>
+                  </div>
+                ) : (
+                  <div className="card overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Archivo
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Categoría
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Fecha
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Usuario
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Tamaño
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {expediente.archivos.map((archivo) => {
+                          const permisosArchivo = getPermisosArchivo(archivo, usuarioActual.role);
+                          return (
+                            <tr key={archivo.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <Icon
+                                    name={getIconForArchivo(archivo) as any}
+                                    size={18}
+                                    className="text-aduana-azul"
+                                  />
+                                  <div>
+                                    <span className="font-medium text-gray-900">{archivo.nombre}</span>
+                                    {archivo.descripcion && (
+                                      <p className="text-xs text-gray-500">{archivo.descripcion}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge variant="info" size="sm">
+                                  {archivo.categoria}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3 text-gray-600">{archivo.fechaSubida}</td>
+                              <td className="px-4 py-3 text-gray-600">
+                                {archivo.nombreUsuarioSubida || archivo.usuarioSubida}
+                              </td>
+                              <td className="px-4 py-3 text-gray-600">{archivo.tamanio}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex justify-center gap-2">
+                                  {permisosArchivo.puedeVisualizar && (
+                                    <button
+                                      className="p-1 text-gray-500 hover:text-aduana-azul"
+                                      title="Ver archivo"
+                                      onClick={() =>
+                                        setModalVisualizarArchivo({ isOpen: true, archivoId: archivo.id })
+                                      }
+                                    >
+                                      <Icon name="Eye" size={16} />
+                                    </button>
+                                  )}
+                                  {permisosArchivo.puedeDescargar && (
+                                    <button
+                                      className="p-1 text-gray-500 hover:text-emerald-600"
+                                      onClick={() => handleDescargarArchivo(archivo.id)}
+                                      title="Descargar"
+                                    >
+                                      <Icon name="Download" size={16} />
+                                    </button>
+                                  )}
+                                  {permisosArchivo.puedeEliminar && (
+                                    <button
+                                      className="p-1 text-gray-500 hover:text-red-600"
+                                      onClick={() => handleEliminarArchivo(archivo.id)}
+                                      title="Eliminar"
+                                    >
+                                      <Icon name="Trash2" size={16} />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
             
             {activeTab === 'historial' && (
               <GiroTimeline giro={giro} />
@@ -453,6 +747,42 @@ export const GiroDetalle: React.FC = () => {
           navigate(ERoutePaths.GIROS);
         }}
       />
+
+      {/* Modal subir archivo */}
+      <Modal
+        isOpen={modalSubirArchivo}
+        onClose={() => setModalSubirArchivo(false)}
+        size="lg"
+        showCloseButton={false}
+      >
+        {expediente ? (
+          <FileUploader
+            expedienteId={expediente.id}
+            onUploadComplete={handleUploadComplete}
+            onClose={() => setModalSubirArchivo(false)}
+          />
+        ) : null}
+      </Modal>
+
+      {/* Modal visualizar archivo */}
+      <Modal
+        isOpen={modalVisualizarArchivo.isOpen}
+        onClose={() => setModalVisualizarArchivo({ isOpen: false })}
+        size="full"
+        showCloseButton={false}
+      >
+        {(() => {
+          const archivoSeleccionado = expediente?.archivos.find(
+            (archivo) => archivo.id === modalVisualizarArchivo.archivoId
+          );
+          return archivoSeleccionado ? (
+            <ArchivoViewer
+              archivo={archivoSeleccionado}
+              onClose={() => setModalVisualizarArchivo({ isOpen: false })}
+            />
+          ) : null;
+        })()}
+      </Modal>
     </CustomLayout>
   );
 };

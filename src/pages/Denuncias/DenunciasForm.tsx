@@ -14,6 +14,7 @@ import {
   getTodasLasNotificaciones,
   usuarioActual,
   getHallazgoPorId,
+  getHallazgoPorNumero,
   prepararDatosFormularioDenuncia,
   generarNumeroDenuncia,
   generarNumeroInterno,
@@ -230,6 +231,18 @@ export const DenunciasForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
   
+  // Soportar precarga desde navegación (ej: /notificaciones -> crear denuncia)
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const locationState = location.state as any;
+  const hallazgoIdFromState =
+    typeof locationState?.hallazgoId === 'string' ? locationState.hallazgoId : undefined;
+  const numeroHallazgoFromState =
+    typeof locationState?.numeroHallazgo === 'string' ? locationState.numeroHallazgo : undefined;
+  const hallazgoIdFromQuery = searchParams.get('hallazgoId') || undefined;
+  const numeroHallazgoFromQuery = searchParams.get('numeroHallazgo') || undefined;
+  const hallazgoIdEfectivo = hallazgoId || hallazgoIdFromState || hallazgoIdFromQuery;
+  const numeroHallazgoEfectivo = numeroHallazgoFromState || numeroHallazgoFromQuery;
+  
   // Estado del formulario
   const [formData, setFormData] = useState<FormularioDenunciaData>(initialFormData);
   const [hallazgoOrigen, setHallazgoOrigen] = useState<Hallazgo | null>(null);
@@ -250,8 +263,9 @@ export const DenunciasForm: React.FC = () => {
   const isDesdeHallazgo = useMemo(() => {
     return location.pathname.includes('desde-hallazgo') || 
            location.pathname.includes('gestionar') ||
-           !!hallazgoId;
-  }, [location.pathname, hallazgoId]);
+           !!hallazgoIdEfectivo ||
+           !!numeroHallazgoEfectivo;
+  }, [location.pathname, hallazgoIdEfectivo, numeroHallazgoEfectivo]);
   
   // Determinar si es edición
   const isEditing = useMemo(() => {
@@ -263,12 +277,19 @@ export const DenunciasForm: React.FC = () => {
 
   // Cargar datos del hallazgo si viene de uno
   useEffect(() => {
-    if (hallazgoId && isDesdeHallazgo) {
-      setIsLoadingHallazgo(true);
-      
-      // Simular carga de datos
-      setTimeout(() => {
-        const hallazgo = getHallazgoPorId(hallazgoId);
+    if (!isDesdeHallazgo || (!hallazgoIdEfectivo && !numeroHallazgoEfectivo)) {
+      return;
+    }
+
+    setIsLoadingHallazgo(true);
+    
+    // Simular carga de datos
+    const timer = setTimeout(() => {
+        const hallazgo = hallazgoIdEfectivo
+          ? getHallazgoPorId(hallazgoIdEfectivo)
+          : numeroHallazgoEfectivo
+            ? getHallazgoPorNumero(numeroHallazgoEfectivo)
+            : undefined;
         
         if (hallazgo) {
           setHallazgoOrigen(hallazgo);
@@ -305,6 +326,10 @@ export const DenunciasForm: React.FC = () => {
               ...initialFormData,
               ...datosFormulario,
               tipoDenuncia: hallazgo.tipoHallazgo,
+              // Datos del denunciado principal (mostrar pre-cargado en el formulario)
+              tipoIdDenunciado: 'RUT',
+              numeroIdDenunciado: hallazgo.rutInvolucrado,
+              nombreDenunciado: hallazgo.nombreInvolucrado,
               // Fechas convertidas al formato correcto
               fechaIngreso: fechaIngresoConvertida,
               fechaOcurrencia: fechaOcurrenciaCalculada,
@@ -340,8 +365,9 @@ export const DenunciasForm: React.FC = () => {
         
         setIsLoadingHallazgo(false);
       }, 500);
-    }
-  }, [hallazgoId, isDesdeHallazgo]);
+
+    return () => clearTimeout(timer);
+  }, [hallazgoIdEfectivo, numeroHallazgoEfectivo, isDesdeHallazgo]);
 
   // Cargar datos existentes cuando se edita una denuncia
   useEffect(() => {

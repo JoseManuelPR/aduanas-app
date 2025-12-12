@@ -63,8 +63,10 @@ export const GirosList: React.FC = () => {
       }
       // Filtro por ID del deudor: se exige seleccionar tipo antes de ingresar número
       const aplicaFiltroId = Boolean(filtros.tipoIdDeudor && filtros.numeroIdDeudor);
-      if (aplicaFiltroId && !giro.rutDeudor.includes(filtros.numeroIdDeudor)) {
-        return false;
+      if (aplicaFiltroId) {
+        const tipoIdGiro = giro.tipoIdDeudor || 'RUT';
+        if (tipoIdGiro !== filtros.tipoIdDeudor) return false;
+        if (!giro.rutDeudor.includes(filtros.numeroIdDeudor)) return false;
       }
       if (filtros.estado && giro.estado !== filtros.estado) {
         return false;
@@ -233,7 +235,9 @@ export const GirosList: React.FC = () => {
           <span className="truncate max-w-[120px] block font-medium" title={row.emitidoA}>
             {row.emitidoA}
           </span>
-          <span className="text-xs text-gray-500">{row.rutDeudor}</span>
+          <span className="text-xs text-gray-500">
+            {(row.tipoIdDeudor || 'RUT')}: {row.rutDeudor}
+          </span>
         </div>
       )
     },

@@ -37,8 +37,8 @@ export const denuncias: Denuncia[] = [
     descripcionHechos: "Se detectaron diferencias en la declaración de importación DIN 6020-24-0012345. Las cantidades declaradas de equipos electrónicos (notebooks y tablets) no coinciden con las efectivamente internadas según fiscalización realizada en zona primaria del puerto de Valparaíso el día 10 de noviembre de 2025.",
     fundamentoLegal: "Ley 18.483 Art. 168",
     normaInfringida: "Art. 174 Ordenanza de Aduanas",
-    mercanciaId: "merc-001",
-    mercanciaDescripcion: "Equipos electrónicos - Notebooks y tablets",
+    mercanciaId: "m-001",
+    mercanciaDescripcion: "Equipos electrónicos - Televisores LED 55\"",
     involucrados: [
       {
         id: "inv-001",
@@ -118,8 +118,8 @@ export const denuncias: Denuncia[] = [
     descripcionHechos: "Detección de contenedor con doble fondo conteniendo mercancías no declaradas (textiles y confecciones de origen asiático) durante inspección rutinaria. La mercancía oculta tiene un valor estimado de $45.000.000 CLP.",
     fundamentoLegal: "Código Penal Art. 178",
     normaInfringida: "Art. 168 Ordenanza de Aduanas",
-    mercanciaId: "merc-002",
-    mercanciaDescripcion: "Textiles y confecciones de origen asiático",
+    mercanciaId: "m-002",
+    mercanciaDescripcion: "Ropa deportiva - Zapatillas marca falsificada",
     involucrados: [
       {
         id: "inv-003",

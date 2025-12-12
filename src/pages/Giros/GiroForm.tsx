@@ -12,6 +12,11 @@ import { CustomButton } from '../../components/Button/Button';
 import InputField from '../../organisms/InputField/InputField';
 import { Badge } from '../../components/UI';
 import { ERoutePaths } from '../../routes/routes';
+import {
+  TIPOS_IDENTIFICACION_DTTA,
+  getPlaceholderPorTipoId,
+  type TipoIdentificacionDTTA,
+} from '../../constants/tipos-identificacion';
 
 // Datos centralizados
 import {
@@ -39,6 +44,7 @@ interface GiroFormData {
   plazo: number;
   diaHabil: boolean;
   emitidoA: string;
+  tipoIdDeudor: TipoIdentificacionDTTA;
   rutDeudor: string;
   direccionDeudor: string;
   emailDeudor: string;
@@ -57,6 +63,7 @@ const initialFormData: GiroFormData = {
   plazo: 30,
   diaHabil: true,
   emitidoA: '',
+  tipoIdDeudor: 'RUT',
   rutDeudor: '',
   direccionDeudor: '',
   emailDeudor: '',
@@ -97,6 +104,7 @@ export const GiroForm: React.FC = () => {
           plazo: 30,
           diaHabil: true,
           emitidoA: cargo.nombreDeudor,
+          tipoIdDeudor: 'RUT',
           rutDeudor: cargo.rutDeudor,
           direccionDeudor: cargo.infractores?.[0]?.direccion || '',
           emailDeudor: cargo.infractores?.[0]?.email || '',
@@ -157,6 +165,7 @@ export const GiroForm: React.FC = () => {
           plazo: 30,
           diaHabil: true,
           emitidoA: denuncia.nombreDeudor,
+          tipoIdDeudor: 'RUT',
           rutDeudor: denuncia.rutDeudor,
           direccionDeudor: denuncia.involucrados?.[0]?.direccion || '',
           emailDeudor: denuncia.involucrados?.[0]?.email || '',
@@ -230,7 +239,7 @@ export const GiroForm: React.FC = () => {
     const newErrors: Record<string, string> = {};
     
     if (!formData.emitidoA) newErrors.emitidoA = 'Ingrese el nombre del deudor';
-    if (!formData.rutDeudor) newErrors.rutDeudor = 'Ingrese el RUT del deudor';
+    if (!formData.rutDeudor) newErrors.rutDeudor = 'Ingrese el N° ID del deudor';
     if (!formData.fechaEmision) newErrors.fechaEmision = 'Seleccione fecha de emisión';
     if (!formData.codigoAduana) newErrors.codigoAduana = 'Seleccione una aduana';
     if (formData.cuentas.length === 0) newErrors.cuentas = 'Debe agregar al menos una cuenta';
@@ -259,6 +268,7 @@ export const GiroForm: React.FC = () => {
       plazo: formData.plazo,
       diaHabil: formData.diaHabil,
       emitidoA: formData.emitidoA,
+      tipoIdDeudor: formData.tipoIdDeudor,
       rutDeudor: formData.rutDeudor,
       direccionDeudor: formData.direccionDeudor || undefined,
       emailDeudor: formData.emailDeudor || undefined,
@@ -453,16 +463,36 @@ export const GiroForm: React.FC = () => {
                   placeholder="Nombre o razón social"
                   errorMessage={errors.emitidoA}
                 />
-                
-                <InputField
-                  label="RUT *"
-                  id="rutDeudor"
-                  type="text"
-                  value={formData.rutDeudor}
-                  onChange={(e) => handleChange('rutDeudor', e.target.value)}
-                  placeholder="12.345.678-9"
-                  errorMessage={errors.rutDeudor}
-                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo ID - N° ID *
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.tipoIdDeudor}
+                      onChange={(e) => handleChange('tipoIdDeudor', e.target.value as TipoIdentificacionDTTA)}
+                      className="w-1/3 px-3 py-2.5 border border-gray-300 rounded-lg"
+                    >
+                      {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
+                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      id="rutDeudor"
+                      type="text"
+                      value={formData.rutDeudor}
+                      onChange={(e) => handleChange('rutDeudor', e.target.value)}
+                      placeholder={getPlaceholderPorTipoId(formData.tipoIdDeudor)}
+                      className={`flex-1 px-4 py-2.5 border rounded-lg ${
+                        errors.rutDeudor ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                  </div>
+                  {errors.rutDeudor && (
+                    <p className="text-sm text-red-500 mt-1">{errors.rutDeudor}</p>
+                  )}
+                </div>
                 
                 <InputField
                   label="Dirección"

@@ -632,6 +632,7 @@ export const crearGiro = (data: Partial<Giro>): Giro => {
     fechaEmision: new Date().toLocaleDateString('es-CL'),
     fechaVencimiento: '',
     emitidoA: '',
+    tipoIdDeudor: 'RUT',
     rutDeudor: '',
     montoTotal: '$0',
     montoTotalNumero: 0,

@@ -32,6 +32,12 @@ export interface NotificacionDenuncia {
   fechaGeneracion: string;
   leido: boolean;
   estado: EstadoNotificacion;
+  /**
+   * Referencia opcional a un hallazgo (PFI) que origina la creación/gestión
+   * de la denuncia. Se usa para precargar el formulario de "Crear Denuncia".
+   */
+  hallazgoId?: string;
+  numeroHallazgo?: string; // Formato PFI-XXX
 }
 
 export interface NotificacionReclamo {
@@ -558,6 +564,7 @@ export interface Giro {
   
   // Deudor
   emitidoA: string;                      // Nombre del deudor
+  tipoIdDeudor?: TipoIdentificacion;     // Tipo de identificación (RUT, Pasaporte, etc.)
   rutDeudor: string;
   direccionDeudor?: string;
   emailDeudor?: string;

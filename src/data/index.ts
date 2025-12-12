@@ -245,6 +245,10 @@ export {
   getDocumentosObligatoriosPorTipo,
   calcularCompletitud,
   getPermisosArchivo,
+  crearExpedienteParaEntidad,
+  getOrCrearExpedientePorEntidad,
+  agregarArchivosAExpediente,
+  eliminarArchivoDeExpediente,
 } from './expedientes';
 
 // ============================================

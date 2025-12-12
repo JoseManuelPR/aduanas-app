@@ -8,6 +8,7 @@ import {
   ArchivoExpediente,
   DocumentoObligatorioConfig,
   PermisosArchivoExpediente,
+  TipoExpediente,
 } from './types';
 
 // Configuración de documentos obligatorios por tipo de expediente
@@ -486,4 +487,159 @@ export const getPermisosArchivo = (
       ? 'Los documentos generados por el sistema no pueden ser eliminados'
       : undefined,
   };
+};
+
+// ============================================
+// MUTACIONES (mock) PARA EXPEDIENTES
+// ============================================
+
+const formatFechaYYYYMMDD = (date: Date = new Date()): string =>
+  date.toISOString().split('T')[0];
+
+const formatHoraHHMM = (date: Date = new Date()): string =>
+  date.toTimeString().slice(0, 5);
+
+/**
+ * Crea un expediente digital "vacío" para una entidad (mock).
+ * Nota: persiste en memoria en el array `expedientesDigitales`.
+ */
+export const crearExpedienteParaEntidad = (
+  tipo: TipoExpediente,
+  entidadId: string,
+  entidadNumero?: string
+): ExpedienteDigital => {
+  const ahora = new Date();
+  const fecha = formatFechaYYYYMMDD(ahora);
+  const hora = formatHoraHHMM(ahora);
+
+  const id = `exp-${tipo.toLowerCase()}-${entidadId}`;
+
+  const nuevo: ExpedienteDigital = {
+    id,
+    tipo,
+    numeroExpediente: entidadNumero || id,
+    entidadId,
+    entidadNumero,
+    fechaCreacion: fecha,
+    fechaModificacion: fecha,
+    archivos: [],
+    timeline: [
+      {
+        id: `tl-${Date.now()}`,
+        title: 'Expediente Creado',
+        description: `Se creó el expediente digital para ${tipo}`,
+        date: fecha,
+        time: hora,
+        user: 'Sistema',
+        status: 'completed',
+      },
+    ],
+    estado: 'Vigente',
+    completitud: 0,
+    documentosFaltantes: [],
+    tieneDocumentosFaltantes: true,
+    tieneDocumentosVencidos: false,
+    usuarioCreacion: 'sistema',
+    fechaUltimaModificacion: fecha,
+    usuarioUltimaModificacion: 'sistema',
+  };
+
+  expedientesDigitales.push(nuevo);
+  return nuevo;
+};
+
+/**
+ * Obtiene el expediente por entidad o lo crea si no existe.
+ */
+export const getOrCrearExpedientePorEntidad = (
+  entidadId: string,
+  tipo: TipoExpediente,
+  entidadNumero?: string
+): ExpedienteDigital => {
+  const existente = getExpedientePorEntidad(entidadId, tipo);
+  if (existente) return existente;
+  return crearExpedienteParaEntidad(tipo, entidadId, entidadNumero);
+};
+
+/**
+ * Agrega archivos a un expediente (mock) y recalcula completitud.
+ */
+export const agregarArchivosAExpediente = (
+  expedienteId: string,
+  archivos: ArchivoExpediente[],
+  usuarioModificador: string = 'sistema'
+): ExpedienteDigital | null => {
+  const expediente = getExpedientePorId(expedienteId);
+  if (!expediente) return null;
+
+  const ahora = new Date();
+  const fecha = formatFechaYYYYMMDD(ahora);
+  const hora = formatHoraHHMM(ahora);
+
+  expediente.archivos = [...(expediente.archivos || []), ...archivos];
+  expediente.fechaModificacion = fecha;
+  expediente.fechaUltimaModificacion = fecha;
+  expediente.usuarioUltimaModificacion = usuarioModificador;
+
+  // Registrar evento en timeline (mock)
+  expediente.timeline = [
+    ...(expediente.timeline || []),
+    {
+      id: `tl-${Date.now()}`,
+      title: 'Archivos Agregados',
+      description: `Se agregaron ${archivos.length} archivo(s) al expediente`,
+      date: fecha,
+      time: hora,
+      user: usuarioModificador,
+      status: 'completed',
+    },
+  ];
+
+  const { porcentaje, faltantes } = calcularCompletitud(expediente);
+  expediente.completitud = porcentaje;
+  expediente.documentosFaltantes = faltantes;
+  expediente.tieneDocumentosFaltantes = faltantes.length > 0;
+
+  return expediente;
+};
+
+/**
+ * Elimina un archivo de un expediente (mock) y recalcula completitud.
+ */
+export const eliminarArchivoDeExpediente = (
+  expedienteId: string,
+  archivoId: string,
+  usuarioModificador: string = 'sistema'
+): ExpedienteDigital | null => {
+  const expediente = getExpedientePorId(expedienteId);
+  if (!expediente) return null;
+
+  const ahora = new Date();
+  const fecha = formatFechaYYYYMMDD(ahora);
+  const hora = formatHoraHHMM(ahora);
+
+  expediente.archivos = (expediente.archivos || []).filter((a) => a.id !== archivoId);
+  expediente.fechaModificacion = fecha;
+  expediente.fechaUltimaModificacion = fecha;
+  expediente.usuarioUltimaModificacion = usuarioModificador;
+
+  expediente.timeline = [
+    ...(expediente.timeline || []),
+    {
+      id: `tl-${Date.now()}`,
+      title: 'Archivo Eliminado',
+      description: `Se eliminó un archivo del expediente`,
+      date: fecha,
+      time: hora,
+      user: usuarioModificador,
+      status: 'completed',
+    },
+  ];
+
+  const { porcentaje, faltantes } = calcularCompletitud(expediente);
+  expediente.completitud = porcentaje;
+  expediente.documentosFaltantes = faltantes;
+  expediente.tieneDocumentosFaltantes = faltantes.length > 0;
+
+  return expediente;
 };
