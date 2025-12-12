@@ -680,7 +680,7 @@ export const DenunciasForm: React.FC = () => {
     <div className="space-y-6">
       {/* Datos de ubicación */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+        <div className="flex flex-col">
           <label className="form-label">Aduana *</label>
           <select
             className={`form-input ${errors.aduanaOrigen ? 'border-red-500' : ''}`}
@@ -694,7 +694,7 @@ export const DenunciasForm: React.FC = () => {
           </select>
           {errors.aduanaOrigen && <p className="text-red-500 text-sm mt-1">{errors.aduanaOrigen}</p>}
         </div>
-        <div>
+        <div className="flex flex-col">
           <label className="form-label">Aduana de Emisión</label>
           <select
             className="form-input"
@@ -707,7 +707,7 @@ export const DenunciasForm: React.FC = () => {
             ))}
           </select>
         </div>
-        <div>
+        <div className="flex flex-col">
           <label className="form-label">Sección</label>
           <select
             className="form-input"
@@ -720,7 +720,7 @@ export const DenunciasForm: React.FC = () => {
             ))}
           </select>
         </div>
-        <div>
+        <div className="flex flex-col">
           <label className="form-label">Moneda</label>
           <select
             className="form-input"
@@ -906,7 +906,7 @@ export const DenunciasForm: React.FC = () => {
       </div>
 
       {/* Tipo de Infracción */}
-      <div>
+      <div className="flex flex-col">
         <label className="form-label">Tipo de Infracción *</label>
         <select
           className={`form-input ${errors.tipoInfraccion ? 'border-red-500' : ''}`}
@@ -922,7 +922,7 @@ export const DenunciasForm: React.FC = () => {
       </div>
 
       {/* Descripción de los hechos */}
-      <div>
+      <div className="flex flex-col">
         <label className="form-label">Descripción de los Hechos *</label>
         <textarea
           key="descripcion-hechos-tipificacion"
@@ -946,7 +946,7 @@ export const DenunciasForm: React.FC = () => {
           </h4>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">Artículo *</label>
               <select
                 className={`form-input ${errors.codigoArticulo ? 'border-red-500' : ''}`}
@@ -982,7 +982,7 @@ export const DenunciasForm: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">Multa ($)</label>
               <input
                 key="multa"
@@ -1000,7 +1000,7 @@ export const DenunciasForm: React.FC = () => {
             </div>
             
             {articuloSeleccionado?.permiteAllanamiento && (
-              <div>
+              <div className="flex flex-col">
                 <label className="form-label">Multa por Allanamiento ($)</label>
                 <input
                   key="multa-allanamiento"
@@ -1016,7 +1016,7 @@ export const DenunciasForm: React.FC = () => {
               </div>
             )}
             
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">Monto Derechos ($)</label>
               <input
                 key="monto-derechos"
@@ -1030,7 +1030,7 @@ export const DenunciasForm: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">Monto Retención ($)</label>
               <input
                 key="monto-retencion"
@@ -1041,7 +1041,7 @@ export const DenunciasForm: React.FC = () => {
                 onChange={handleMontoRetencionChange}
               />
             </div>
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">Monto No Declarado ($)</label>
               <input
                 key="monto-no-declarado"
@@ -1065,7 +1065,7 @@ export const DenunciasForm: React.FC = () => {
           </h4>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">Artículo Penal</label>
               <select
                 className="form-input"
@@ -1081,7 +1081,7 @@ export const DenunciasForm: React.FC = () => {
               </select>
             </div>
             
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">Denunciante *</label>
               <select
                 className={`form-input ${errors.codigoDenunciante ? 'border-red-500' : ''}`}
@@ -1160,7 +1160,7 @@ export const DenunciasForm: React.FC = () => {
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* ID del Infractor - Campos anidados */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 flex flex-col">
             <label className="form-label">ID del Infractor *</label>
             <div className="flex gap-2">
               <select
@@ -1180,6 +1180,7 @@ export const DenunciasForm: React.FC = () => {
                 onChange={handleNumeroIdDenunciadoChange}
               />
             </div>
+            {errors.numeroIdDenunciado && <p className="text-red-500 text-sm mt-1">{errors.numeroIdDenunciado}</p>}
           </div>
           <InputField
             key="nombre-denunciado"
@@ -1228,7 +1229,6 @@ export const DenunciasForm: React.FC = () => {
             onChange={handleRepresentanteLegalChange}
           />
         </div>
-        {errors.numeroIdDenunciado && <p className="text-red-500 text-sm mt-2">{errors.numeroIdDenunciado}</p>}
       </div>
 
       <div className="card p-5 border-l-4 border-l-emerald-500">
@@ -1347,7 +1347,7 @@ export const DenunciasForm: React.FC = () => {
           value={formData.documentoAduanero || ''}
           onChange={handleDocumentoAduaneroChange}
         />
-        <div>
+        <div className="flex flex-col">
           <label className="form-label">Tipo de Documento</label>
           <select
             className="form-input"
@@ -1368,7 +1368,7 @@ export const DenunciasForm: React.FC = () => {
       <div className="card p-4 bg-gray-50">
         <h4 className="font-medium text-gray-900 mb-3">Clasificación de Documentos</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="flex flex-col">
             <label className="form-label">Clasificación</label>
             <select
               className="form-input"
@@ -1382,7 +1382,7 @@ export const DenunciasForm: React.FC = () => {
             </select>
           </div>
           {formData.clasificacionDocumento === 'OTROS' && (
-            <div>
+            <div className="flex flex-col">
               <label className="form-label">N° de Radicado (Auto-generado)</label>
               <input
                 type="text"

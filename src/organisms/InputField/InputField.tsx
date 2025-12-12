@@ -44,12 +44,12 @@ const InputFieldComponent = React.forwardRef<HTMLInputElement, InputFieldProps>(
     return (
       <div
         className={cn(
-          "flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 w-full",
+          "flex flex-col gap-2 w-full",
           containerClassName
         )}
       >
         {/* Label */}
-        <div className="lg:w-48 lg:flex-shrink-0">
+        <div>
           <Label
             htmlFor={id}
             required={required}
@@ -61,7 +61,7 @@ const InputFieldComponent = React.forwardRef<HTMLInputElement, InputFieldProps>(
         </div>
 
         {/* Input Container */}
-        <div className="flex-1 w-full">
+        <div className="w-full">
           <div className="relative w-full pointer-events-auto">
             <CustomInput
               id={id}
