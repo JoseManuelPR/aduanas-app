@@ -73,13 +73,18 @@ const convertirFechaParaInput = (fecha: string): string => {
 const obtenerArticuloPorInfraccion = (tipoInfraccion: string, tipoDenuncia: string): string => {
   const mapeoInfraccion: Record<string, string> = {
     'Contrabando': '168',
+    'Contrabando Penal': 'PEN-168BIS',
+    'Acciones sobre mercancías objeto de contrabando': 'PEN-182',
     'Declaración Falsa': '174',
     'Fraude Aduanero': '178',
     'Clasificación Incorrecta': '176',
     'Valor Incorrecto': '177',
     'Documentación Incompleta': '175',
     'Falsificación Documental': '169',
+    'Falsificación Documental Penal': 'PEN-193',
     'Evasión Tributaria': tipoDenuncia === 'Penal' ? 'PEN-97' : '178',
+    'Evasión Tributaria Penal': 'PEN-97',
+    'Reintegros Tributarios': 'PEN-18480-18708',
   };
   return mapeoInfraccion[tipoInfraccion] || '';
 };
