@@ -44,7 +44,7 @@ interface GiroFormData {
   plazo: number;
   diaHabil: boolean;
   emitidoA: string;
-  tipoIdDeudor: TipoIdentificacionDTTA;
+  tipoIdDeudor: TipoIdentificacionDTTA | '';
   rutDeudor: string;
   direccionDeudor: string;
   emailDeudor: string;
@@ -63,7 +63,7 @@ const initialFormData: GiroFormData = {
   plazo: 30,
   diaHabil: true,
   emitidoA: '',
-  tipoIdDeudor: 'RUT',
+  tipoIdDeudor: '',
   rutDeudor: '',
   direccionDeudor: '',
   emailDeudor: '',
@@ -104,7 +104,7 @@ export const GiroForm: React.FC = () => {
           plazo: 30,
           diaHabil: true,
           emitidoA: cargo.nombreDeudor,
-          tipoIdDeudor: 'RUT',
+          tipoIdDeudor: '',
           rutDeudor: cargo.rutDeudor,
           direccionDeudor: cargo.infractores?.[0]?.direccion || '',
           emailDeudor: cargo.infractores?.[0]?.email || '',
@@ -165,7 +165,7 @@ export const GiroForm: React.FC = () => {
           plazo: 30,
           diaHabil: true,
           emitidoA: denuncia.nombreDeudor,
-          tipoIdDeudor: 'RUT',
+          tipoIdDeudor: '',
           rutDeudor: denuncia.rutDeudor,
           direccionDeudor: denuncia.involucrados?.[0]?.direccion || '',
           emailDeudor: denuncia.involucrados?.[0]?.email || '',
@@ -239,6 +239,7 @@ export const GiroForm: React.FC = () => {
     const newErrors: Record<string, string> = {};
     
     if (!formData.emitidoA) newErrors.emitidoA = 'Ingrese el nombre del deudor';
+    if (!formData.tipoIdDeudor) newErrors.tipoIdDeudor = 'Seleccione el tipo de documento';
     if (!formData.rutDeudor) newErrors.rutDeudor = 'Ingrese el N° ID del deudor';
     if (!formData.fechaEmision) newErrors.fechaEmision = 'Seleccione fecha de emisión';
     if (!formData.codigoAduana) newErrors.codigoAduana = 'Seleccione una aduana';
@@ -268,7 +269,7 @@ export const GiroForm: React.FC = () => {
       plazo: formData.plazo,
       diaHabil: formData.diaHabil,
       emitidoA: formData.emitidoA,
-      tipoIdDeudor: formData.tipoIdDeudor,
+      tipoIdDeudor: (formData.tipoIdDeudor || 'RUT') as TipoIdentificacionDTTA,
       rutDeudor: formData.rutDeudor,
       direccionDeudor: formData.direccionDeudor || undefined,
       emailDeudor: formData.emailDeudor || undefined,
@@ -471,9 +472,16 @@ export const GiroForm: React.FC = () => {
                   <div className="flex gap-2">
                     <select
                       value={formData.tipoIdDeudor}
-                      onChange={(e) => handleChange('tipoIdDeudor', e.target.value as TipoIdentificacionDTTA)}
-                      className="w-1/3 px-3 py-2.5 border border-gray-300 rounded-lg"
+                      onChange={(e) => {
+                        const valor = e.target.value as TipoIdentificacionDTTA | '';
+                        handleChange('tipoIdDeudor', valor);
+                        if (!valor) handleChange('rutDeudor', '');
+                      }}
+                      className={`w-1/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul ${
+                        errors.tipoIdDeudor ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     >
+                      <option value="">Tipo ID</option>
                       {TIPOS_IDENTIFICACION_DTTA.map(tipo => (
                         <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
                       ))}
@@ -484,11 +492,18 @@ export const GiroForm: React.FC = () => {
                       value={formData.rutDeudor}
                       onChange={(e) => handleChange('rutDeudor', e.target.value)}
                       placeholder={getPlaceholderPorTipoId(formData.tipoIdDeudor)}
-                      className={`flex-1 px-4 py-2.5 border rounded-lg ${
+                      disabled={!formData.tipoIdDeudor}
+                      className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-aduana-azul/20 focus:border-aduana-azul disabled:opacity-60 disabled:cursor-not-allowed ${
                         errors.rutDeudor ? 'border-red-500' : 'border-gray-300'
                       }`}
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selecciona el tipo de documento antes de escribir el número.
+                  </p>
+                  {errors.tipoIdDeudor && (
+                    <p className="text-sm text-red-500 mt-1">{errors.tipoIdDeudor}</p>
+                  )}
                   {errors.rutDeudor && (
                     <p className="text-sm text-red-500 mt-1">{errors.rutDeudor}</p>
                   )}
