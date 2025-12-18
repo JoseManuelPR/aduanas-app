@@ -313,7 +313,7 @@ export const GiroDetalle: React.FC = () => {
   if (!giro) {
     return (
       <CustomLayout
-        platformName="DECARE"
+        platformName="Sistema de Tramitación de Denuncias"
         sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
         options={[]}
         onLogout={() => navigate(ERoutePaths.LOGIN)}
@@ -348,7 +348,7 @@ export const GiroDetalle: React.FC = () => {
   
   return (
     <CustomLayout
-      platformName="DECARE"
+      platformName="Sistema de Tramitación de Denuncias"
       sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
       options={[]}
       onLogout={() => navigate(ERoutePaths.LOGIN)}

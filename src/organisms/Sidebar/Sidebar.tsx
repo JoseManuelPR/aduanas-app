@@ -13,7 +13,7 @@ interface CustomSidebarProps {
 
 const CustomSidebar: React.FC<CustomSidebarProps> = ({
   items,
-  platformName = 'DECARE',
+  platformName = 'Sistema de Tramitación de Denuncias',
   platformLogo,
   platformLogoClass = 'h-10',
   isOpen,
@@ -64,7 +64,7 @@ const CustomSidebar: React.FC<CustomSidebarProps> = ({
             />
           ) : (
             <div className={`font-bold text-aduana-azul ${isOpen ? 'text-xl' : 'text-xs text-center'}`}>
-              {isOpen ? platformName : platformName.substring(0, 2)}
+              {isOpen ? platformName : 'STD'}
             </div>
           )}
         </div>

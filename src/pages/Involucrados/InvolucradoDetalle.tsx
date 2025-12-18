@@ -42,7 +42,7 @@ const InvolucradoDetalle: React.FC = () => {
   if (!involucrado) {
     return (
       <CustomLayout
-        platformName="DECARE"
+        platformName="Sistema de Tramitación de Denuncias"
         sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
         options={[]}
         onLogout={() => navigate(ERoutePaths.LOGIN)}
@@ -406,7 +406,7 @@ const InvolucradoDetalle: React.FC = () => {
 
   return (
     <CustomLayout
-      platformName="DECARE"
+      platformName="Sistema de Tramitación de Denuncias"
       sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
       options={[]}
       onLogout={() => navigate(ERoutePaths.LOGIN)}

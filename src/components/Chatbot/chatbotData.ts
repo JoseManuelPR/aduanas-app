@@ -251,7 +251,7 @@ export const notFoundQuickActions: QuickAction[] = [
 // ============================================
 
 export const chatbotMessages = {
-  welcome: `¡Hola! Soy el **Asistente de Denuncias** del Sistema DECARE. 
+  welcome: `¡Hola! Soy el **Asistente de Denuncias** del Sistema de Tramitación de Denuncias. 
 
 Puedo ayudarte a:
 • 📋 Ver el estado y trazabilidad de una denuncia

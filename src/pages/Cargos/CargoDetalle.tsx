@@ -143,7 +143,7 @@ export const CargoDetalle: React.FC = () => {
   if (!cargo) {
     return (
       <CustomLayout
-        platformName="DECARE"
+        platformName="Sistema de Tramitación de Denuncias"
         sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
         options={[]}
         onLogout={() => navigate(ERoutePaths.LOGIN)}
@@ -178,7 +178,7 @@ export const CargoDetalle: React.FC = () => {
   
   return (
     <CustomLayout
-      platformName="DECARE"
+      platformName="Sistema de Tramitación de Denuncias"
       sidebarItems={CONSTANTS_APP.ITEMS_SIDEBAR_MENU}
       options={[]}
       onLogout={() => navigate(ERoutePaths.LOGIN)}

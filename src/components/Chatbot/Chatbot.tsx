@@ -462,7 +462,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               <Icon name="Bot" size={22} className="text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Asistente DECARE</h3>
+              <h3 className="font-semibold text-lg">Asistente STD</h3>
               <p className="text-xs text-white/80">Consulta estados, normativas y estadísticas</p>
             </div>
           </div>
