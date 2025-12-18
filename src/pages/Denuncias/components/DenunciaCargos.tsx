@@ -30,7 +30,7 @@ export const DenunciaCargos: React.FC<DenunciaCargosProps> = ({
           No hay cargos generados para esta denuncia. 
           {permisos.puedeGenerarCargo 
             ? ' Puede generar un cargo desde el botón de acciones.'
-            : ' La denuncia debe estar formalizada para poder generar cargos.'
+            : ' La denuncia debe estar ingresada para poder generar cargos.'
           }
         </p>
         {permisos.puedeGenerarCargo && onGenerarCargo && (

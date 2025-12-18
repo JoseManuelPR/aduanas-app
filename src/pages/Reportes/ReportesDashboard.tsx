@@ -26,7 +26,7 @@ export const ReportesDashboard: React.FC = () => {
     {
       id: 'denuncias-periodo',
       titulo: 'Denuncias por Período',
-      descripcion: 'Resumen de denuncias ingresadas, formuladas y cerradas',
+      descripcion: 'Resumen de denuncias ingresadas y cerradas',
       icono: <Icon name="FileText" size={24} />,
       color: 'azul',
     },

@@ -38,7 +38,7 @@ export const DenunciaDetalle: React.FC = () => {
   const { showToast } = useToast();
   
   // Estados
-  const [showModalFormalizar, setShowModalFormalizar] = useState(false);
+  const [showModalIngresar, setShowModalIngresar] = useState(false);
   const [showModalGenerarCargo, setShowModalGenerarCargo] = useState(false);
   
   // Obtener notificaciones para el header
@@ -132,7 +132,7 @@ export const DenunciaDetalle: React.FC = () => {
       items.push({
         id: '2',
         title: 'Denuncia Ingresada',
-        description: 'La denuncia fue ingresada formalmente al sistema',
+        description: 'La denuncia fue ingresada al sistema',
         date: denuncia.fechaIngreso,
         time: '10:00',
         user: denuncia.loginFuncionario || 'Sistema',
@@ -220,14 +220,14 @@ export const DenunciaDetalle: React.FC = () => {
   }, [denuncia, cargosAsociados, reclamosAsociados]);
   
   // Handlers
-  const handleFormalizar = () => {
+  const handleIngresar = () => {
     showToast({
       type: 'success',
-      title: 'Denuncia Formalizada',
-      message: `La denuncia N° ${denuncia.numeroDenuncia} ha sido formalizada exitosamente.`,
+      title: 'Denuncia Ingresada',
+      message: `La denuncia N° ${denuncia.numeroDenuncia} ha sido ingresada exitosamente.`,
       duration: 4000,
     });
-    setShowModalFormalizar(false);
+    setShowModalIngresar(false);
   };
   
   const handleGenerarCargo = () => {
@@ -474,10 +474,10 @@ export const DenunciaDetalle: React.FC = () => {
               <CustomButton 
                 variant="primary" 
                 className="flex items-center gap-2 text-sm bg-emerald-600 hover:bg-emerald-700"
-                onClick={() => setShowModalFormalizar(true)}
+                onClick={() => setShowModalIngresar(true)}
               >
                 <Icon name="CheckCircle" size={16} />
-                Formalizar
+                Ingresar
               </CustomButton>
             )}
             
@@ -565,13 +565,13 @@ export const DenunciaDetalle: React.FC = () => {
         
         {/* Modales */}
         <ModalConfirmacion
-          isOpen={showModalFormalizar}
-          onClose={() => setShowModalFormalizar(false)}
-          onConfirm={handleFormalizar}
+          isOpen={showModalIngresar}
+          onClose={() => setShowModalIngresar(false)}
+          onConfirm={handleIngresar}
           titulo="Confirmar Formalización"
           mensaje={`¿Está seguro que desea formalizar la denuncia N° ${denuncia.numeroDenuncia}? Esta acción iniciará el flujo de trabajo correspondiente y se enviará a revisión.`}
           tipo="info"
-          textoConfirmar="Formalizar"
+          textoConfirmar="Ingresar"
         />
         
         <ModalConfirmacion
