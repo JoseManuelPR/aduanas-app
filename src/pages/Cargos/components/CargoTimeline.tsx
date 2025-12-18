@@ -46,10 +46,10 @@ export const CargoTimeline: React.FC<CargoTimelineProps> = ({
       status: 'current' as const,
       description: cargo.observaciones || 'Observaciones pendientes de resolver',
     }] : []),
-    ...(cargo.fechaEmision ? [{
+    ...(cargo.fechaGeneracion ? [{
       id: 'emision',
       title: 'Cargo Emitido',
-      date: cargo.fechaEmision,
+      date: cargo.fechaGeneracion,
       status: 'completed' as const,
       description: 'Cargo emitido para aprobación',
       user: cargo.loginFuncionario,
@@ -57,7 +57,7 @@ export const CargoTimeline: React.FC<CargoTimelineProps> = ({
     ...(cargo.estado === 'Pendiente Aprobación' || cargo.estado === 'En Revisión' ? [{
       id: 'revision',
       title: cargo.estado === 'Pendiente Aprobación' ? 'Pendiente Aprobación' : 'En Revisión',
-      date: cargo.fechaModificacion || cargo.fechaEmision || '',
+      date: cargo.fechaModificacion || cargo.fechaGeneracion || '',
       status: 'current' as const,
       description: 'Cargo en espera de revisión y aprobación',
     }] : []),
@@ -107,7 +107,7 @@ export const CargoTimeline: React.FC<CargoTimelineProps> = ({
   
   // Estados esperados que aún no ocurren
   const estadosEsperados = [];
-  if (!cargo.fechaEmision && cargo.estado === 'Borrador') {
+  if (!cargo.fechaGeneracion && cargo.estado === 'Borrador') {
     estadosEsperados.push({
       id: 'pending-emision',
       title: 'Pendiente Emisión',

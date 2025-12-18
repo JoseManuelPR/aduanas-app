@@ -101,7 +101,7 @@ export const CargoCuentas: React.FC<CargoCuentasProps> = ({
           <p className="text-gray-500 mb-4">No hay cuentas registradas</p>
           <p className="text-sm text-amber-600 bg-amber-50 inline-block px-4 py-2 rounded-lg">
             <Icon name="AlertTriangle" size={16} className="inline mr-1" />
-            No se puede emitir cargo sin cuentas de cargo
+            No se puede generar cargo sin cuentas de cargo
           </p>
           {puedeEditar && (
             <div className="mt-4">

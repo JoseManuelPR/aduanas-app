@@ -38,7 +38,7 @@ import { ModalConfirmacion, ModalAgregarCuenta } from './components';
 interface CargoFormData {
   // Datos generales
   numeroInterno: string;
-  fechaEmision: string;
+  fechaGeneracion: string;
   fechaOcurrencia: string;
   fechaIngreso: string;
   origen: 'DENUNCIA' | 'TRAMITE_ADUANERO' | 'OTRO';
@@ -76,7 +76,7 @@ interface CargoFormData {
 
 const initialFormData: CargoFormData = {
   numeroInterno: '',
-  fechaEmision: new Date().toISOString().split('T')[0],
+  fechaGeneracion: new Date().toISOString().split('T')[0],
   fechaOcurrencia: '',
   fechaIngreso: new Date().toISOString().split('T')[0],
   origen: 'TRAMITE_ADUANERO',
@@ -135,7 +135,7 @@ export const CargoForm: React.FC = () => {
       if (cargo) {
         setFormData({
           numeroInterno: cargo.numeroInterno || '',
-          fechaEmision: toInputDate(cargo.fechaEmision || ''),
+          fechaGeneracion: toInputDate(cargo.fechaGeneracion || ''),
           fechaOcurrencia: toInputDate(cargo.fechaOcurrencia || ''),
           fechaIngreso: toInputDate(cargo.fechaIngreso),
           origen: cargo.origen || 'TRAMITE_ADUANERO',
@@ -304,7 +304,7 @@ export const CargoForm: React.FC = () => {
     switch (step) {
       case 0: // Datos generales
         if (!formData.codigoAduana) newErrors.codigoAduana = 'Seleccione una aduana';
-        if (!formData.fechaEmision) newErrors.fechaEmision = 'Ingrese fecha de emisión';
+        if (!formData.fechaGeneracion) newErrors.fechaGeneracion = 'Ingrese fecha de emisión';
         if (!formData.rutDeudor) newErrors.rutDeudor = 'Ingrese RUT del deudor';
         if (!formData.nombreDeudor) newErrors.nombreDeudor = 'Ingrese nombre del deudor';
         break;
@@ -346,7 +346,7 @@ export const CargoForm: React.FC = () => {
     // Guardar como borrador
     const cargoData: Partial<Cargo> = {
       numeroInterno: formData.numeroInterno,
-      fechaEmision: formData.fechaEmision,
+      fechaGeneracion: formData.fechaGeneracion,
       fechaOcurrencia: formData.fechaOcurrencia,
       fechaIngreso: formData.fechaIngreso,
       origen: formData.origen,
@@ -396,10 +396,10 @@ export const CargoForm: React.FC = () => {
     }
   };
   
-  const confirmarEmision = () => {
+  const confirmarGeneracion = () => {
     const cargoData: Partial<Cargo> = {
       numeroInterno: formData.numeroInterno,
-      fechaEmision: formData.fechaEmision,
+      fechaGeneracion: formData.fechaGeneracion,
       fechaOcurrencia: formData.fechaOcurrencia,
       fechaIngreso: formData.fechaIngreso,
       origen: formData.origen,
@@ -429,7 +429,7 @@ export const CargoForm: React.FC = () => {
     }
     
     setShowModalConfirm(false);
-    alert('Cargo emitido exitosamente');
+    alert('Cargo generado exitosamente');
     navigate(ERoutePaths.CARGOS);
   };
   
@@ -527,11 +527,11 @@ export const CargoForm: React.FC = () => {
                 
                 <InputField
                   label="Fecha Emisión *"
-                  id="fechaEmision"
+                  id="fechaGeneracion"
                   type="date"
-                  value={formData.fechaEmision}
-                  onChange={(e) => handleChange('fechaEmision', e.target.value)}
-                  errorMessage={errors.fechaEmision}
+                  value={formData.fechaGeneracion}
+                  onChange={(e) => handleChange('fechaGeneracion', e.target.value)}
+                  errorMessage={errors.fechaGeneracion}
                 />
                 
                 <InputField
@@ -1018,7 +1018,7 @@ export const CargoForm: React.FC = () => {
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                     <p><span className="text-gray-500">Origen:</span> {formData.origen}</p>
                     <p><span className="text-gray-500">Aduana:</span> {aduanas.find(a => a.codigo === formData.codigoAduana)?.nombre || '-'}</p>
-                    <p><span className="text-gray-500">Fecha Emisión:</span> {formData.fechaEmision}</p>
+                    <p><span className="text-gray-500">Fecha Emisión:</span> {formData.fechaGeneracion}</p>
                     <p><span className="text-gray-500">Deudor:</span> {formData.nombreDeudor} ({formData.rutDeudor})</p>
                   </div>
                 </div>
@@ -1045,7 +1045,7 @@ export const CargoForm: React.FC = () => {
               {formData.cuentas.length === 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
                   <Icon name="AlertTriangle" size={20} className="text-amber-500" />
-                  <p className="text-amber-700">No se puede emitir cargo sin cuentas de cargo</p>
+                  <p className="text-amber-700">No se puede generar cargo sin cuentas de cargo</p>
                 </div>
               )}
               
@@ -1114,10 +1114,10 @@ export const CargoForm: React.FC = () => {
       <ModalConfirmacion
         isOpen={showModalConfirm}
         onClose={() => setShowModalConfirm(false)}
-        onConfirm={confirmarEmision}
-        title="Confirmar Emisión de Cargo"
-        message={`¿Está seguro que desea emitir este cargo por ${formatMonto(totalCuentas)}?\n\nEsta acción cambiará el estado a "Emitido" y no podrá ser revertida.`}
-        confirmText="Emitir Cargo"
+        onConfirm={confirmarGeneracion}
+        title="Confirmar Generación de Cargo"
+        message={`¿Está seguro que desea generar este cargo por ${formatMonto(totalCuentas)}?\n\nEsta acción cambiará el estado a "Generado" y no podrá ser revertida.`}
+        confirmText="Generar Cargo"
         confirmVariant="primary"
       />
     </CustomLayout>

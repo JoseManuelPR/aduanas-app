@@ -406,7 +406,7 @@ export interface Cargo {
   // Fechas
   fechaIngreso: string;           // FECHA_INGRESO
   fechaOcurrencia?: string;       // FECHA_OCURRENCIA
-  fechaEmision?: string;          // FECHA_EMISION (obligatorio)
+  fechaGeneracion?: string;       // FECHA_GENERACION (obligatorio)
   fechaNotificacion?: string;
   
   // Estado y origen

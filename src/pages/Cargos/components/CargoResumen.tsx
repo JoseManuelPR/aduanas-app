@@ -62,8 +62,8 @@ export const CargoResumen: React.FC<CargoResumenProps> = ({
           </div>
           
           <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-500 mb-1">Fecha Emisión</p>
-            <p className="font-medium">{cargo.fechaEmision || 'Sin emitir'}</p>
+            <p className="text-sm text-gray-500 mb-1">Fecha Generación</p>
+            <p className="font-medium">{cargo.fechaGeneracion || 'Sin generar'}</p>
           </div>
           
           <div className="bg-gray-50 rounded-lg p-4">

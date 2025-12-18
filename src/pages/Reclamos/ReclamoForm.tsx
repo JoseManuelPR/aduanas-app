@@ -23,6 +23,7 @@ import {
   type OrigenReclamo,
   formatMonto,
 } from '../../data';
+import { useToast } from '../../components/UI';
 import { ERoutePaths } from '../../routes/routes';
 
 const tiposReclamo: { value: TipoReclamoCompleto; label: string }[] = [
@@ -42,6 +43,7 @@ const ReclamoForm: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
+  const { showToast } = useToast();
   
   // Pre-fill params
   const origenParam = searchParams.get('origen') as OrigenReclamo | null;
@@ -211,13 +213,25 @@ const ReclamoForm: React.FC = () => {
   
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
-    
+
     setIsSaving(true);
     try {
       if (isEditing && id) {
         actualizarReclamo(id, formData);
+        showToast({
+          type: 'success',
+          title: 'Reclamo Actualizado',
+          message: `El reclamo ha sido actualizado exitosamente.`,
+          duration: 4000,
+        });
       } else {
         crearReclamo(formData);
+        showToast({
+          type: 'success',
+          title: 'Reclamo Creado',
+          message: `El reclamo ha sido creado exitosamente.`,
+          duration: 4000,
+        });
       }
       navigate(ERoutePaths.RECLAMOS);
     } finally {

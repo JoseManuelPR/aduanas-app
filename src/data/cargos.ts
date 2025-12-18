@@ -54,7 +54,7 @@ export const cargos: Cargo[] = [
     numeroInterno: "INT-2024-001234",
     fechaIngreso: "18-11-2025",
     fechaOcurrencia: "10-11-2025",
-    fechaEmision: "18-11-2025",
+    fechaGeneracion: "18-11-2025",
     estado: "Pendiente Aprobación",
     origen: "DENUNCIA",
     aduana: "Valparaíso",
@@ -109,7 +109,7 @@ export const cargos: Cargo[] = [
     numeroInterno: "INT-2024-001235",
     fechaIngreso: "12-11-2025",
     fechaOcurrencia: "01-11-2025",
-    fechaEmision: "12-11-2025",
+    fechaGeneracion: "12-11-2025",
     estado: "Emitido",
     origen: "DENUNCIA",
     aduana: "Santiago",
@@ -156,7 +156,7 @@ export const cargos: Cargo[] = [
     numeroInterno: "INT-2024-001236",
     fechaIngreso: "08-11-2025",
     fechaOcurrencia: "25-10-2025",
-    fechaEmision: "08-11-2025",
+    fechaGeneracion: "08-11-2025",
     estado: "En Revisión",
     origen: "TRAMITE_ADUANERO",
     aduana: "Antofagasta",
@@ -220,7 +220,7 @@ export const cargos: Cargo[] = [
     numeroInterno: "INT-2024-001237",
     fechaIngreso: "05-11-2025",
     fechaOcurrencia: "20-10-2025",
-    fechaEmision: "05-11-2025",
+    fechaGeneracion: "05-11-2025",
     fechaNotificacion: "10-11-2025",
     estado: "Notificado",
     origen: "DENUNCIA",
@@ -306,7 +306,7 @@ export const cargos: Cargo[] = [
     numeroCargo: "CAR-2024-005683",
     fechaIngreso: "15-11-2025",
     fechaOcurrencia: "05-11-2025",
-    fechaEmision: "15-11-2025",
+    fechaGeneracion: "15-11-2025",
     estado: "Pendiente Aprobación",
     origen: "DENUNCIA",
     aduana: "Valparaíso",
@@ -402,7 +402,7 @@ export const cargos: Cargo[] = [
     numeroInterno: "INT-2024-001241",
     fechaIngreso: "22-11-2025",
     fechaOcurrencia: "12-11-2025",
-    fechaEmision: "22-11-2025",
+    fechaGeneracion: "22-11-2025",
     estado: "Cerrado",
     origen: "DENUNCIA",
     aduana: "Antofagasta",
@@ -484,11 +484,11 @@ export const calcularTotalCargo = (cuentas: CargoCuenta[]): number => {
 };
 
 // Validar si cargo puede ser emitido
-export const puedeEmitirCargo = (cargo: Cargo): { valido: boolean; errores: string[] } => {
+export const puedeGenerarCargo = (cargo: Cargo): { valido: boolean; errores: string[] } => {
   const errores: string[] = [];
   
   if (!cargo.cuentas || cargo.cuentas.length === 0) {
-    errores.push('No se puede emitir cargo sin cuentas de cargo.');
+    errores.push('No se puede generar cargo sin cuentas de cargo.');
   }
   
   if (!cargo.descripcionHechos) {
@@ -522,7 +522,7 @@ export const puedeEmitirCargo = (cargo: Cargo): { valido: boolean; errores: stri
 export const getPermisosCargo = (estado: Cargo['estado']) => {
   const permisos = {
     puedeEditar: false,
-    puedeEmitir: false,
+    puedeGenerar: false,
     puedeAprobar: false,
     puedeRechazar: false,
     puedeAnular: false,
@@ -534,11 +534,11 @@ export const getPermisosCargo = (estado: Cargo['estado']) => {
   switch (estado) {
     case 'Borrador':
       permisos.puedeEditar = true;
-      permisos.puedeEmitir = true;
+      permisos.puedeGenerar = true;
       break;
     case 'Observado':
       permisos.puedeEditar = true;
-      permisos.puedeEmitir = true;
+      permisos.puedeGenerar = true;
       break;
     case 'Pendiente Aprobación':
       permisos.puedeAprobar = true;

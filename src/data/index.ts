@@ -72,7 +72,7 @@ export {
   getCargosPorAduana,
   getCargosConGiros,
   calcularTotalCargo,
-  puedeEmitirCargo,
+  puedeGenerarCargo,
   getPermisosCargo,
   getConteoCargos,
   formatMonto,

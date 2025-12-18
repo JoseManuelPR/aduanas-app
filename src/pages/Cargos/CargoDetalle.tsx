@@ -18,7 +18,7 @@ import {
   getTodasLasNotificaciones,
   usuarioActual,
   getPermisosCargo,
-  puedeEmitirCargo,
+  puedeGenerarCargo,
   formatMonto,
   getDenunciaPorId,
   giros,
@@ -37,7 +37,7 @@ export const CargoDetalle: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState('resumen');
-  const [showModalEmision, setShowModalEmision] = useState(false);
+  const [showModalGeneracion, setShowModalGeneracion] = useState(false);
   const [showModalGiro, setShowModalGiro] = useState(false);
   const [showModalCuenta, setShowModalCuenta] = useState(false);
   
@@ -55,10 +55,10 @@ export const CargoDetalle: React.FC = () => {
     return getPermisosCargo(cargo.estado);
   }, [cargo]);
   
-  // Validación para emitir
-  const validacionEmision = useMemo(() => {
+  // Validación para generar
+  const validacionGeneracion = useMemo(() => {
     if (!cargo) return { valido: false, errores: [] };
-    return puedeEmitirCargo(cargo);
+    return puedeGenerarCargo(cargo);
   }, [cargo]);
   
   // Datos relacionados
@@ -112,17 +112,17 @@ export const CargoDetalle: React.FC = () => {
   ], [cargo, girosDelCargo]);
   
   // Handlers
-  const handleEmitirCargo = () => {
-    if (!validacionEmision.valido) {
-      alert('No se puede emitir el cargo:\n' + validacionEmision.errores.join('\n'));
+  const handleGenerarCargo = () => {
+    if (!validacionGeneracion.valido) {
+      alert('No se puede generar el cargo:\n' + validacionGeneracion.errores.join('\n'));
       return;
     }
-    setShowModalEmision(true);
+    setShowModalGeneracion(true);
   };
   
-  const confirmarEmision = () => {
+  const confirmarGeneracion = () => {
     // Aquí iría la lógica de emisión
-    setShowModalEmision(false);
+    setShowModalGeneracion(false);
     alert('Cargo emitido exitosamente');
     // navigate(ERoutePaths.CARGOS);
   };
@@ -226,14 +226,14 @@ export const CargoDetalle: React.FC = () => {
                 Editar
               </CustomButton>
             )}
-            {permisos?.puedeEmitir && (
+            {permisos?.puedeGenerar && (
               <CustomButton 
                 variant="primary"
-                onClick={handleEmitirCargo}
-                disabled={!validacionEmision.valido}
+                onClick={handleGenerarCargo}
+                disabled={!validacionGeneracion.valido}
               >
                 <Icon name="Send" size={16} />
-                Emitir Cargo
+                Generar Cargo
               </CustomButton>
             )}
             {permisos?.puedeGenerarGiro && (
@@ -267,14 +267,14 @@ export const CargoDetalle: React.FC = () => {
         </div>
         
         {/* Alertas de validación */}
-        {permisos?.puedeEmitir && !validacionEmision.valido && (
+        {permisos?.puedeGenerar && !validacionGeneracion.valido && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <Icon name="AlertTriangle" size={20} className="text-amber-500 mt-0.5" />
               <div>
-                <p className="font-medium text-amber-800">Requisitos para emitir cargo:</p>
+                <p className="font-medium text-amber-800">Requisitos para generar cargo:</p>
                 <ul className="list-disc list-inside text-sm text-amber-700 mt-1">
-                  {validacionEmision.errores.map((error, idx) => (
+                  {validacionGeneracion.errores.map((error, idx) => (
                     <li key={idx}>{error}</li>
                   ))}
                 </ul>
@@ -403,12 +403,12 @@ export const CargoDetalle: React.FC = () => {
       
       {/* Modal de confirmación de emisión */}
       <ModalConfirmacion
-        isOpen={showModalEmision}
-        onClose={() => setShowModalEmision(false)}
-        onConfirm={confirmarEmision}
-        title="Confirmar Emisión de Cargo"
-        message={`¿Está seguro que desea emitir el cargo ${cargo.numeroCargo}?\n\nEsta acción cambiará el estado a "Emitido" y no podrá ser revertida.`}
-        confirmText="Emitir Cargo"
+        isOpen={showModalGeneracion}
+        onClose={() => setShowModalGeneracion(false)}
+        onConfirm={confirmarGeneracion}
+        title="Confirmar Generación de Cargo"
+        message={`¿Está seguro que desea generar el cargo ${cargo.numeroCargo}?\n\nEsta acción cambiará el estado a "Generado" y no podrá ser revertida.`}
+        confirmText="Generar Cargo"
         confirmVariant="primary"
       />
       
