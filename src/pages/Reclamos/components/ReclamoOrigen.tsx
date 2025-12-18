@@ -153,8 +153,8 @@ export const ReclamoOrigen: React.FC<ReclamoOrigenProps> = ({
                 <p className="font-medium">{cargo.origen}</p>
               </div>
               <div>
-                <p className="text-gray-500">Fecha Emisión</p>
-                <p className="font-medium">{cargo.fechaEmision}</p>
+                <p className="text-gray-500">Fecha Generación</p>
+                <p className="font-medium">{cargo.fechaGeneracion}</p>
               </div>
               <div>
                 <p className="text-gray-500">Monto Total</p>
