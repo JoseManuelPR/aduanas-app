@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
@@ -22,6 +22,10 @@ import {
   usuarioActual,
   type Hallazgo,
   type EstadoHallazgo,
+  // Hallazgos externos
+  hallazgosExternos,
+  getConteoHallazgosExternos,
+  type HallazgoProcesado,
 } from '../../data';
 
 // Mapeo de variantes para estados de hallazgo
@@ -44,63 +48,108 @@ const getEstadoHallazgoBadgeVariant = (estado: EstadoHallazgo): "default" | "suc
   }
 };
 
+// Tipo combinado para tabla
+type HallazgoListItem = (Hallazgo | HallazgoProcesado) & { 
+  esExterno?: boolean;
+  transactionId?: string;
+};
+
 export const HallazgosList: React.FC = () => {
   const navigate = useNavigate();
   const [selectedRows] = useState<string[]>([]);
   const [tipoIdInvolucrado, setTipoIdInvolucrado] = useState<TipoIdentificacionDTTA | ''>('');
   const [numeroIdInvolucrado, setNumeroIdInvolucrado] = useState('');
+  const [mostrarExternos, setMostrarExternos] = useState(true);
 
   // Obtener conteos desde datos centralizados
   const conteoHallazgos = getConteoHallazgos();
+  const conteoExternos = getConteoHallazgosExternos();
   const allNotifications = getTodasLasNotificaciones();
+
+  // Combinar hallazgos internos y externos
+  const hallazgosCombinados = useMemo<HallazgoListItem[]>(() => {
+    const internos: HallazgoListItem[] = hallazgos.map(h => ({ ...h, esExterno: false }));
+    
+    if (!mostrarExternos) return internos;
+    
+    const externos: HallazgoListItem[] = hallazgosExternos.map(h => ({ 
+      ...h, 
+      esExterno: true,
+      transactionId: h.transactionId 
+    }));
+    
+    return [...externos, ...internos];
+  }, [mostrarExternos]);
 
   // Verificar si el hallazgo puede ser gestionado (convertido a denuncia)
   const puedeGestionar = (estado: EstadoHallazgo): boolean => {
     return ['Ingresado', 'En Análisis', 'Notificar Denuncia'].includes(estado);
   };
 
-  const handleActions = (row: Hallazgo) => (
-    <div className="flex flex-col w-full gap-1">
-      {puedeGestionar(row.estado) ? (
-        <CustomButton 
-          variant="primary" 
-          className="w-full text-xs bg-emerald-600 hover:bg-emerald-700"
-          onClick={() => navigate(`/hallazgos/${row.id}/gestionar`)}
-        >
-          <Icon name="FileCheck" className="hidden md:block" size={14} />
-          Gestionar
-        </CustomButton>
-      ) : (
+  const handleActions = (row: HallazgoListItem) => {
+    // Determinar el ID correcto para navegación
+    const navigationId = row.esExterno && (row as HallazgoProcesado).transactionId 
+      ? (row as HallazgoProcesado).transactionId 
+      : row.id;
+
+    return (
+      <div className="flex flex-col w-full gap-1">
+        {puedeGestionar(row.estado) ? (
+          <CustomButton 
+            variant="primary" 
+            className="w-full text-xs bg-emerald-600 hover:bg-emerald-700"
+            onClick={() => navigate(`/hallazgos/${row.id}/gestionar`)}
+          >
+            <Icon name="FileCheck" className="hidden md:block" size={14} />
+            Gestionar
+          </CustomButton>
+        ) : (
+          <CustomButton 
+            variant="secondary" 
+            className="w-full text-xs"
+            disabled={row.estado === 'Cerrado' || row.estado === 'Convertido a Denuncia'}
+            onClick={() => navigate(`/expediente/${row.id}`)}
+          >
+            <Icon name="FileText" className="hidden md:block" size={14} />
+            Ver Expediente
+          </CustomButton>
+        )}
         <CustomButton 
           variant="secondary" 
           className="w-full text-xs"
-          disabled={row.estado === 'Cerrado' || row.estado === 'Convertido a Denuncia'}
-          onClick={() => navigate(`/expediente/${row.id}`)}
+          onClick={() => navigate(`/hallazgos/${navigationId}/detalle`)}
         >
-          <Icon name="FileText" className="hidden md:block" size={14} />
-          Ver Expediente
+          <Icon name="Eye" className="hidden md:block" size={14} />
+          Ver Detalle
         </CustomButton>
-      )}
-      <CustomButton 
-        variant="secondary" 
-        className="w-full text-xs"
-        onClick={() => {/* Ver detalle del hallazgo */}}
-      >
-        <Icon name="Eye" className="hidden md:block" size={14} />
-        Ver Detalle
-      </CustomButton>
-    </div>
-  );
+      </div>
+    );
+  };
 
   // Columnas para la tabla de hallazgos
   const columnasHallazgos = [
-    { key: 'numeroHallazgo' as const, label: 'N° Hallazgo', sortable: true },
+    { 
+      key: 'numeroHallazgo' as const, 
+      label: 'N° Hallazgo', 
+      sortable: true,
+      render: (row: HallazgoListItem) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{row.numeroHallazgo}</span>
+          {row.esExterno && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700" title="Hallazgo de origen externo (PFI)">
+              <Icon name="Globe" size={10} className="mr-0.5" />
+              PFI
+            </span>
+          )}
+        </div>
+      )
+    },
     { key: 'fechaIngreso' as const, label: 'Fecha Ingreso', sortable: true },
     { 
       key: 'estado' as const, 
       label: 'Estado', 
       sortable: true,
-      render: (row: Hallazgo) => (
+      render: (row: HallazgoListItem) => (
         <Badge variant={getEstadoHallazgoBadgeVariant(row.estado)} dot>
           {row.estado}
         </Badge>
@@ -110,21 +159,21 @@ export const HallazgosList: React.FC = () => {
       key: 'tipoHallazgo' as const, 
       label: 'Tipo', 
       sortable: true,
-      render: (row: Hallazgo) => (
+      render: (row: HallazgoListItem) => (
         <Badge variant={row.tipoHallazgo === 'Penal' ? 'error' : 'info'}>
           {row.tipoHallazgo}
         </Badge>
       )
     },
     { key: 'aduana' as const, label: 'Aduana', sortable: true },
-    { key: 'rutInvolucrado' as const, label: 'RUT Involucrado', sortable: true },
+    { key: 'rutInvolucrado' as const, label: 'RUT/ID Involucrado', sortable: true },
     { key: 'nombreInvolucrado' as const, label: 'Nombre Involucrado', sortable: true },
     { key: 'montoEstimado' as const, label: 'Monto Estimado', sortable: true },
     { 
       key: 'diasVencimiento' as const, 
       label: 'Días Plazo', 
       sortable: true,
-      render: (row: Hallazgo) => {
+      render: (row: HallazgoListItem) => {
         const dias = row.diasVencimiento;
         const variant = getDiasVencimientoBadgeVariant(dias);
         return (
@@ -194,23 +243,23 @@ export const HallazgosList: React.FC = () => {
         </div>
 
         {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <div className="card p-4 border-l-4 border-l-blue-500">
             <p className="text-sm text-gray-600">Ingresados</p>
             <p className="text-2xl font-bold text-blue-600">
-              {conteoHallazgos.porEstado.ingresado}
+              {conteoHallazgos.porEstado.ingresado + conteoExternos.porEstado.ingresado}
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-amber-500">
             <p className="text-sm text-gray-600">En Análisis</p>
             <p className="text-2xl font-bold text-amber-600">
-              {conteoHallazgos.porEstado.enAnalisis}
+              {conteoHallazgos.porEstado.enAnalisis + conteoExternos.porEstado.enAnalisis}
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-red-500">
             <p className="text-sm text-gray-600">Por Notificar</p>
             <p className="text-2xl font-bold text-red-600">
-              {conteoHallazgos.porEstado.notificarDenuncia}
+              {conteoHallazgos.porEstado.notificarDenuncia + conteoExternos.porEstado.notificarDenuncia}
             </p>
           </div>
           <div className="card p-4 border-l-4 border-l-emerald-500">
@@ -219,10 +268,19 @@ export const HallazgosList: React.FC = () => {
               {conteoHallazgos.gestionables}
             </p>
           </div>
+          <div className="card p-4 border-l-4 border-l-indigo-500">
+            <div className="flex items-center gap-1">
+              <Icon name="Globe" size={14} className="text-indigo-500" />
+              <p className="text-sm text-gray-600">Externos (PFI)</p>
+            </div>
+            <p className="text-2xl font-bold text-indigo-600">
+              {conteoExternos.total}
+            </p>
+          </div>
           <div className="card p-4 border-l-4 border-l-gray-500">
             <p className="text-sm text-gray-600">Total</p>
             <p className="text-2xl font-bold text-gray-900">
-              {conteoHallazgos.total}
+              {conteoHallazgos.total + conteoExternos.total}
             </p>
           </div>
         </div>
@@ -235,9 +293,23 @@ export const HallazgosList: React.FC = () => {
               <Icon name="FileSearch" size={18} />
               Búsqueda de Hallazgos
             </span>
-            <span className="text-white/80 text-sm">
-              {hallazgos.length} registros encontrados
-            </span>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={mostrarExternos}
+                  onChange={(e) => setMostrarExternos(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-aduana-azul focus:ring-aduana-azul"
+                />
+                <span className="text-white/90 text-sm flex items-center gap-1">
+                  <Icon name="Globe" size={14} />
+                  Incluir externos (PFI)
+                </span>
+              </label>
+              <span className="text-white/80 text-sm">
+                {hallazgosCombinados.length} registros encontrados
+              </span>
+            </div>
           </div>
 
           {/* Filtros */}
@@ -315,7 +387,7 @@ export const HallazgosList: React.FC = () => {
             <Table
               classHeader="bg-aduana-azul text-white text-xs"
               headers={columnasHallazgos}
-              data={hallazgos}
+              data={hallazgosCombinados}
               actions={handleActions}
             />
           </div>
@@ -323,7 +395,12 @@ export const HallazgosList: React.FC = () => {
           {/* Paginación */}
           <div className="flex flex-col md:flex-row items-center justify-between px-5 py-4 border-t border-gray-200 bg-gray-50">
             <p className="text-sm text-gray-600">
-              Mostrando 1 a {hallazgos.length} de {hallazgos.length} registros
+              Mostrando 1 a {hallazgosCombinados.length} de {hallazgosCombinados.length} registros
+              {mostrarExternos && conteoExternos.total > 0 && (
+                <span className="ml-2 text-indigo-600">
+                  ({conteoExternos.total} externos)
+                </span>
+              )}
             </p>
             <div className="flex items-center gap-2 mt-3 md:mt-0">
               <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>

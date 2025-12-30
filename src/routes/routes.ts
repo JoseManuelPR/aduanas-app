@@ -44,15 +44,18 @@ enum ERoutePaths {
   RECLAMOS_DETALLE = '/reclamos/:id',
   RECLAMOS_EDITAR = '/reclamos/:id/editar',
   
+  // Hallazgos (PFI)
+  HALLAZGOS = '/hallazgos',
+  HALLAZGOS_DETALLE = '/hallazgos/:id/detalle',
+  HALLAZGOS_GESTIONAR = '/hallazgos/:id/gestionar',
+  
   // Notificaciones
   NOTIFICACIONES = '/notificaciones',
   NOTIFICACIONES_DETALLE = '/notificaciones/:id',
   
-  // Gestión de Mercancías
+  // Gestión de Mercancías (solo lectura - datos de sistemas externos)
   MERCANCIAS = '/mercancias',
-  MERCANCIAS_NUEVO = '/mercancias/nuevo',
   MERCANCIAS_DETALLE = '/mercancias/:id',
-  MERCANCIAS_EDITAR = '/mercancias/:id/editar',
   
   // Movimientos Terrestres
   MOVIMIENTOS_TERRESTRES = '/movimientos-terrestres',

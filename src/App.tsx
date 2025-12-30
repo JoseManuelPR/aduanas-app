@@ -7,10 +7,11 @@ import { Dashboard } from './pages/Dashboard/Dashboard';
 import { DenunciasList, DenunciasForm, DenunciaDetalle } from './pages/Denuncias';
 import { ExpedienteDigital } from './pages/Expediente';
 import { NotificacionesList } from './pages/Notificaciones';
+import { HallazgosList, HallazgoDetalle } from './pages/Hallazgos';
 import { CargosList, CargoDetalle, CargoForm } from './pages/Cargos';
 import { GirosList, GiroDetalle, GiroForm } from './pages/Giros';
 import { ReclamosList, ReclamoDetalle, ReclamoForm } from './pages/Reclamos';
-import { MercanciasList, MercanciaDetalle, MercanciaForm } from './pages/Mercancias';
+import { MercanciasList, MercanciaDetalle } from './pages/Mercancias';
 import { InvolucradosList, InvolucradoDetalle, InvolucradoForm } from './pages/Involucrados';
 import { ReportesDashboard } from './pages/Reportes';
 import { Configuracion } from './pages/Configuracion';
@@ -57,15 +58,18 @@ function App() {
       <Route path={ERoutePaths.RECLAMOS_DETALLE} element={<ReclamoDetalle />} />
       <Route path={ERoutePaths.RECLAMOS_EDITAR} element={<ReclamoForm />} />
       
+      {/* Hallazgos (PFI) */}
+      <Route path={ERoutePaths.HALLAZGOS} element={<HallazgosList />} />
+      <Route path={ERoutePaths.HALLAZGOS_DETALLE} element={<HallazgoDetalle />} />
+      <Route path={ERoutePaths.HALLAZGOS_GESTIONAR} element={<DenunciasForm />} />
+      
       {/* Notificaciones */}
       <Route path={ERoutePaths.NOTIFICACIONES} element={<NotificacionesList />} />
       <Route path={ERoutePaths.NOTIFICACIONES_DETALLE} element={<NotificacionesList />} />
       
-      {/* Gestión de Mercancías */}
+      {/* Gestión de Mercancías (solo lectura - datos de sistemas externos) */}
       <Route path={ERoutePaths.MERCANCIAS} element={<MercanciasList />} />
-      <Route path={ERoutePaths.MERCANCIAS_NUEVO} element={<MercanciaForm />} />
       <Route path={ERoutePaths.MERCANCIAS_DETALLE} element={<MercanciaDetalle />} />
-      <Route path={ERoutePaths.MERCANCIAS_EDITAR} element={<MercanciaForm />} />
       
       {/* Gestión de Involucrados */}
       <Route path={ERoutePaths.INVOLUCRADOS} element={<InvolucradosList />} />

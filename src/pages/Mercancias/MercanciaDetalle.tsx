@@ -12,21 +12,17 @@ import {
   getMercanciaPorId,
   getDenunciaPorId,
   getCargoPorId,
-  getPermisosMercancia,
-  registrarEventoMercancia,
   aduanas,
   getTodasLasNotificaciones,
   usuarioActual,
   type Mercancia,
   type EstadoMercancia,
-  type TipoEventoMercancia,
 } from '../../data';
 import { ERoutePaths } from '../../routes/routes';
 import {
   MercanciaResumen,
   MercanciaSeguimiento,
   MercanciaDocumentos,
-  ModalRegistrarEvento,
 } from './components';
 
 const MercanciaDetalle: React.FC = () => {
@@ -34,11 +30,10 @@ const MercanciaDetalle: React.FC = () => {
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('resumen');
-  const [showModalEvento, setShowModalEvento] = useState(false);
-  const [mercancia, setMercancia] = useState<Mercancia | null>(() => {
+  const mercancia = useMemo<Mercancia | null>(() => {
     if (!id) return null;
     return getMercanciaPorId(id) || null;
-  });
+  }, [id]);
   
   // Entidades relacionadas
   const denuncia = useMemo(() => {
@@ -56,7 +51,6 @@ const MercanciaDetalle: React.FC = () => {
     return aduanas.find(a => a.codigo === mercancia.codigoAduanaIngreso);
   }, [mercancia]);
   
-  const permisos = useMemo(() => mercancia ? getPermisosMercancia(mercancia) : null, [mercancia]);
   const allNotifications = getTodasLasNotificaciones();
   
   if (!mercancia) {
@@ -111,22 +105,6 @@ const MercanciaDetalle: React.FC = () => {
     return variantMap[estado] || 'default';
   };
   
-  const handleRegistrarEvento = (evento: {
-    tipoEvento: TipoEventoMercancia;
-    fechaEvento: string;
-    autoridad?: string;
-    nroResolucion?: string;
-    fechaResolucion?: string;
-    ubicacionNueva?: string;
-    observaciones?: string;
-    funcionarioResponsable: string;
-  }) => {
-    const resultado = registrarEventoMercancia(mercancia.id, evento);
-    if (resultado.exito && resultado.mercancia) {
-      setMercancia(resultado.mercancia);
-    }
-  };
-  
   // Solo Resumen, Seguimiento y Documentos (Items removido - lo mismo que Resumen)
   const tabs: Tab[] = [
     { id: 'resumen', label: 'Resumen', icon: <Icon name="Package" size={18} /> },
@@ -139,12 +117,7 @@ const MercanciaDetalle: React.FC = () => {
       case 'resumen':
         return <MercanciaResumen mercancia={mercancia} aduana={aduana} />;
       case 'seguimiento':
-        return (
-          <MercanciaSeguimiento 
-            mercancia={mercancia} 
-            onRegistrarEvento={permisos?.puedeRegistrarEvento ? () => setShowModalEvento(true) : undefined}
-          />
-        );
+        return <MercanciaSeguimiento mercancia={mercancia} />;
       case 'documentos':
         return <MercanciaDocumentos mercancia={mercancia} denuncia={denuncia} cargo={cargo} />;
       default:
@@ -200,15 +173,6 @@ const MercanciaDetalle: React.FC = () => {
           
           {/* Acciones */}
           <div className="flex items-center gap-3">
-            {permisos?.puedeRegistrarEvento && (
-              <button
-                onClick={() => setShowModalEvento(true)}
-                className="px-4 py-2 bg-aduana-azul text-white rounded-lg hover:bg-aduana-azul-dark flex items-center gap-2"
-              >
-                <Icon name="Plus" size={18} />
-                Registrar Evento
-              </button>
-            )}
             <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2">
               <Icon name="Download" size={18} />
               Exportar
@@ -291,13 +255,6 @@ const MercanciaDetalle: React.FC = () => {
         </div>
       </div>
       
-      {/* Modal Registrar Evento */}
-      <ModalRegistrarEvento
-        mercancia={mercancia}
-        isOpen={showModalEvento}
-        onClose={() => setShowModalEvento(false)}
-        onConfirm={handleRegistrarEvento}
-      />
     </div>
     </CustomLayout>
   );

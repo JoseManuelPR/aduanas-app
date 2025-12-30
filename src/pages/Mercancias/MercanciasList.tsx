@@ -213,16 +213,9 @@ export const MercanciasList: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900">Gestión de Mercancías</h1>
             </div>
             <p className="text-gray-600 mt-1 ml-7">
-              Control del ciclo de vida de mercancías asociadas a procesos
+              Visualización de mercancías recibidas desde sistemas externos
             </p>
           </div>
-          <CustomButton 
-            className="btn-primary flex items-center gap-2"
-            onClick={() => navigate(ERoutePaths.MERCANCIAS_NUEVO)}
-          >
-            <Icon name="Plus" size={18} />
-            Nueva Mercancía
-          </CustomButton>
         </div>
 
         {/* Estadísticas compactas */}

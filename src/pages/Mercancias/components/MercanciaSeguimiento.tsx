@@ -9,12 +9,10 @@ import { type Mercancia, type TipoEventoMercancia } from '../../../data';
 
 interface MercanciaSeguimientoProps {
   mercancia: Mercancia;
-  onRegistrarEvento?: () => void;
 }
 
 export const MercanciaSeguimiento: React.FC<MercanciaSeguimientoProps> = ({ 
-  mercancia,
-  onRegistrarEvento 
+  mercancia 
 }) => {
   const seguimientos = mercancia.seguimientos || [];
 
@@ -78,6 +76,11 @@ export const MercanciaSeguimiento: React.FC<MercanciaSeguimientoProps> = ({
     return variantMap[tipo] || 'default';
   };
 
+  const parseFecha = (fecha: string): Date => {
+    const [dia, mes, anio] = fecha.split('-').map(Number);
+    return new Date(anio, mes - 1, dia);
+  };
+
   // Ordenar seguimientos por fecha (más reciente primero)
   const seguimientosOrdenados = [...seguimientos].sort((a, b) => {
     const fechaA = parseFecha(a.fechaEvento);
@@ -85,28 +88,14 @@ export const MercanciaSeguimiento: React.FC<MercanciaSeguimientoProps> = ({
     return fechaB.getTime() - fechaA.getTime();
   });
 
-  const parseFecha = (fecha: string): Date => {
-    const [dia, mes, anio] = fecha.split('-').map(Number);
-    return new Date(anio, mes - 1, dia);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header con botón de acción */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <Icon name="Clock" size={20} className="text-aduana-azul" />
           Historial de Eventos
         </h3>
-        {onRegistrarEvento && (
-          <button
-            onClick={onRegistrarEvento}
-            className="px-4 py-2 bg-aduana-azul text-white rounded-lg hover:bg-aduana-azul-dark flex items-center gap-2 text-sm"
-          >
-            <Icon name="Plus" size={16} />
-            Registrar Evento
-          </button>
-        )}
       </div>
 
       {seguimientos.length === 0 ? (

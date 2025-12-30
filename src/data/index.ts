@@ -251,6 +251,91 @@ export {
   eliminarArchivoDeExpediente,
 } from './expedientes';
 
+// Hallazgos Externos (Sistema PFI)
+export {
+  // Tipos
+  type PayloadDenunciaExterna,
+  type DenunciaExterna,
+  type IdentificacionExterna,
+  type InfraccionExterna,
+  type MultasExterna,
+  type DenunciadosExterna,
+  type InfractorExterno,
+  type DocumentoAduaneroExterno,
+  type DescripcionHechosExterna,
+  type HallazgoProcesado,
+  type InfractorProcesado,
+  type DocumentoAduaneroProcesado,
+  // Funciones de validación y transformación
+  validarPayloadExterno,
+  transformarPayloadAHallazgo,
+  recibirHallazgoExterno,
+  generarNumeroHallazgo,
+  convertirFechaExterna,
+  determinarTipoHallazgo,
+  determinarTipoPersona,
+  construirNombreCompleto,
+  formatearMontoChileno,
+  calcularDiasVencimiento,
+  // Datos y funciones de acceso
+  hallazgosExternos,
+  getHallazgosExternos,
+  getHallazgoExternoPorTransactionId,
+  getHallazgoExternoPorNumero,
+  getConteoHallazgosExternos,
+  // Ejemplo de payload
+  ejemploPayloadExterno,
+} from './hallazgosExternos';
+
+// Catálogos Externos (Mapeo con Sistema PFI)
+export {
+  // Aduanas
+  type AduanaExterna,
+  aduanasExternas,
+  getAduanaPorCodigoExterno,
+  getAduanaPorCodigoInterno,
+  getNombreAduanaPorCodigoExterno,
+  esCodigoAduanaValido,
+  // Secciones
+  type SeccionExterna,
+  seccionesExternas,
+  getSeccionPorCodigoExterno,
+  getNombreSeccionPorCodigoExterno,
+  // Tipos de Identificador
+  type TipoIdentificadorExterno,
+  tiposIdentificadorExternos,
+  getTipoIdentificadorPorCodigo,
+  getTipoIdentificadorPorSigla,
+  getNombreTipoIdentificadorPorCodigo,
+  // Tipos de Documento Aduanero
+  type TipoDocumentoAduaneroExterno,
+  tiposDocumentoAduaneroExternos,
+  getTipoDocumentoAduaneroPorCodigo,
+  getTipoDocumentoAduaneroPorCodigoInterno,
+  // Artículos
+  type ArticuloExterno,
+  articulosExternos,
+  getArticuloPorCodigoExterno,
+  esCodigoArticuloValido,
+  // Etapas de Formulación
+  type EtapaFormulacionExterna,
+  etapasFormulacionExternas,
+  getEtapaPorCodigoExterno,
+  getEtapaPorCodigoInterno,
+  // Tipos de Infracción
+  type TipoInfraccionExterna,
+  tiposInfraccionExternos,
+  getTipoInfraccionPorCodigo,
+  // Tipos de Persona
+  type TipoPersonaExterna,
+  tiposPersonaExternos,
+  getTipoPersonaPorCodigo,
+  // Comunas
+  type ComunaExterna,
+  comunasExternas,
+  getComunaPorCodigo,
+} from './catalogosExternos';
+
 // ============================================
 // USUARIO ACTUAL (para prototipo)
 // ============================================
