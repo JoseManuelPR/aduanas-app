@@ -48,7 +48,18 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   // Formatear fecha a dd-mm-aaaa
   const formatDate = (dateString: string): string => {
+    // Si la fecha ya está en formato dd-mm-aaaa, devolverla tal cual
+    if (dateString && dateString.includes('-') && dateString.split('-')[0].length <= 2) {
+      return dateString;
+    }
+    
+    // Si viene en formato ISO o otro formato, parsearlo
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      // Si no se puede parsear, devolver la fecha original
+      return dateString;
+    }
+    
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
