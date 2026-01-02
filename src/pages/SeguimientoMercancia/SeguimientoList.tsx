@@ -75,29 +75,29 @@ export const SeguimientoList: React.FC = () => {
             title="En Tránsito"
             value={estadisticasSeguimiento.enTransito}
             subtitle="Contenedores"
-            colorScheme="azul"
-            icon={<Icon name="Ship" size={24} />}
+            accent="blue"
+            icon="Ship"
           />
           <StatCard
             title="En Puerto"
             value={estadisticasSeguimiento.enPuerto}
             subtitle="Pendientes de aforo"
-            colorScheme="amarillo"
-            icon={<Icon name="Anchor" size={24} />}
+            accent="amber"
+            icon="Anchor"
           />
           <StatCard
             title="Transporte Terrestre"
             value={estadisticasSeguimiento.transporteTerrestre}
             subtitle="En ruta"
-            colorScheme="verde"
-            icon={<Icon name="Truck" size={24} />}
+            accent="green"
+            icon="Truck"
           />
           <StatCard
             title="Con Alerta"
             value={estadisticasSeguimiento.conAlerta}
             subtitle="Requieren atención"
-            colorScheme="rojo"
-            icon={<Icon name="AlertTriangle" size={24} />}
+            accent="red"
+            icon="AlertTriangle"
           />
         </div>
 

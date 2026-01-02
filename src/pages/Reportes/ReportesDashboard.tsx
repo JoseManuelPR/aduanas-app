@@ -87,31 +87,31 @@ export const ReportesDashboard: React.FC = () => {
               title="Denuncias Procesadas"
               value={KPI_DASHBOARD.denuncias.total}
               subtitle="Este mes"
-              colorScheme="azul"
-              icon={<Icon name="FileCheck" size={24} />}
-              trend={{ value: 8.5, label: 'vs mes anterior', isPositive: true }}
+              accent="blue"
+              icon="FileCheck"
+              trend={{ value: 8.5, period: 'vs mes anterior', sentiment: 'positive' }}
             />
             <StatCard
               title="Recaudación Total"
               value={KPI_DASHBOARD.giros.montoRecaudado}
               subtitle="Año fiscal"
-              colorScheme="verde"
-              icon={<Icon name="Wallet" size={24} />}
-              trend={{ value: 12.3, label: 'vs año anterior', isPositive: true }}
+              accent="green"
+              icon="Wallet"
+              trend={{ value: 12.3, period: 'vs año anterior', sentiment: 'positive' }}
             />
             <StatCard
               title="Tasa de Notificación"
               value={`${KPI_DASHBOARD.notificaciones.tasaExito}%`}
               subtitle="Exitosas"
-              colorScheme="amarillo"
-              icon={<Icon name="Send" size={24} />}
+              accent="amber"
+              icon="Send"
             />
             <StatCard
               title="Tiempo Prom. Resolución"
               value={`${KPI_DASHBOARD.reclamos.tiempoPromedioRespuesta} días`}
               subtitle="Reclamos"
-              colorScheme="azul"
-              icon={<Icon name="Clock" size={24} />}
+              accent="blue"
+              icon="Clock"
             />
           </div>
 
