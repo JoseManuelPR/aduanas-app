@@ -14,4 +14,6 @@ export type { StepperStep, StepStatus } from './Stepper';
 export { TrendIndicator } from './TrendIndicator';
 export { PriorityBadge } from './PriorityBadge';
 export { ProgressRing } from './ProgressRing';
+export { CollapsibleSection } from './CollapsibleSection';
+export { StatusHeader } from './StatusHeader';
 

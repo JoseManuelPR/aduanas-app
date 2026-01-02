@@ -4,8 +4,7 @@ import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
 import CustomLayout from "../../Layout/Layout";
 import { CustomButton } from "../../components/Button/Button";
-import { Badge, Tabs, getEstadoBadgeVariant, useToast } from "../../components/UI";
-import type { BadgeVariant } from "../../components/UI";
+import { Tabs, useToast, StatusHeader } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -248,30 +247,237 @@ export const DenunciaDetalle: React.FC = () => {
     });
   };
   
-  // Alertas de la denuncia
+  // ============================================
+  // ALERTAS DE LA DENUNCIA (Críticas para el header)
+  // ============================================
   const alertas = useMemo(() => {
-    const items: { tipo: 'error' | 'warning' | 'info'; mensaje: string }[] = [];
+    const items: { tipo: 'error' | 'warning' | 'info'; mensaje: string; accion?: string; onAccion?: () => void }[] = [];
     
     if (denuncia.diasVencimiento < 0) {
-      items.push({ tipo: 'error', mensaje: `Esta denuncia está vencida por ${Math.abs(denuncia.diasVencimiento)} días.` });
+      items.push({ 
+        tipo: 'error', 
+        mensaje: `Vencida hace ${Math.abs(denuncia.diasVencimiento)} días`,
+        accion: 'Gestionar',
+      });
+    } else if (denuncia.diasVencimiento === 0) {
+      items.push({ 
+        tipo: 'error', 
+        mensaje: 'Vence hoy',
+        accion: 'Atender ahora',
+      });
     } else if (denuncia.diasVencimiento <= 5) {
-      items.push({ tipo: 'warning', mensaje: `Esta denuncia vence en ${denuncia.diasVencimiento} días.` });
+      items.push({ 
+        tipo: 'warning', 
+        mensaje: `Vence en ${denuncia.diasVencimiento} días` 
+      });
     }
     
     if (reclamosAsociados.some(r => ['Ingresado', 'En Análisis'].includes(r.estado))) {
-      items.push({ tipo: 'warning', mensaje: 'Existe un reclamo pendiente asociado a esta denuncia.' });
+      items.push({ 
+        tipo: 'warning', 
+        mensaje: 'Reclamo pendiente',
+        accion: 'Ver reclamo',
+      });
     }
     
     if (girosAsociados.some(g => g.estado === 'Vencido')) {
-      items.push({ tipo: 'error', mensaje: 'Existen giros vencidos asociados a esta denuncia.' });
+      items.push({ 
+        tipo: 'error', 
+        mensaje: 'Giros vencidos' 
+      });
     }
     
     if (denuncia.observada) {
-      items.push({ tipo: 'warning', mensaje: 'Esta denuncia ha sido observada y requiere correcciones.' });
+      items.push({ 
+        tipo: 'warning', 
+        mensaje: 'Requiere correcciones' 
+      });
     }
     
     return items;
   }, [denuncia, reclamosAsociados, girosAsociados]);
+  
+  // ============================================
+  // MÉTRICAS CRÍTICAS PARA EL HEADER
+  // ============================================
+  const metricasCriticas = useMemo(() => {
+    const metricas: Array<{
+      label: string;
+      value: string | number;
+      variant: 'critical' | 'warning' | 'success' | 'neutral';
+      icon?: string;
+      description?: string;
+    }> = [];
+    
+    // Días de plazo - siempre mostrar
+    if (denuncia.diasVencimiento < 0) {
+      metricas.push({
+        label: 'Plazo',
+        value: `${Math.abs(denuncia.diasVencimiento)}d`,
+        variant: 'critical',
+        icon: 'Clock',
+        description: 'vencido',
+      });
+    } else if (denuncia.diasVencimiento <= 5) {
+      metricas.push({
+        label: 'Plazo',
+        value: `${denuncia.diasVencimiento}d`,
+        variant: denuncia.diasVencimiento === 0 ? 'critical' : 'warning',
+        icon: 'Clock',
+        description: denuncia.diasVencimiento === 0 ? 'vence hoy' : 'restantes',
+      });
+    } else {
+      metricas.push({
+        label: 'Plazo',
+        value: `${denuncia.diasVencimiento}d`,
+        variant: 'neutral',
+        icon: 'Clock',
+        description: 'restantes',
+      });
+    }
+    
+    // Monto estimado
+    metricas.push({
+      label: 'Monto',
+      value: denuncia.montoEstimado,
+      variant: 'neutral',
+      icon: 'DollarSign',
+    });
+    
+    // Multa
+    if (denuncia.multa) {
+      metricas.push({
+        label: 'Multa',
+        value: `$${denuncia.multa.toLocaleString('es-CL')}`,
+        variant: 'warning',
+        icon: 'Receipt',
+      });
+    }
+    
+    // Derechos
+    if (denuncia.montoDerechos) {
+      metricas.push({
+        label: 'Derechos',
+        value: `$${denuncia.montoDerechos.toLocaleString('es-CL')}`,
+        variant: 'success',
+        icon: 'Landmark',
+      });
+    }
+    
+    // Reclamos pendientes
+    const reclamosPendientes = reclamosAsociados.filter(r => ['Ingresado', 'En Análisis'].includes(r.estado));
+    if (reclamosPendientes.length > 0) {
+      metricas.push({
+        label: 'Reclamos',
+        value: reclamosPendientes.length,
+        variant: 'warning',
+        icon: 'AlertTriangle',
+        description: 'pendientes',
+      });
+    }
+    
+    return metricas;
+  }, [denuncia, reclamosAsociados]);
+  
+  // ============================================
+  // ACCIONES PRINCIPALES Y SECUNDARIAS
+  // ============================================
+  const accionesPrincipales = useMemo(() => {
+    const acciones = [];
+    
+    if (permisos.puedeFormalizar) {
+      acciones.push({
+        label: 'Ingresar',
+        icon: 'CheckCircle',
+        onClick: () => setShowModalIngresar(true),
+        variant: 'success' as const,
+      });
+    }
+    
+    if (permisos.puedeGenerarCargo) {
+      acciones.push({
+        label: 'Generar Cargo',
+        icon: 'FilePlus',
+        onClick: () => setShowModalGenerarCargo(true),
+        variant: 'primary' as const,
+      });
+    }
+    
+    return acciones;
+  }, [permisos]);
+  
+  const accionesSecundarias = useMemo(() => {
+    const acciones = [];
+    
+    if (permisos.puedeEditar) {
+      acciones.push({
+        label: 'Editar',
+        icon: 'Edit',
+        onClick: () => navigate(`${ERoutePaths.DENUNCIAS}/${denuncia.id}/editar`),
+      });
+    }
+    
+    if (permisos.puedeCrearReclamo) {
+      acciones.push({
+        label: 'Crear Reclamo',
+        icon: 'FileWarning',
+        onClick: handleCrearReclamo,
+      });
+    }
+    
+    if (permisos.puedeNotificar) {
+      acciones.push({
+        label: 'Notificar',
+        icon: 'Bell',
+        onClick: handleNotificar,
+      });
+    }
+    
+    acciones.push({
+      label: 'Ver Expediente',
+      icon: 'FolderOpen',
+      onClick: () => navigate(`/expediente/${denuncia.id}`),
+    });
+    
+    return acciones;
+  }, [permisos, denuncia.id, navigate]);
+  
+  // ============================================
+  // DETERMINAR VARIANT DEL ESTADO
+  // ============================================
+  const getEstadoVariant = (): 'success' | 'warning' | 'error' | 'info' => {
+    if (denuncia.diasVencimiento < 0 || denuncia.estado === 'Observada') return 'error';
+    if (denuncia.diasVencimiento <= 5 || ['En Revisión', 'Notificada'].includes(denuncia.estado)) return 'warning';
+    if (denuncia.estado === 'Cerrada') return 'success';
+    return 'info';
+  };
+  
+  // ============================================
+  // BADGES ADICIONALES
+  // ============================================
+  const badgesAdicionales = useMemo(() => {
+    const badges = [];
+    
+    if (denuncia.mercanciaAfecta) {
+      badges.push(
+        <span key="mercancia" className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold bg-amber-200 text-amber-900">
+          <Icon name="Package" size={14} />
+          Mercancía Afecta
+        </span>
+      );
+    }
+    
+    if (denuncia.retencion) {
+      badges.push(
+        <span key="retencion" className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold bg-purple-200 text-purple-900">
+          <Icon name="Lock" size={14} />
+          Retención
+        </span>
+      );
+    }
+    
+    return badges;
+  }, [denuncia]);
   
   // Tabs del detalle
   const tabs = [
@@ -382,188 +588,43 @@ export const DenunciaDetalle: React.FC = () => {
         role: usuarioActual.role,
       }}
     >
-      <div className="min-h-full space-y-4 animate-fade-in">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <button onClick={() => navigate(ERoutePaths.DASHBOARD)} className="hover:text-aduana-azul">
-            Dashboard
-          </button>
-          <Icon name="ChevronRight" size={14} />
-          <button onClick={() => navigate(ERoutePaths.DENUNCIAS)} className="hover:text-aduana-azul">
-            Denuncias
-          </button>
-          <Icon name="ChevronRight" size={14} />
-          <span className="text-gray-900 font-medium">N° {denuncia.numeroDenuncia}</span>
-        </nav>
+      <div className="min-h-full space-y-6 animate-fade-in pb-8">
+        {/* ═══════════════════════════════════════════════════════════════════
+            STATUS HEADER - Cabecera de estado prominente
+            Responde: ¿Cuál es el estado crítico y qué debo hacer?
+        ═══════════════════════════════════════════════════════════════════ */}
+        <StatusHeader
+          titulo="Denuncia"
+          numero={denuncia.numeroDenuncia}
+          subtitulo={`${denuncia.aduana} • ${denuncia.seccion || 'Sin sección'} • N° Interno: ${denuncia.numeroInterno || '-'}`}
+          estado={denuncia.estado}
+          estadoVariant={getEstadoVariant()}
+          tipo={denuncia.tipoDenuncia}
+          tipoVariant={denuncia.tipoDenuncia === 'Penal' ? 'error' : 'info'}
+          metricasCriticas={metricasCriticas}
+          alertas={alertas}
+          acciones={accionesPrincipales}
+          accionesSecundarias={accionesSecundarias}
+          onBack={() => navigate(ERoutePaths.DENUNCIAS)}
+          breadcrumbs={[
+            { label: 'Dashboard', onClick: () => navigate(ERoutePaths.DASHBOARD) },
+            { label: 'Denuncias', onClick: () => navigate(ERoutePaths.DENUNCIAS) },
+            { label: `N° ${denuncia.numeroDenuncia}` },
+          ]}
+          badges={badgesAdicionales}
+        />
         
-        {/* Alertas */}
-        {alertas.length > 0 && (
-          <div className="space-y-2">
-            {alertas.map((alerta, index) => (
-              <div 
-                key={index}
-                className={`flex items-center gap-3 p-3 rounded-lg border ${
-                  alerta.tipo === 'error' 
-                    ? 'bg-red-50 border-red-200 text-red-800' 
-                    : alerta.tipo === 'warning'
-                    ? 'bg-amber-50 border-amber-200 text-amber-800'
-                    : 'bg-blue-50 border-blue-200 text-blue-800'
-                }`}
-              >
-                <Icon 
-                  name={alerta.tipo === 'error' ? 'AlertCircle' : alerta.tipo === 'warning' ? 'AlertTriangle' : 'Info'} 
-                  size={18} 
-                />
-                <span className="text-sm font-medium">{alerta.mensaje}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* ═══════════════════════════════════════════════════════════════════
+            CONTENT TABS - Información detallada organizada
+            Responde: ¿Dónde está la información específica que necesito?
+        ═══════════════════════════════════════════════════════════════════ */}
+        <section className="animate-fade-in-up animate-delay-200">
+          <Tabs tabs={tabs} variant="underline" />
+        </section>
         
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => navigate(ERoutePaths.DENUNCIAS)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors mt-1"
-            >
-              <Icon name="ArrowLeft" size={20} />
-            </button>
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Denuncia N° {denuncia.numeroDenuncia}
-                </h1>
-                <Badge variant={getEstadoBadgeVariant(denuncia.estado)} size="md" dot>
-                  {denuncia.estado}
-                </Badge>
-                <Badge variant={(denuncia.tipoDenuncia === 'Penal' ? 'error' : 'info') as BadgeVariant}>
-                  {denuncia.tipoDenuncia}
-                </Badge>
-                {denuncia.mercanciaAfecta && (
-                  <Badge variant="warning" size="sm">
-                    <Icon name="Package" size={12} className="mr-1" />
-                    Mercancía Afecta
-                  </Badge>
-                )}
-              </div>
-              <p className="text-gray-600 mt-1">
-                {denuncia.aduana} • {denuncia.seccion || 'Sin sección'} • N° Interno: {denuncia.numeroInterno || '-'}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Fecha emisión: {denuncia.fechaEmision || denuncia.fechaIngreso} • 
-                Funcionario: {denuncia.loginFuncionario || '-'}
-              </p>
-            </div>
-          </div>
-          
-          {/* Acciones principales */}
-          <div className="flex flex-wrap gap-2 ml-10 lg:ml-0">
-            {permisos.puedeEditar && (
-              <CustomButton 
-                variant="secondary" 
-                className="flex items-center gap-2 text-sm"
-                onClick={() => navigate(`${ERoutePaths.DENUNCIAS}/${denuncia.id}/editar`)}
-              >
-                <Icon name="Edit" size={16} />
-                Editar
-              </CustomButton>
-            )}
-            
-            {permisos.puedeFormalizar && (
-              <CustomButton 
-                variant="primary" 
-                className="flex items-center gap-2 text-sm bg-emerald-600 hover:bg-emerald-700"
-                onClick={() => setShowModalIngresar(true)}
-              >
-                <Icon name="CheckCircle" size={16} />
-                Ingresar
-              </CustomButton>
-            )}
-            
-            {permisos.puedeGenerarCargo && (
-              <CustomButton 
-                variant="primary" 
-                className="flex items-center gap-2 text-sm"
-                onClick={() => setShowModalGenerarCargo(true)}
-              >
-                <Icon name="FilePlus" size={16} />
-                Generar Cargo
-              </CustomButton>
-            )}
-            
-            {permisos.puedeCrearReclamo && (
-              <CustomButton 
-                variant="secondary" 
-                className="flex items-center gap-2 text-sm"
-                onClick={handleCrearReclamo}
-              >
-                <Icon name="FileWarning" size={16} />
-                Crear Reclamo
-              </CustomButton>
-            )}
-            
-            {permisos.puedeNotificar && (
-              <CustomButton 
-                variant="secondary" 
-                className="flex items-center gap-2 text-sm"
-                onClick={handleNotificar}
-              >
-                <Icon name="Bell" size={16} />
-                Notificar
-              </CustomButton>
-            )}
-            
-            <CustomButton 
-              variant="secondary" 
-              className="flex items-center gap-2 text-sm"
-              onClick={() => navigate(`/expediente/${denuncia.id}`)}
-            >
-              <Icon name="FolderOpen" size={16} />
-              Ver Expediente
-            </CustomButton>
-          </div>
-        </div>
-        
-        {/* Info Cards rápida */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="card p-4 border-l-4 border-l-aduana-azul">
-            <p className="text-sm text-gray-500">Monto Estimado</p>
-            <p className="text-xl font-bold text-gray-900">{denuncia.montoEstimado}</p>
-          </div>
-          <div className="card p-4 border-l-4 border-l-amber-500">
-            <p className="text-sm text-gray-500">Multa</p>
-            <p className="text-xl font-bold text-amber-600">
-              {denuncia.multa ? `$${denuncia.multa.toLocaleString('es-CL')}` : '-'}
-            </p>
-          </div>
-          <div className="card p-4 border-l-4 border-l-emerald-500">
-            <p className="text-sm text-gray-500">Derechos</p>
-            <p className="text-xl font-bold text-emerald-600">
-              {denuncia.montoDerechos ? `$${denuncia.montoDerechos.toLocaleString('es-CL')}` : '-'}
-            </p>
-          </div>
-          <div className={`card p-4 border-l-4 ${
-            denuncia.diasVencimiento < 0 ? 'border-l-red-500' : 
-            denuncia.diasVencimiento <= 5 ? 'border-l-amber-500' : 'border-l-gray-300'
-          }`}>
-            <p className="text-sm text-gray-500">Días Plazo</p>
-            <p className={`text-xl font-bold ${
-              denuncia.diasVencimiento < 0 ? 'text-red-600' : 
-              denuncia.diasVencimiento <= 5 ? 'text-amber-600' : 'text-gray-900'
-            }`}>
-              {denuncia.diasVencimiento < 0 
-                ? `${Math.abs(denuncia.diasVencimiento)}d vencido`
-                : `${denuncia.diasVencimiento} días`
-              }
-            </p>
-          </div>
-        </div>
-        
-        {/* Tabs */}
-        <Tabs tabs={tabs} variant="underline" />
-        
-        {/* Modales */}
+        {/* ═══════════════════════════════════════════════════════════════════
+            MODALS
+        ═══════════════════════════════════════════════════════════════════ */}
         <ModalConfirmacion
           isOpen={showModalIngresar}
           onClose={() => setShowModalIngresar(false)}
@@ -589,4 +650,3 @@ export const DenunciaDetalle: React.FC = () => {
 };
 
 export default DenunciaDetalle;
-
