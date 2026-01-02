@@ -98,22 +98,22 @@ export const ReclamosList: React.FC = () => {
   };
 
   const handleActions = (row: Reclamo) => (
-    <div className="flex flex-col w-full gap-1">
+    <div className="flex flex-col w-full gap-1.5">
       <CustomButton 
         variant="primary" 
-        className="w-full text-xs"
+        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
         onClick={() => navigate(ERoutePaths.RECLAMOS_DETALLE.replace(':id', row.id))}
       >
-        <Icon name="Eye" className="hidden md:block" size={14} />
-        Ver Detalle
+        <Icon name="Eye" className="hidden md:block" size={12} />
+        <span>Ver Detalle</span>
       </CustomButton>
       <CustomButton 
         variant="secondary" 
-        className="w-full text-xs"
+        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
         onClick={() => navigate(ERoutePaths.RECLAMOS_EDITAR.replace(':id', row.id))}
       >
-        <Icon name="Edit" className="hidden md:block" size={14} />
-        Editar
+        <Icon name="Edit" className="hidden md:block" size={12} />
+        <span>Editar</span>
       </CustomButton>
     </div>
   );

@@ -109,22 +109,22 @@ export const DenunciasList: React.FC = () => {
   };
 
   const handleActions = (row: Denuncia) => (
-    <div className="flex flex-col w-full gap-1">
+    <div className="flex flex-col w-full gap-1.5">
       <CustomButton 
         variant="primary" 
-        className="w-full text-xs"
+        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
         onClick={() => navigate(`/denuncias/${row.id}`)}
       >
-        <Icon name="Eye" className="hidden md:block" size={14} />
-        Ver Detalle
+        <Icon name="Eye" className="hidden md:block" size={12} />
+        <span>Ver Detalle</span>
       </CustomButton>
       <CustomButton 
         variant="secondary" 
-        className="w-full text-xs"
+        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
         onClick={() => navigate(`/expediente/${row.id}`)}
       >
-        <Icon name="FileText" className="hidden md:block" size={14} />
-        Expediente
+        <Icon name="FolderOpen" className="hidden md:block" size={12} />
+        <span>Expediente</span>
       </CustomButton>
     </div>
   );
@@ -202,36 +202,36 @@ export const DenunciasList: React.FC = () => {
         role: usuarioActual.role,
       }}
     >
-      <div className="min-h-full space-y-4 animate-fade-in">
-        {/* Header de la sección */}
+      <div className="min-h-full space-y-5 animate-fade-in pb-8">
+        {/* Header de la sección - más limpio y con mejor jerarquía */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
+            <nav className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <button 
                 onClick={() => navigate(ERoutePaths.DASHBOARD)}
-                className="text-gray-500 hover:text-aduana-azul transition-colors"
+                className="hover:text-aduana-azul transition-colors"
               >
-                <Icon name="ArrowLeft" size={20} />
+                Dashboard
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Listado de Denuncias</h1>
-            </div>
-            <p className="text-gray-600 mt-1 ml-7">
+              <Icon name="ChevronRight" size={14} />
+              <span className="text-gray-900 font-medium">Denuncias</span>
+            </nav>
+            <h1 className="text-2xl font-bold text-gray-900">Listado de Denuncias</h1>
+            <p className="text-gray-500 mt-1">
               Gestión y seguimiento de denuncias aduaneras
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <CustomButton 
-              variant="primary"
-              className="flex items-center gap-2"
-              onClick={() => navigate(ERoutePaths.DENUNCIAS_NUEVA)}
-            >
-              <Icon name="Plus" size={18} />
-              Nueva Denuncia
-            </CustomButton>
-          </div>
+          <CustomButton 
+            variant="primary"
+            className="flex items-center gap-2"
+            onClick={() => navigate(ERoutePaths.DENUNCIAS_NUEVA)}
+          >
+            <Icon name="Plus" size={16} />
+            Nueva Denuncia
+          </CustomButton>
         </div>
 
-        {/* Estadísticas compactas (alineadas a Giros) */}
+        {/* Estadísticas compactas */}
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
             Total: <strong>{conteoDenuncias.total}</strong>
@@ -257,7 +257,7 @@ export const DenunciasList: React.FC = () => {
         </div>
 
         {/* Card principal */}
-        <section className="card overflow-hidden">
+        <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           {/* Header azul */}
           <div className="bg-aduana-azul py-3 px-6 flex items-center justify-between">
             <span className="text-white font-medium flex items-center gap-2">
@@ -270,7 +270,7 @@ export const DenunciasList: React.FC = () => {
           </div>
 
           {/* Filtros básicos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-white border-b border-gray-100">
             <InputField
               label="N° Denuncia"
               id="numeroDenuncia"
@@ -323,7 +323,7 @@ export const DenunciasList: React.FC = () => {
 
           {/* Filtros avanzados */}
           {showAdvancedFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-100 border-b border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-5 bg-gray-50 border-b border-gray-100">
               <InputField
                 label="N° Interno"
                 id="numeroInterno"
@@ -428,36 +428,36 @@ export const DenunciasList: React.FC = () => {
           )}
 
           {/* Acciones */}
-          <div className="flex flex-col md:flex-row justify-between items-center px-5 py-3 gap-3 border-b border-gray-200">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex flex-col md:flex-row justify-between items-center px-5 py-3 gap-3 bg-white border-b border-gray-100">
+            <div className="flex items-center gap-3 text-sm text-gray-600">
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="flex items-center gap-1 text-aduana-azul hover:underline"
+                className="flex items-center gap-1.5 text-gray-600 hover:text-aduana-azul transition-colors"
               >
-                <Icon name={showAdvancedFilters ? "ChevronUp" : "ChevronDown"} size={16} />
-                {showAdvancedFilters ? 'Ocultar filtros avanzados' : 'Mostrar filtros avanzados'}
+                <Icon name={showAdvancedFilters ? "ChevronUp" : "SlidersHorizontal"} size={16} />
+                {showAdvancedFilters ? 'Ocultar filtros' : 'Más filtros'}
               </button>
               {selectedRows.length > 0 && (
-                <span className="bg-aduana-azul-50 text-aduana-azul px-2 py-1 rounded ml-4">
+                <span className="bg-aduana-azul/10 text-aduana-azul px-2.5 py-1 rounded-full text-xs font-medium">
                   {selectedRows.length} seleccionados
                 </span>
               )}
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               <CustomButton 
-                variant="secondary" 
-                className="flex items-center gap-1 text-sm"
+                variant="ghost" 
+                className="flex items-center gap-1.5"
                 onClick={limpiarFiltros}
               >
-                <Icon name="Eraser" size={16} />
+                <Icon name="X" size={14} />
                 Limpiar
               </CustomButton>
-              <CustomButton variant="secondary" className="flex items-center gap-1 text-sm">
-                <Icon name="FileDown" size={16} />
-                Exportar Excel
+              <CustomButton variant="secondary" className="flex items-center gap-1.5">
+                <Icon name="Download" size={14} />
+                Exportar
               </CustomButton>
-              <CustomButton variant="primary" className="flex items-center gap-1 text-sm">
-                <Icon name="Search" size={16} />
+              <CustomButton variant="primary" className="flex items-center gap-1.5">
+                <Icon name="Search" size={14} />
                 Buscar
               </CustomButton>
             </div>
@@ -466,30 +466,30 @@ export const DenunciasList: React.FC = () => {
           {/* Tabla */}
           <div className="p-4">
             <Table
-              classHeader="bg-aduana-azul text-white text-xs"
+              classHeader="bg-gray-50 text-gray-700 text-xs font-semibold uppercase tracking-wide"
               headers={columnasDenuncias}
               data={denunciasFiltradas}
               actions={handleActions}
             />
           </div>
 
-          {/* Paginación */}
-          <div className="flex flex-col md:flex-row items-center justify-between px-5 py-4 border-t border-gray-200 bg-gray-50">
-            <p className="text-sm text-gray-600">
-              Mostrando 1 a {Math.min(denunciasFiltradas.length, 20)} de {denunciasFiltradas.length} registros
+          {/* Paginación - más limpia */}
+          <div className="flex flex-col md:flex-row items-center justify-between px-5 py-4 border-t border-gray-100 bg-white">
+            <p className="text-sm text-gray-500">
+              Mostrando <strong className="text-gray-700">1</strong> a <strong className="text-gray-700">{Math.min(denunciasFiltradas.length, 20)}</strong> de <strong className="text-gray-700">{denunciasFiltradas.length}</strong> registros
             </p>
-            <div className="flex items-center gap-2 mt-3 md:mt-0">
-              <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>
-                Anterior
+            <div className="flex items-center gap-1 mt-3 md:mt-0">
+              <button className="px-3 py-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" disabled>
+                <Icon name="ChevronLeft" size={16} />
               </button>
-              <button className="px-3 py-1.5 text-sm bg-aduana-azul text-white rounded-md">
+              <button className="px-3.5 py-1.5 text-sm bg-aduana-azul text-white rounded-lg font-medium">
                 1
               </button>
-              <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">
+              <button className="px-3.5 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 2
               </button>
-              <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">
-                Siguiente
+              <button className="px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <Icon name="ChevronRight" size={16} />
               </button>
             </div>
           </div>

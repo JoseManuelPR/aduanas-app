@@ -116,23 +116,23 @@ export const CargosList: React.FC = () => {
   };
 
   const handleActions = (row: Cargo) => (
-    <div className="flex flex-col w-full gap-1">
+    <div className="flex flex-col w-full gap-1.5">
       <CustomButton 
         variant="primary" 
-        className="w-full text-xs"
+        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
         onClick={() => navigate(`/cargos/${row.id}/editar`)}
       >
-        <Icon name="Edit" className="hidden md:block" size={14} />
-        Editar Cargo
+        <Icon name="Edit" className="hidden md:block" size={12} />
+        <span>Editar Cargo</span>
       </CustomButton>
       {(row.estado === 'Emitido' || row.estado === 'Aprobado' || row.estado === 'Notificado') && (
         <CustomButton 
           variant="secondary" 
-          className="w-full text-xs"
+          className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
           onClick={() => navigate(`/giros/nuevo?cargoId=${row.id}`)}
         >
-          <Icon name="Receipt" className="hidden md:block" size={14} />
-          Generar Giro
+          <Icon name="Receipt" className="hidden md:block" size={12} />
+          <span>Generar Giro</span>
         </CustomButton>
       )}
     </div>

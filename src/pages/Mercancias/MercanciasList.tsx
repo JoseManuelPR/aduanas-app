@@ -87,23 +87,23 @@ export const MercanciasList: React.FC = () => {
   };
 
   const handleActions = (row: Mercancia) => (
-    <div className="flex flex-col w-full gap-1">
+    <div className="flex flex-col w-full gap-1.5">
       <CustomButton 
         variant="primary" 
-        className="w-full text-xs"
+        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
         onClick={() => navigate(ERoutePaths.MERCANCIAS_DETALLE.replace(':id', row.id))}
       >
-        <Icon name="Eye" className="hidden md:block" size={14} />
-        Ver Detalle
+        <Icon name="Eye" className="hidden md:block" size={12} />
+        <span>Ver Detalle</span>
       </CustomButton>
       {row.denunciaId && (
         <CustomButton 
           variant="secondary" 
-          className="w-full text-xs"
+          className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
           onClick={() => navigate(ERoutePaths.DENUNCIAS_DETALLE.replace(':id', row.denunciaId!))}
         >
-          <Icon name="FileWarning" className="hidden md:block" size={14} />
-          Ver Denuncia
+          <Icon name="FileWarning" className="hidden md:block" size={12} />
+          <span>Ver Denuncia</span>
         </CustomButton>
       )}
     </div>

@@ -111,23 +111,23 @@ export const GirosList: React.FC = () => {
   };
 
   const handleActions = (row: Giro) => (
-    <div className="flex flex-col w-full gap-1">
+    <div className="flex flex-col w-full gap-1.5">
       <CustomButton 
         variant="primary" 
-        className="w-full text-xs"
+        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
         onClick={() => navigate(`/giros/${row.id}`)}
       >
-        <Icon name="Eye" className="hidden md:block" size={14} />
-        Ver Detalle
+        <Icon name="Eye" className="hidden md:block" size={12} />
+        <span>Ver Detalle</span>
       </CustomButton>
       {(row.estado === 'Emitido' || row.estado === 'Notificado' || row.estado === 'Vencido' || row.estado === 'Parcialmente Pagado') && (
         <CustomButton 
-          variant="secondary" 
-          className="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+          variant="primary" 
+          className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5 !bg-emerald-600 hover:!bg-emerald-700"
           onClick={() => navigate(`/giros/${row.id}`)}
         >
-          <Icon name="CreditCard" className="hidden md:block" size={14} />
-          Registrar Pago
+          <Icon name="CreditCard" className="hidden md:block" size={12} />
+          <span>Registrar Pago</span>
         </CustomButton>
       )}
     </div>

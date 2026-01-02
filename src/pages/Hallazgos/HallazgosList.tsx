@@ -93,34 +93,34 @@ export const HallazgosList: React.FC = () => {
       : row.id;
 
     return (
-      <div className="flex flex-col w-full gap-1">
+      <div className="flex flex-col w-full gap-1.5">
         {puedeGestionar(row.estado) ? (
           <CustomButton 
             variant="primary" 
-            className="w-full text-xs bg-emerald-600 hover:bg-emerald-700"
+            className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5 !bg-emerald-600 hover:!bg-emerald-700"
             onClick={() => navigate(`/hallazgos/${row.id}/gestionar`)}
           >
-            <Icon name="FileCheck" className="hidden md:block" size={14} />
-            Gestionar
+            <Icon name="FileCheck" className="hidden md:block" size={12} />
+            <span>Gestionar</span>
           </CustomButton>
         ) : (
           <CustomButton 
             variant="secondary" 
-            className="w-full text-xs"
+            className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
             disabled={row.estado === 'Cerrado' || row.estado === 'Convertido a Denuncia'}
             onClick={() => navigate(`/expediente/${row.id}`)}
           >
-            <Icon name="FileText" className="hidden md:block" size={14} />
-            Ver Expediente
+            <Icon name="FileText" className="hidden md:block" size={12} />
+            <span>Ver Expediente</span>
           </CustomButton>
         )}
         <CustomButton 
           variant="secondary" 
-          className="w-full text-xs"
+          className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
           onClick={() => navigate(`/hallazgos/${navigationId}/detalle`)}
         >
-          <Icon name="Eye" className="hidden md:block" size={14} />
-          Ver Detalle
+          <Icon name="Eye" className="hidden md:block" size={12} />
+          <span>Ver Detalle</span>
         </CustomButton>
       </div>
     );
