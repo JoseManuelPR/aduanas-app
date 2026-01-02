@@ -462,20 +462,14 @@ export const Dashboard: React.FC = () => {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h4 className={`font-semibold ${config.text} truncate`}>
-                          {alerta.titulo}
-                        </h4>
-                        <p className={`text-sm ${config.textLight} mt-0.5 line-clamp-1`}>
-                          {alerta.descripcion}
-                        </p>
-                      </div>
-                      
-                      {/* Time badge - prominent for critical */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className={`font-semibold ${config.text} truncate`}>
+                        {alerta.titulo}
+                      </h4>
+                      {/* Time badge - right after title */}
                       {alerta.timeLabel && (
                         <span className={`
-                          px-3 py-1 rounded-lg text-sm font-bold whitespace-nowrap flex-shrink-0
+                          px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap flex-shrink-0
                           ${alerta.priority === 'critical' 
                             ? 'bg-red-600 text-white shadow-sm' 
                             : `${config.bgLight} ${config.text}`
@@ -485,6 +479,9 @@ export const Dashboard: React.FC = () => {
                         </span>
                       )}
                     </div>
+                    <p className={`text-sm ${config.textLight} mt-1 line-clamp-1`}>
+                      {alerta.descripcion}
+                    </p>
                   </div>
 
                   {/* Action */}
@@ -581,7 +578,7 @@ export const Dashboard: React.FC = () => {
                   onClick={() => navigate(ERoutePaths.NOTIFICACIONES)}
                   className="w-full text-center text-sm font-medium text-gray-600 hover:text-aduana-azul transition-colors"
                 >
-                  Ver calendario completo →
+                  Ver completo →
                 </button>
               </div>
             </div>
@@ -651,72 +648,6 @@ export const Dashboard: React.FC = () => {
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            SECCIÓN 4: ACCESO RÁPIDO
-            Acciones frecuentes claramente visibles
-        ═══════════════════════════════════════════════════════════════════ */}
-        <section className="breathing-section-lg animate-fade-in animate-delay-500">
-          <div className="dashboard-section-header mb-5">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Acceso rápido</h2>
-              <p className="text-sm text-gray-500">Acciones frecuentes</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button
-              onClick={() => navigate(ERoutePaths.DENUNCIAS)}
-              className="quick-action-card group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                <Icon name="FilePlus" size={24} className="text-blue-600" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900">Nueva Denuncia</p>
-                <p className="text-xs text-gray-500">Crear expediente</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate(ERoutePaths.CARGOS)}
-              className="quick-action-card group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
-                <Icon name="ClipboardList" size={24} className="text-amber-600" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900">Gestionar Cargos</p>
-                <p className="text-xs text-gray-500">Ver pendientes</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate(ERoutePaths.GIROS)}
-              className="quick-action-card group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                <Icon name="DollarSign" size={24} className="text-emerald-600" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900">Emitir Giro</p>
-                <p className="text-xs text-gray-500">Cobros pendientes</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate(ERoutePaths.RECLAMOS)}
-              className="quick-action-card group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                <Icon name="FileQuestion" size={24} className="text-purple-600" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900">Ver Reclamos</p>
-                <p className="text-xs text-gray-500">En tramitación</p>
-              </div>
-            </button>
-          </div>
-        </section>
       </div>
     </CustomLayout>
   );

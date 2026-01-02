@@ -126,7 +126,7 @@
 
   /* Visual Separator */
   .section-divider {
-    @apply border-t border-gray-200 my-8;
+    @apply border-t border-gray-200 my-4;
   }
 
   /* Status Dot Indicators */
