@@ -303,16 +303,16 @@ export const Dashboard: React.FC = () => {
           {/* Executive Summary Panel */}
           <div className="executive-panel mb-8">
             <div className="relative z-10">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
                 {/* Left: Greeting and status */}
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-white/70 text-sm font-medium uppercase tracking-wide">
                     Panel de Control
                   </p>
-                  <h1 className="text-2xl lg:text-3xl font-bold text-white mt-1">
+                  <h1 className="text-2xl md:text-3xl font-bold text-white mt-1">
                     Buenos días, {usuarioActual.name.split(' ')[0]}
                   </h1>
-                  <p className="text-white/80 mt-2 max-w-xl">
+                  <p className="text-white/80 mt-2">
                     {casosUrgentes > 0 
                       ? `Tienes ${casosUrgentes} casos que requieren atención inmediata.`
                       : 'No hay casos críticos pendientes. Buen trabajo.'}
@@ -320,10 +320,10 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Right: Key metrics at a glance */}
-                <div className="flex flex-wrap gap-4 lg:gap-6">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   {/* Critical indicator */}
                   {casosUrgentes > 0 && (
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/20 animate-pulse-subtle">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20 animate-pulse-subtle">
                       <div className="flex items-center gap-3">
                         <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse" />
                         <div>
@@ -335,7 +335,7 @@ export const Dashboard: React.FC = () => {
                   )}
                   
                   {/* Resolution rate */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
                     <div className="flex items-center gap-3">
                       <ProgressRing 
                         value={tasaResolucion} 
@@ -351,7 +351,7 @@ export const Dashboard: React.FC = () => {
                   </div>
 
                   {/* Pending */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
                         <Icon name="Clock" size={20} className="text-amber-300" />
