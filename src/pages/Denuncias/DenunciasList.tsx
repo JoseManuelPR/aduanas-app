@@ -445,8 +445,8 @@ export const DenunciasList: React.FC = () => {
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               <CustomButton 
-                variant="ghost" 
-                className="flex items-center gap-1.5"
+                variant="secondary"
+                className="flex items-center gap-1.5 !bg-transparent !border-0 hover:!bg-gray-100"
                 onClick={limpiarFiltros}
               >
                 <Icon name="X" size={14} />
