@@ -11,4 +11,7 @@ export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
 export { Stepper } from './Stepper';
 export type { StepperStep, StepStatus } from './Stepper';
+export { TrendIndicator } from './TrendIndicator';
+export { PriorityBadge } from './PriorityBadge';
+export { ProgressRing } from './ProgressRing';
 
