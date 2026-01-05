@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Icon } from "he-button-custom-library";
 import CustomLayout from '../../Layout/Layout';
 import { CustomInput } from '../../components/Input/Input';
 import { Table } from '../../components/Table/Table';
@@ -338,23 +339,63 @@ export const NotificacionesList: React.FC = () => {
         role: usuarioActual.role,
       }}
     >
-      <div className="min-h-full space-y-4 animate-fade-in">
-        {/* Header */}
+      <div className="min-h-full space-y-5 animate-fade-in pb-8">
+        {/* Header de la sección - más limpio y con mejor jerarquía */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
+            <nav className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+              <button
+                onClick={() => navigate(ERoutePaths.DASHBOARD)}
+                className="hover:text-aduana-azul transition-colors"
+              >
+                Dashboard
+              </button>
+              <Icon name="ChevronRight" size={14} />
+              <span className="text-gray-900 font-medium">Notificaciones</span>
+            </nav>
             <h1 className="text-2xl font-bold text-gray-900">Notificaciones</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Total: {conteoNotificaciones.totalGeneral} notificaciones | 
-              Sin leer: {conteoNotificaciones.totalNoLeidas}
+            <p className="text-gray-500 mt-1">
+              Gestión y seguimiento de notificaciones del sistema aduanero
             </p>
           </div>
         </div>
 
-        {/* Barra de búsqueda y filtros */}
-        <div className="card p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Estadísticas compactas */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
+            Total: <strong>{conteoNotificaciones.totalGeneral}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            Sin leer: <strong>{conteoNotificaciones.totalNoLeidas}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+            Denuncias: <strong>{conteoNotificaciones.denuncias.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+            Reclamos: <strong>{conteoNotificaciones.reclamos.total}</strong>
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Cargos: <strong>{conteoNotificaciones.cargos.total}</strong>
+          </span>
+        </div>
+
+        {/* Card principal */}
+        <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* Header azul */}
+          <div className="bg-aduana-azul py-3 px-6 flex items-center justify-between">
+            <span className="text-white font-medium flex items-center gap-2">
+              <Icon name="Bell" size={18} />
+              Gestión de Notificaciones
+            </span>
+            <span className="text-white/80 text-sm">
+              {conteoNotificaciones.totalGeneral} notificaciones totales
+            </span>
+          </div>
+
+          {/* Filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-white border-b border-gray-100">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-black mb-1">
                 Buscar
               </label>
               <CustomInput
@@ -369,7 +410,7 @@ export const NotificacionesList: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-black mb-1">
                 Fecha desde
               </label>
               <CustomInput
@@ -383,7 +424,7 @@ export const NotificacionesList: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-black mb-1">
                 Fecha hasta
               </label>
               <CustomInput
@@ -397,7 +438,7 @@ export const NotificacionesList: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-black mb-1">
                 Estado (opcional)
               </label>
               <select
@@ -416,15 +457,44 @@ export const NotificacionesList: React.FC = () => {
               </select>
             </div>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <Tabs
-          tabs={tabs}
-          defaultTab={activeTab}
-          onChange={handleTabChange}
-          variant="underline"
-        />
+          {/* Acciones */}
+          <div className="flex flex-col md:flex-row justify-between items-center px-5 py-3 gap-3 bg-white border-b border-gray-100">
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              <span className="bg-aduana-azul/10 text-aduana-azul px-2.5 py-1 rounded-full text-xs font-medium">
+                {activeTab === 'denuncias' ? conteoNotificaciones.denuncias.total :
+                 activeTab === 'reclamos' ? conteoNotificaciones.reclamos.total :
+                 conteoNotificaciones.cargos.total} registros
+              </span>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2">
+              <CustomButton
+                variant="secondary"
+                className="flex items-center gap-1.5 !bg-transparent !border-0 hover:!bg-gray-100"
+                onClick={() => {
+                  setSearchTerm('');
+                  setFechaDesde('');
+                  setFechaHasta('');
+                  setEstadoFiltro('');
+                  setCurrentPage(1);
+                }}
+              >
+                <Icon name="X" size={14} />
+                Limpiar
+              </CustomButton>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="p-4">
+            <Tabs
+              tabs={tabs}
+              defaultTab={activeTab}
+              onChange={handleTabChange}
+              variant="underline"
+            />
+          </div>
+        </section>
       </div>
     </CustomLayout>
   );
