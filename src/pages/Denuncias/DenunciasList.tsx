@@ -62,8 +62,6 @@ const initialFiltros: FiltrosDenuncia = {
 
 export const DenunciasList: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedRows, _setSelectedRows] = useState<string[]>([]);
-  void _setSelectedRows; // For future use with bulk actions
   const [filtros, setFiltros] = useState<FiltrosDenuncia>(initialFiltros);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
