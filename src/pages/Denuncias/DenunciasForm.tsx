@@ -1652,17 +1652,6 @@ export const DenunciasForm: React.FC = () => {
     setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
   };
 
-  const handleGenerarCargo = () => {
-    setShowModalInfraccional(false);
-    showToast({
-      type: 'info',
-      title: 'Generar Cargo',
-      message: 'Redirigiendo a formulario de cargo...',
-      duration: 2000,
-    });
-    setTimeout(() => navigate(ERoutePaths.CARGOS_NUEVO), 500);
-  };
-
   const handleDerivarMinisterioPublico = () => {
     setShowModalPenal(false);
     showToast({
@@ -1803,31 +1792,31 @@ export const DenunciasForm: React.FC = () => {
           setShowModalInfraccional(false);
           navigate(ERoutePaths.DENUNCIAS);
         }}
-        onConfirm={handleGenerarCargo}
+        onConfirm={handleRegistrarAudiencia}
         titulo="Denuncia Infraccional Registrada"
-        mensaje="La denuncia infraccional ha sido registrada exitosamente. ¿Qué acción desea realizar?"
-        tipo="info"
-        textoConfirmar="Generar Cargo"
-        textoCancelar="Registrar Audiencia"
+        mensaje="La denuncia infraccional ha sido registrada exitosamente. El expediente digital ha sido generado y está disponible para su revisión."
+        tipo="success"
+        textoConfirmar="Registrar Audiencia"
+        textoCancelar="Continuar"
       >
         <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Icon name="Info" size={20} className="text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-900 mb-1">Próximos pasos</p>
+                <p className="text-sm text-amber-800">
+                  La denuncia se encuentra en estado <strong>"Ingresada"</strong> y será revisada por el Jefe de Sección. 
+                  Una vez formulada, podrá proceder con la generación de cargos si corresponde.
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              <strong>Generar Cargo:</strong> Crear un cargo asociado a esta denuncia para la determinación de la deuda.
+              <strong>Registrar Audiencia:</strong> Si desea programar una audiencia con el infractor, puede hacerlo ahora.
             </p>
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm text-amber-800">
-              <strong>Registrar Audiencia:</strong> Programar una audiencia con el infractor para resolver la situación.
-            </p>
-          </div>
-          <button
-            onClick={handleRegistrarAudiencia}
-            className="w-full py-2 px-4 border border-amber-500 text-amber-700 rounded-lg hover:bg-amber-50 flex items-center justify-center gap-2"
-          >
-            <Icon name="Calendar" size={18} />
-            Registrar Audiencia
-          </button>
         </div>
       </ModalConfirmacion>
 

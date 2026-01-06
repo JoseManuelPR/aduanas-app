@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from 'he-button-custom-library';
 import CONSTANTS_APP from '../../constants/sidebar-menu';
@@ -19,8 +19,114 @@ import {
   expedientesDigitales,
   getDocumentosAduanerosPorDenuncia,
   getPermisosArchivo,
-  calcularCompletitud,
 } from '../../data';
+
+// Configuración de contexto de estados
+const ESTADO_CONTEXTO: Record<string, {
+  responsable: string;
+  descripcion: string;
+  siguientePaso: string;
+  icono: string;
+  color: string;
+}> = {
+  'En Revisión': {
+    responsable: 'Jefe de Sección',
+    descripcion: 'Verificando documentación y tipificación',
+    siguientePaso: 'Formulación de la denuncia',
+    icono: 'Search',
+    color: 'blue',
+  },
+  'Ingresada': {
+    responsable: 'Funcionario Fiscalizador',
+    descripcion: 'Denuncia ingresada al sistema',
+    siguientePaso: 'Revisión por Jefe de Sección',
+    icono: 'FileInput',
+    color: 'blue',
+  },
+  'Borrador': {
+    responsable: 'Funcionario Fiscalizador',
+    descripcion: 'Preparación de documentación',
+    siguientePaso: 'Completar e ingresar denuncia',
+    icono: 'Edit',
+    color: 'gray',
+  },
+  'Formulada': {
+    responsable: 'Sistema',
+    descripcion: 'Denuncia formulada formalmente',
+    siguientePaso: 'Notificación al denunciado',
+    icono: 'FileCheck',
+    color: 'emerald',
+  },
+  'Notificada': {
+    responsable: 'Sistema de Notificaciones',
+    descripcion: 'En espera de respuesta del denunciado',
+    siguientePaso: 'Registro de respuesta o vencimiento de plazo',
+    icono: 'Bell',
+    color: 'amber',
+  },
+  'En Proceso': {
+    responsable: 'Administrador de Audiencia',
+    descripcion: 'Tramitación activa del caso',
+    siguientePaso: 'Resolución del proceso',
+    icono: 'Clock',
+    color: 'blue',
+  },
+  'Cerrada': {
+    responsable: 'Sistema',
+    descripcion: 'Proceso finalizado',
+    siguientePaso: 'Archivado',
+    icono: 'CheckCircle',
+    color: 'emerald',
+  },
+};
+
+// Requisitos de completitud del expediente
+interface RequisitoExpediente {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  obligatorio: boolean;
+  verificar: (data: { documentosAduaneros: any[]; archivos: any[]; denuncia: any }) => boolean;
+}
+
+// Definir requisitos del expediente
+const REQUISITOS_EXPEDIENTE: RequisitoExpediente[] = [
+  {
+    id: 'registro',
+    nombre: 'Registro creado',
+    descripcion: 'Expediente digital generado en el sistema',
+    obligatorio: true,
+    verificar: () => true, // Siempre cumplido si existe el expediente
+  },
+  {
+    id: 'denuncia',
+    nombre: 'Denuncia ingresada',
+    descripcion: 'Formulario de denuncia completado',
+    obligatorio: true,
+    verificar: ({ denuncia }) => !!denuncia?.numeroDenuncia,
+  },
+  {
+    id: 'documentos_aduaneros',
+    nombre: 'Documentos aduaneros',
+    descripcion: 'DUS, DIN u otros documentos aduaneros asociados',
+    obligatorio: true,
+    verificar: ({ documentosAduaneros }) => documentosAduaneros.length > 0,
+  },
+  {
+    id: 'archivos_respaldo',
+    nombre: 'Archivos de respaldo',
+    descripcion: 'Evidencia fotográfica o documental',
+    obligatorio: false,
+    verificar: ({ archivos }) => archivos.length > 0,
+  },
+  {
+    id: 'resolucion',
+    nombre: 'Resolución',
+    descripcion: 'Resolución o dictamen del caso',
+    obligatorio: false,
+    verificar: ({ denuncia }) => denuncia?.estado === 'Cerrada' || denuncia?.estado === 'Archivada',
+  },
+];
 
 export const ExpedienteDigital: React.FC = () => {
   const navigate = useNavigate();
@@ -52,8 +158,30 @@ export const ExpedienteDigital: React.FC = () => {
   // Obtener documentos aduaneros relacionados
   const documentosAduaneros = getDocumentosAduanerosPorDenuncia(denunciaData?.id || 'den-001');
 
-  // Calcular completitud del expediente
-  const { porcentaje: completitud } = calcularCompletitud(expediente);
+  // Calcular completitud del expediente con checklist
+  const requisitosCompletados = useMemo(() => {
+    return REQUISITOS_EXPEDIENTE.map(req => ({
+      ...req,
+      completado: req.verificar({
+        documentosAduaneros,
+        archivos: expediente.archivos,
+        denuncia: denunciaData,
+      }),
+    }));
+  }, [documentosAduaneros, expediente.archivos, denunciaData]);
+
+  const completitud = useMemo(() => {
+    const obligatorios = requisitosCompletados.filter(r => r.obligatorio);
+    const completados = obligatorios.filter(r => r.completado).length;
+    return Math.round((completados / obligatorios.length) * 100);
+  }, [requisitosCompletados]);
+
+  // Obtener contexto del estado actual
+  const estadoContexto = ESTADO_CONTEXTO[expediente.estado] || ESTADO_CONTEXTO['En Revisión'];
+
+  // Determinar si faltan documentos críticos
+  const faltanDocumentosAduaneros = documentosAduaneros.length === 0;
+  const faltanArchivos = expediente.archivos.length === 0;
 
   // Permisos del usuario actual
   const permisos = {
@@ -87,15 +215,43 @@ export const ExpedienteDigital: React.FC = () => {
       label: 'Documentos Aduaneros',
       icon: <Icon name="FileText" size={16} />,
       badge: documentosAduaneros.length,
+      badgeVariant: (documentosAduaneros.length === 0 ? 'warning' : undefined) as 'warning' | undefined,
       content: (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h4 className="font-semibold text-gray-900">Documentos Aduaneros Asociados</h4>
           </div>
           {documentosAduaneros.length === 0 ? (
-            <div className="card p-8 text-center">
-              <Icon name="FileText" size={48} className="mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500">No hay documentos aduaneros asociados</p>
+            <div className="card border-2 border-dashed border-amber-300 bg-amber-50/50 p-8">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
+                  <Icon name="AlertTriangle" size={32} className="text-amber-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Acción requerida: Asociar documento aduanero
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Este expediente requiere al menos un documento aduanero (DUS, DIN, etc.) 
+                  para completar el registro. Sin este documento, no podrá avanzar a la siguiente etapa.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <CustomButton 
+                    variant="primary"
+                    className="flex items-center gap-2"
+                    onClick={() => setModalSubirArchivo(true)}
+                  >
+                    <Icon name="Upload" size={18} />
+                    Cargar documento aduanero
+                  </CustomButton>
+                  <CustomButton 
+                    variant="secondary"
+                    className="flex items-center gap-2"
+                  >
+                    <Icon name="Search" size={18} />
+                    Buscar en sistema
+                  </CustomButton>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="card overflow-hidden">
@@ -175,7 +331,7 @@ export const ExpedienteDigital: React.FC = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h4 className="font-semibold text-gray-900">Archivos del Expediente</h4>
-            {permisos.puedeSubir && (
+            {permisos.puedeSubir && expediente.archivos.length > 0 && (
               <CustomButton
                 variant="primary"
                 className="flex items-center gap-2 text-sm"
@@ -186,6 +342,29 @@ export const ExpedienteDigital: React.FC = () => {
               </CustomButton>
             )}
           </div>
+          {expediente.archivos.length === 0 ? (
+            <div className="card border-2 border-dashed border-blue-200 bg-blue-50/30 p-8">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                  <Icon name="FolderOpen" size={32} className="text-blue-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Agregar archivos de respaldo
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Suba evidencia fotográfica, actas, informes u otros documentos que respalden este expediente.
+                </p>
+                <CustomButton 
+                  variant="primary"
+                  className="flex items-center gap-2 mx-auto"
+                  onClick={() => setModalSubirArchivo(true)}
+                >
+                  <Icon name="Upload" size={18} />
+                  Subir primer archivo
+                </CustomButton>
+              </div>
+            </div>
+          ) : (
           <div className="card overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -279,6 +458,7 @@ export const ExpedienteDigital: React.FC = () => {
               </tbody>
             </table>
           </div>
+          )}
         </div>
       ),
     },
@@ -332,22 +512,149 @@ export const ExpedienteDigital: React.FC = () => {
                 </Badge>
               </div>
               <p className="text-gray-600 mt-1">
-                Expediente Digital • {expediente.tipo} • Completitud: {completitud}%
+                Expediente Digital • {expediente.tipo}
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 Última actualización: {expediente.fechaModificacion}
               </p>
             </div>
           </div>
+          {/* Acciones - Priorizar según contexto */}
           <div className="flex flex-wrap gap-2 ml-10 md:ml-0">
-            <CustomButton variant="secondary" className="flex items-center gap-2 text-sm">
-              <Icon name="Printer" size={16} />
-              Imprimir
-            </CustomButton>
-            <CustomButton variant="secondary" className="flex items-center gap-2 text-sm">
-              <Icon name="Download" size={16} />
-              Exportar
-            </CustomButton>
+            {faltanDocumentosAduaneros || faltanArchivos ? (
+              <>
+                <CustomButton 
+                  variant="primary" 
+                  className="flex items-center gap-2 text-sm"
+                  onClick={() => setModalSubirArchivo(true)}
+                >
+                  <Icon name="Upload" size={16} />
+                  Cargar documento
+                </CustomButton>
+                <CustomButton variant="secondary" className="flex items-center gap-2 text-sm">
+                  <Icon name="Printer" size={16} />
+                  Imprimir
+                </CustomButton>
+              </>
+            ) : (
+              <>
+                <CustomButton variant="secondary" className="flex items-center gap-2 text-sm">
+                  <Icon name="Printer" size={16} />
+                  Imprimir
+                </CustomButton>
+                <CustomButton variant="secondary" className="flex items-center gap-2 text-sm">
+                  <Icon name="Download" size={16} />
+                  Exportar
+                </CustomButton>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Panel de Estado con Contexto */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Estado actual con contexto completo */}
+          <div className={`card p-4 border-l-4 ${
+            estadoContexto.color === 'blue' ? 'border-l-blue-500 bg-blue-50/50' :
+            estadoContexto.color === 'emerald' ? 'border-l-emerald-500 bg-emerald-50/50' :
+            estadoContexto.color === 'amber' ? 'border-l-amber-500 bg-amber-50/50' :
+            'border-l-gray-400 bg-gray-50'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-lg ${
+                estadoContexto.color === 'blue' ? 'bg-blue-100' :
+                estadoContexto.color === 'emerald' ? 'bg-emerald-100' :
+                estadoContexto.color === 'amber' ? 'bg-amber-100' :
+                'bg-gray-200'
+              }`}>
+                <Icon 
+                  name={estadoContexto.icono as any} 
+                  size={20} 
+                  className={
+                    estadoContexto.color === 'blue' ? 'text-blue-600' :
+                    estadoContexto.color === 'emerald' ? 'text-emerald-600' :
+                    estadoContexto.color === 'amber' ? 'text-amber-600' :
+                    'text-gray-600'
+                  } 
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-semibold text-gray-900">{expediente.estado}</span>
+                  <span className="text-xs text-gray-500">·</span>
+                  <span className="text-xs text-gray-600">{estadoContexto.descripcion}</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
+                  <Icon name="User" size={14} className="text-gray-400" />
+                  <span>Responsable: <strong>{estadoContexto.responsable}</strong></span>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-blue-600">
+                  <Icon name="ArrowRight" size={14} />
+                  <span>Siguiente: {estadoContexto.siguientePaso}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Checklist de completitud */}
+          <div className="card p-4 lg:col-span-2">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <Icon name="CheckSquare" size={18} className="text-gray-400" />
+                Completitud del expediente
+              </h3>
+              <span className={`text-sm font-bold ${
+                completitud === 100 ? 'text-emerald-600' : 
+                completitud >= 50 ? 'text-blue-600' : 'text-amber-600'
+              }`}>
+                {completitud}%
+              </span>
+            </div>
+            
+            {/* Barra de progreso */}
+            <div className="h-2 bg-gray-200 rounded-full mb-4 overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all ${
+                  completitud === 100 ? 'bg-emerald-500' : 
+                  completitud >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                }`}
+                style={{ width: `${completitud}%` }}
+              />
+            </div>
+
+            {/* Lista de requisitos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {requisitosCompletados.map((req) => (
+                <div 
+                  key={req.id}
+                  className={`flex items-center gap-2 text-sm p-2 rounded-lg ${
+                    req.completado 
+                      ? 'bg-emerald-50 text-emerald-700' 
+                      : req.obligatorio 
+                        ? 'bg-amber-50 text-amber-700' 
+                        : 'bg-gray-50 text-gray-500'
+                  }`}
+                >
+                  {req.completado ? (
+                    <Icon name="CheckCircle" size={16} className="text-emerald-500 flex-shrink-0" />
+                  ) : (
+                    <Icon 
+                      name={req.obligatorio ? "Clock" : "Circle"} 
+                      size={16} 
+                      className={req.obligatorio ? "text-amber-500 flex-shrink-0" : "text-gray-400 flex-shrink-0"} 
+                    />
+                  )}
+                  <span className="truncate">
+                    {req.completado ? '✓' : req.obligatorio ? '⏳' : '○'} {req.nombre}
+                  </span>
+                  {!req.completado && req.obligatorio && (
+                    <span className="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded ml-auto flex-shrink-0">
+                      Requerido
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
