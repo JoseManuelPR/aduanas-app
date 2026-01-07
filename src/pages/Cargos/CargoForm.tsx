@@ -17,6 +17,7 @@ import { ERoutePaths } from '../../routes/routes';
 import {
   getCargoPorId,
   getDenunciaPorId,
+  getReclamoPorId,
   getTodasLasNotificaciones,
   usuarioActual,
   aduanas,
@@ -117,6 +118,7 @@ export const CargoForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const denunciaIdParam = searchParams.get('denunciaId');
+  const reclamoIdParam = searchParams.get('reclamoId');
   
   const isEditing = !!id;
   const [activeStep, setActiveStep] = useState(0);
@@ -200,6 +202,22 @@ export const CargoForm: React.FC = () => {
       }
     }
   }, [denunciaIdParam, isEditing]);
+
+  // Precargar datos si viene del módulo de Reclamos
+  useEffect(() => {
+    if (reclamoIdParam && !isEditing) {
+      const reclamo = getReclamoPorId(reclamoIdParam);
+      if (reclamo) {
+        setFormData(prev => ({
+          ...prev,
+          origen: 'OTRO',
+          tieneReclamoAsociado: true, // Automático desde módulo Reclamos
+          rutDeudor: reclamo.rutReclamante,
+          nombreDeudor: reclamo.reclamante,
+        }));
+      }
+    }
+  }, [reclamoIdParam, isEditing]);
   
   // Calcular total de cuentas
   const totalCuentas = useMemo(() => {
@@ -225,7 +243,7 @@ export const CargoForm: React.FC = () => {
       formData.area && `Área: ${formData.area}`,
       formData.subarea && `Subárea: ${formData.subarea}`,
       formData.jefeRevisor && `Jefe revisor: ${formData.jefeRevisor}`,
-      formData.tieneReclamoAsociado ? 'Tiene reclamo asociado' : '',
+      formData.tieneReclamoAsociado ? 'Reclamo asociado (desde módulo Reclamos)' : '',
     ].filter(Boolean).join(' | ');
     return [formData.observaciones || '', meta].filter(Boolean).join(' • ');
   }, [
@@ -719,15 +737,16 @@ export const CargoForm: React.FC = () => {
                 </div>
               )}
               
-              <div className="flex items-center gap-2 mt-4">
-                <input
-                  type="checkbox"
-                  checked={formData.tieneReclamoAsociado}
-                  onChange={(e) => handleChange('tieneReclamoAsociado', e.target.checked)}
-                  className="rounded border-gray-300 text-aduana-azul focus:ring-aduana-azul"
-                />
-                <span className="text-sm text-gray-700">Tiene reclamo asociado</span>
-              </div>
+              {/* Indicador de reclamo - solo lectura, se determina automáticamente */}
+              {formData.tieneReclamoAsociado && (
+                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2">
+                  <Icon name="AlertCircle" size={18} className="text-amber-600" />
+                  <span className="text-sm text-amber-800 font-medium">
+                    Este cargo tiene reclamo(s) asociado(s)
+                  </span>
+                  <Badge variant="warning" size="sm">Automático</Badge>
+                </div>
+              )}
             </div>
           )}
           
