@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CustomLayout from '../../Layout/Layout';
 import { CustomInput } from '../../components/Input/Input';
-import { Table } from '../../components/Table/Table';
 import { Badge } from '../../components/UI';
 import { Tabs } from '../../components/UI/Tabs';
 import { Pagination } from '../../components/Pagination';
-import { CustomButton } from '../../components/Button/Button';
 import { ERoutePaths } from '../../routes/routes';
 
 // Datos centralizados
@@ -26,10 +24,17 @@ import type {
   NotificacionCargo 
 } from '../../data';
 
-// Sidebar menu (solo para el menú del sidebar)
+// Sidebar menu
 import CONSTANTS_APP from '../../constants/sidebar-menu';
 
 type TabType = 'denuncias' | 'reclamos' | 'cargos';
+
+// Configuración de tipos con iconos y colores
+const TIPO_CONFIG = {
+  denuncias: { icon: 'FileWarning', color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+  reclamos: { icon: 'AlertCircle', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
+  cargos: { icon: 'Receipt', color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
+};
 
 export const NotificacionesList: React.FC = () => {
   const navigate = useNavigate();
@@ -38,28 +43,32 @@ export const NotificacionesList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
-  const [estadoFiltro, setEstadoFiltro] = useState<string>('');
+  const [prioridadFiltro, setPrioridadFiltro] = useState<string>('');
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
-  const itemsPerPage = 25;
+  const itemsPerPage = 15;
 
-  // Obtener conteos de notificaciones
   const conteoNotificaciones = getConteoNotificaciones();
 
-  // Formatear fecha de dd-mm-aaaa a Date para comparación
   const parseDate = (dateStr: string): Date | null => {
     if (!dateStr) return null;
-    // Si viene en formato dd-mm-aaaa
     if (dateStr.includes('-') && dateStr.split('-')[0].length <= 2) {
       const [day, month, year] = dateStr.split('-').map(Number);
       if (!day || !month || !year) return null;
       return new Date(year, month - 1, day);
     }
-    // Si viene en formato yyyy-mm-dd (de input date)
     const date = new Date(dateStr);
     return isNaN(date.getTime()) ? null : date;
   };
 
-  // Filtrar datos según búsqueda y filtros
+  // Determinar prioridad de una notificación
+  const getPrioridad = (item: any): 'alta' | 'media' | 'baja' => {
+    if (!item.leido && item.diasVencimiento !== undefined && item.diasVencimiento <= 3) return 'alta';
+    if (!item.leido) return 'media';
+    return 'baja';
+  };
+
+  // Filtrar datos
   const filterData = <T extends { 
     numeroNotificacion: string; 
     descripcion: string; 
@@ -67,7 +76,6 @@ export const NotificacionesList: React.FC = () => {
     leido: boolean;
   }>(data: T[]): T[] => {
     return data.filter((item) => {
-      // Filtro de búsqueda
       const matchesSearch = 
         !searchTerm ||
         item.numeroNotificacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,7 +84,6 @@ export const NotificacionesList: React.FC = () => {
          ('numeroReclamo' in item && String(item.numeroReclamo).toLowerCase().includes(searchTerm.toLowerCase())) ||
          ('numeroCargo' in item && String(item.numeroCargo).toLowerCase().includes(searchTerm.toLowerCase())));
 
-      // Filtro de fecha - comparar solo fechas (sin hora)
       const itemDate = parseDate(item.fechaGeneracion);
       let matchesDate = true;
       if (fechaDesde && itemDate) {
@@ -96,20 +103,17 @@ export const NotificacionesList: React.FC = () => {
         }
       }
 
-      // Filtro de estado
-      let matchesEstado = true;
-      if (estadoFiltro) {
-        if (estadoFiltro === 'Pendiente' && item.leido) matchesEstado = false;
-        if (estadoFiltro === 'Vencido' && !item.leido) matchesEstado = false;
-        if (estadoFiltro === 'Actualizado' && !item.leido) matchesEstado = false;
-        if (estadoFiltro === 'En gestión' && item.leido) matchesEstado = false;
+      // Filtro de prioridad
+      let matchesPrioridad = true;
+      if (prioridadFiltro) {
+        const prioridad = getPrioridad(item);
+        if (prioridadFiltro !== prioridad) matchesPrioridad = false;
       }
 
-      return matchesSearch && matchesDate && matchesEstado;
+      return matchesSearch && matchesDate && matchesPrioridad;
     });
   };
 
-  // Obtener datos filtrados y paginados
   const getFilteredAndPaginatedData = <T extends { 
     numeroNotificacion: string; 
     descripcion: string; 
@@ -117,107 +121,60 @@ export const NotificacionesList: React.FC = () => {
     leido: boolean;
   }>(data: T[]) => {
     const filtered = filterData(data);
+    // Ordenar: no leídas primero, luego por prioridad
+    const sorted = [...filtered].sort((a, b) => {
+      if (!a.leido && b.leido) return -1;
+      if (a.leido && !b.leido) return 1;
+      return 0;
+    });
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return {
-      filtered,
-      paginated: filtered.slice(startIndex, endIndex),
-      totalPages: Math.ceil(filtered.length / itemsPerPage),
+      filtered: sorted,
+      paginated: sorted.slice(startIndex, endIndex),
+      totalPages: Math.ceil(sorted.length / itemsPerPage),
     };
   };
 
-  // Datos por tab - usando datos centralizados
   const denunciasData = useMemo(() => 
     getFilteredAndPaginatedData(notificacionesDenuncias),
-    [searchTerm, fechaDesde, fechaHasta, estadoFiltro, currentPage]
+    [searchTerm, fechaDesde, fechaHasta, prioridadFiltro, currentPage]
   );
 
   const reclamosData = useMemo(() => 
     getFilteredAndPaginatedData(notificacionesReclamos),
-    [searchTerm, fechaDesde, fechaHasta, estadoFiltro, currentPage]
+    [searchTerm, fechaDesde, fechaHasta, prioridadFiltro, currentPage]
   );
 
   const cargosData = useMemo(() => 
     getFilteredAndPaginatedData(notificacionesCargos),
-    [searchTerm, fechaDesde, fechaHasta, estadoFiltro, currentPage]
+    [searchTerm, fechaDesde, fechaHasta, prioridadFiltro, currentPage]
   );
 
-  // Resetear página cuando cambia el tab
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId as TabType);
     setCurrentPage(1);
   };
 
-  // Preparar notificaciones para el dropdown del header
   const allNotifications = getTodasLasNotificaciones();
 
-  // Columnas para Denuncias - Con columna de origen
-  const columnsDenuncias = [
-    { key: 'numeroNotificacion' as const, label: 'N° Notificación', sortable: true },
-    { key: 'descripcion' as const, label: 'Descripción', sortable: true },
-    { key: 'numeroDenuncia' as const, label: 'N° Denuncia', sortable: true },
-    { 
-      key: 'tipoDenuncia' as const, 
-      label: 'Tipo', 
-      sortable: true,
-      render: (row: NotificacionDenuncia) => (
-        <Badge variant={row.tipoDenuncia === 'Infraccional' ? 'info' : 'danger'}>
-          {row.tipoDenuncia}
-        </Badge>
-      ),
-    },
-    { 
-      key: 'origen' as const, 
-      label: 'Origen', 
-      sortable: true,
-      render: () => (
-        <Badge variant="default">
-          Manual
-        </Badge>
-      ),
-    },
-    { key: 'fechaGeneracion' as const, label: 'Fecha', sortable: true },
-  ];
+  // Truncar descripción
+  const truncateDesc = (text: string, maxLength: number = 80): string => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
 
-  // Columnas para Reclamos
-  const columnsReclamos = [
-    { key: 'numeroNotificacion' as const, label: 'Número de Notificación', sortable: true },
-    { key: 'descripcion' as const, label: 'Descripción de la notificación', sortable: true },
-    { key: 'numeroReclamo' as const, label: 'Número de Reclamo', sortable: true },
-    { 
-      key: 'tipoReclamo' as const, 
-      label: 'Tipo de Reclamo', 
-      sortable: true,
-      render: (row: NotificacionReclamo) => (
-        <Badge variant="info">
-          {row.tipoReclamo}
-        </Badge>
-      ),
-    },
-    { key: 'fechaGeneracion' as const, label: 'Fecha de generación', sortable: true },
-  ];
-
-  // Columnas para Cargos
-  const columnsCargos = [
-    { key: 'numeroNotificacion' as const, label: 'Número de Notificación', sortable: true },
-    { key: 'descripcion' as const, label: 'Descripción de la notificación', sortable: true },
-    { key: 'numeroCargo' as const, label: 'Número de Cargo', sortable: true },
-    { key: 'fechaGeneracion' as const, label: 'Fecha de generación', sortable: true },
-  ];
-
-  // Acciones para cada tipo - Navegar a gestionar denuncia
-  const handleGestionar = (
+  // Handler de navegación según tipo
+  const handleRowClick = (
     tipo: TabType,
     row: NotificacionDenuncia | NotificacionReclamo | NotificacionCargo
   ) => {
     switch (tipo) {
       case 'denuncias':
-        // Ir a "Crear Denuncia" con datos precargados (desde hallazgo asociado a la notificación)
         {
           const denuncia = row as NotificacionDenuncia;
           const hallazgoId = denuncia.hallazgoId;
-          const numeroHallazgo =
-            denuncia.numeroHallazgo ||
+          const numeroHallazgo = denuncia.numeroHallazgo ||
             (typeof denuncia.descripcion === 'string'
               ? (denuncia.descripcion.match(/PFI-\d+/i)?.[0]?.toUpperCase() ?? undefined)
               : undefined);
@@ -247,83 +204,180 @@ export const NotificacionesList: React.FC = () => {
     }
   };
 
-  const getActions = (tipo: TabType) => {
-    return (row: NotificacionDenuncia | NotificacionReclamo | NotificacionCargo) => (
-      <div className="flex justify-center items-center w-full">
-        <CustomButton
-          variant="primary"
-          className="text-xs"
-          onClick={() => {
-            handleGestionar(tipo, row);
-          }}
-        >
-          Gestionar Denuncia
-        </CustomButton>
+  // Renderizar fila de notificación
+  const renderNotificationRow = (
+    item: NotificacionDenuncia | NotificacionReclamo | NotificacionCargo,
+    tipo: TabType
+  ) => {
+    const prioridad = getPrioridad(item);
+    const isHovered = hoveredRow === item.id;
+    const config = TIPO_CONFIG[tipo];
+    
+    // Obtener número de referencia según tipo
+    const numeroRef = tipo === 'denuncias' 
+      ? (item as NotificacionDenuncia).numeroDenuncia 
+      : tipo === 'reclamos'
+        ? (item as NotificacionReclamo).numeroReclamo
+        : (item as NotificacionCargo).numeroCargo;
+
+    return (
+      <div
+        key={item.id}
+        className={`
+          group relative flex items-center gap-4 px-4 py-3 border-b border-gray-100 cursor-pointer transition-all
+          ${!item.leido ? 'bg-blue-50/40' : 'bg-white'}
+          ${isHovered ? 'bg-gray-50' : ''}
+          ${prioridad === 'alta' ? 'border-l-4 border-l-red-400' : prioridad === 'media' ? 'border-l-4 border-l-amber-400' : 'border-l-4 border-l-transparent'}
+        `}
+        onMouseEnter={() => setHoveredRow(item.id)}
+        onMouseLeave={() => setHoveredRow(null)}
+        onClick={() => handleRowClick(tipo, item)}
+      >
+        {/* Indicador de prioridad */}
+        <div className="flex-shrink-0">
+          {prioridad === 'alta' ? (
+            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+              <Icon name="AlertTriangle" size={16} className="text-red-500" />
+            </div>
+          ) : prioridad === 'media' ? (
+            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+              <Icon name="Clock" size={16} className="text-amber-500" />
+            </div>
+          ) : (
+            <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center`}>
+              <Icon name={config.icon as any} size={16} className={config.color} />
+            </div>
+          )}
+        </div>
+
+        {/* Contenido principal */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            {/* Indicador de no leído */}
+            {!item.leido && (
+              <span className={`w-2 h-2 rounded-full ${prioridad === 'alta' ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`} />
+            )}
+            {/* Número de referencia */}
+            <span className="text-sm font-semibold text-gray-900">
+              {numeroRef}
+            </span>
+            {/* Badge de tipo (solo en denuncias) */}
+            {tipo === 'denuncias' && (item as NotificacionDenuncia).tipoDenuncia && (
+              <Badge 
+                variant={(item as NotificacionDenuncia).tipoDenuncia === 'Infraccional' ? 'info' : 'error'} 
+                size="sm"
+              >
+                {(item as NotificacionDenuncia).tipoDenuncia}
+              </Badge>
+            )}
+            {/* Badge de urgencia */}
+            {prioridad === 'alta' && (
+              <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">
+                URGENTE
+              </span>
+            )}
+          </div>
+          {/* Descripción truncada */}
+          <p className="text-sm text-gray-600 truncate">
+            {truncateDesc(item.descripcion)}
+          </p>
+        </div>
+
+        {/* Metadatos */}
+        <div className="flex-shrink-0 text-right hidden sm:block">
+          <p className="text-xs text-gray-500">{item.fechaGeneracion}</p>
+          <p className="text-[10px] text-gray-400 uppercase mt-0.5">{item.numeroNotificacion}</p>
+        </div>
+
+        {/* Indicador de navegación - siempre visible */}
+        <div className="flex-shrink-0 pl-2">
+          <Icon 
+            name="ChevronRight" 
+            size={18} 
+            className={`transition-colors ${isHovered ? 'text-aduana-azul' : 'text-gray-300'}`} 
+          />
+        </div>
       </div>
     );
   };
 
-  // Función para obtener el contenido de cada tab dinámicamente
+  // Contenido de cada tab
   const getTabContent = (tabId: TabType) => {
     const tabData = tabId === 'denuncias' ? denunciasData :
                     tabId === 'reclamos' ? reclamosData :
                     cargosData;
-    
-    const columns = tabId === 'denuncias' ? columnsDenuncias :
-                   tabId === 'reclamos' ? columnsReclamos :
-                   columnsCargos;
 
     const emptyMessages = {
-      denuncias: { title: 'No hay notificaciones de denuncias', description: 'No se encontraron notificaciones que coincidan con los filtros aplicados.' },
-      reclamos: { title: 'No hay notificaciones de reclamos', description: 'No se encontraron notificaciones que coincidan con los filtros aplicados.' },
-      cargos: { title: 'No hay notificaciones de cargos', description: 'No se encontraron notificaciones que coincidan con los filtros aplicados.' },
+      denuncias: { title: 'Sin notificaciones de denuncias', icon: 'FileText' },
+      reclamos: { title: 'Sin notificaciones de reclamos', icon: 'AlertCircle' },
+      cargos: { title: 'Sin notificaciones de cargos', icon: 'Receipt' },
     };
+
+    if (tabData.filtered.length === 0) {
+      return (
+        <div className="py-16 text-center">
+          <Icon name={emptyMessages[tabId].icon as any} size={40} className="mx-auto mb-3 text-gray-300" />
+          <p className="text-gray-500">{emptyMessages[tabId].title}</p>
+          <p className="text-sm text-gray-400 mt-1">Ajusta los filtros o revisa más tarde</p>
+        </div>
+      );
+    }
 
     return (
       <div>
-        <Table
-          headers={columns as any}
-          data={tabData.paginated as any}
-          actions={getActions(tabId)}
-          emptyState={emptyMessages[tabId]}
-        />
-        {tabData.totalPages > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={tabData.totalPages}
-            onPageChange={setCurrentPage}
-            itemsPerPage={itemsPerPage}
-            totalItems={tabData.filtered.length}
-          />
+        {/* Lista de notificaciones */}
+        <div className="divide-y divide-gray-100">
+          {tabData.paginated.map((item) => renderNotificationRow(item, tabId))}
+        </div>
+        
+        {/* Paginación */}
+        {tabData.totalPages > 1 && (
+          <div className="p-4 border-t border-gray-100">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={tabData.totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={tabData.filtered.length}
+            />
+          </div>
         )}
       </div>
     );
   };
 
-  // Recalcular tabs cuando cambian los datos o el tab activo - Sin Hallazgos
+  // Contar urgentes por tipo
+  const urgentesCount = {
+    denuncias: notificacionesDenuncias.filter(n => !n.leido && getPrioridad(n) === 'alta').length,
+    reclamos: notificacionesReclamos.filter(n => !n.leido && getPrioridad(n) === 'alta').length,
+    cargos: notificacionesCargos.filter(n => !n.leido && getPrioridad(n) === 'alta').length,
+  };
+
   const tabs = useMemo(() => [
     {
       id: 'denuncias',
       label: 'Denuncias',
       badge: conteoNotificaciones.denuncias.noLeidas,
-      badgeVariant: 'danger' as const,
+      badgeVariant: urgentesCount.denuncias > 0 ? 'danger' as const : 'default' as const,
       content: getTabContent('denuncias'),
     },
     {
       id: 'cargos',
       label: 'Cargos',
       badge: conteoNotificaciones.cargos.noLeidas,
-      badgeVariant: 'danger' as const,
+      badgeVariant: urgentesCount.cargos > 0 ? 'danger' as const : 'default' as const,
       content: getTabContent('cargos'),
     },
     {
       id: 'reclamos',
       label: 'Reclamos',
       badge: conteoNotificaciones.reclamos.noLeidas,
-      badgeVariant: 'danger' as const,
+      badgeVariant: urgentesCount.reclamos > 0 ? 'danger' as const : 'default' as const,
       content: getTabContent('reclamos'),
     },
-  ], [activeTab, currentPage, searchTerm, fechaDesde, fechaHasta, estadoFiltro, denunciasData, reclamosData, cargosData]);
+  ], [activeTab, currentPage, searchTerm, fechaDesde, fechaHasta, prioridadFiltro, denunciasData, reclamosData, cargosData, hoveredRow]);
+
+  const hayFiltrosActivos = searchTerm || fechaDesde || fechaHasta || prioridadFiltro;
 
   return (
     <CustomLayout
@@ -339,11 +393,11 @@ export const NotificacionesList: React.FC = () => {
         role: usuarioActual.role,
       }}
     >
-      <div className="min-h-full space-y-5 animate-fade-in pb-8">
-        {/* Header de la sección - más limpio y con mejor jerarquía */}
+      <div className="min-h-full space-y-4 animate-fade-in pb-8">
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <nav className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+            <nav className="flex items-center gap-2 text-sm text-gray-500 mb-1">
               <button
                 onClick={() => navigate(ERoutePaths.DASHBOARD)}
                 className="hover:text-aduana-azul transition-colors"
@@ -354,65 +408,38 @@ export const NotificacionesList: React.FC = () => {
               <span className="text-gray-900 font-medium">Notificaciones</span>
             </nav>
             <h1 className="text-2xl font-bold text-gray-900">Notificaciones</h1>
-            <p className="text-gray-500 mt-1">
-              Gestión y seguimiento de notificaciones del sistema aduanero
-            </p>
           </div>
-        </div>
 
-        {/* Estadísticas compactas */}
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700">
-            Total: <strong>{conteoNotificaciones.totalGeneral}</strong>
-          </span>
-          <span className="px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
-            Sin leer: <strong>{conteoNotificaciones.totalNoLeidas}</strong>
-          </span>
-          <span className="px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
-            Denuncias: <strong>{conteoNotificaciones.denuncias.total}</strong>
-          </span>
-          <span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
-            Reclamos: <strong>{conteoNotificaciones.reclamos.total}</strong>
-          </span>
-          <span className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Cargos: <strong>{conteoNotificaciones.cargos.total}</strong>
-          </span>
+          {/* Resumen rápido de urgentes */}
+          {(urgentesCount.denuncias > 0 || urgentesCount.reclamos > 0 || urgentesCount.cargos > 0) && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+              <Icon name="AlertTriangle" size={16} className="text-red-500" />
+              <span className="text-sm text-red-700">
+                <strong>{urgentesCount.denuncias + urgentesCount.reclamos + urgentesCount.cargos}</strong> urgente(s) requieren atención
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Card principal */}
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* Header azul */}
-          <div className="bg-aduana-azul py-3 px-6 flex items-center justify-between">
-            <span className="text-white font-medium flex items-center gap-2">
-              <Icon name="Bell" size={18} />
-              Gestión de Notificaciones
-            </span>
-            <span className="text-white/80 text-sm">
-              {conteoNotificaciones.totalGeneral} notificaciones totales
-            </span>
-          </div>
-
-          {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-white border-b border-gray-100">
-            <div>
-              <label className="block text-sm font-semibold text-black mb-1">
-                Buscar
-              </label>
+          {/* Filtros compactos */}
+          <div className="flex flex-wrap items-end gap-3 p-4 bg-gray-50 border-b border-gray-100">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Buscar</label>
               <CustomInput
                 type="text"
-                placeholder="Número o texto"
+                placeholder="Número o descripción..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full"
+                className="w-full !py-2"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-black mb-1">
-                Fecha desde
-              </label>
+            <div className="w-36">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Desde</label>
               <CustomInput
                 type="date"
                 value={fechaDesde}
@@ -420,13 +447,11 @@ export const NotificacionesList: React.FC = () => {
                   setFechaDesde(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full"
+                className="w-full !py-2"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-black mb-1">
-                Fecha hasta
-              </label>
+            <div className="w-36">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Hasta</label>
               <CustomInput
                 type="date"
                 value={fechaHasta}
@@ -434,66 +459,49 @@ export const NotificacionesList: React.FC = () => {
                   setFechaHasta(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full"
+                className="w-full !py-2"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-black mb-1">
-                Estado (opcional)
-              </label>
+            <div className="w-32">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Prioridad</label>
               <select
-                value={estadoFiltro}
+                value={prioridadFiltro}
                 onChange={(e) => {
-                  setEstadoFiltro(e.target.value);
+                  setPrioridadFiltro(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-aduana-azul-200 focus:border-aduana-azul"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-aduana-azul-200 focus:border-aduana-azul"
               >
-                <option value="">Todos</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="Vencido">Vencido</option>
-                <option value="Actualizado">Actualizado</option>
-                <option value="En gestión">En gestión</option>
+                <option value="">Todas</option>
+                <option value="alta">🔴 Alta</option>
+                <option value="media">🟡 Media</option>
+                <option value="baja">🟢 Baja</option>
               </select>
             </div>
-          </div>
-
-          {/* Acciones */}
-          <div className="flex flex-col md:flex-row justify-between items-center px-5 py-3 gap-3 bg-white border-b border-gray-100">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span className="bg-aduana-azul/10 text-aduana-azul px-2.5 py-1 rounded-full text-xs font-medium">
-                {activeTab === 'denuncias' ? conteoNotificaciones.denuncias.total :
-                 activeTab === 'reclamos' ? conteoNotificaciones.reclamos.total :
-                 conteoNotificaciones.cargos.total} registros
-              </span>
-            </div>
-            <div className="flex flex-wrap justify-end gap-2">
-              <CustomButton
-                variant="secondary"
-                className="flex items-center gap-1.5 !bg-transparent !border-0 hover:!bg-gray-100"
+            {hayFiltrosActivos && (
+              <button
                 onClick={() => {
                   setSearchTerm('');
                   setFechaDesde('');
                   setFechaHasta('');
-                  setEstadoFiltro('');
+                  setPrioridadFiltro('');
                   setCurrentPage(1);
                 }}
+                className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
               >
                 <Icon name="X" size={14} />
                 Limpiar
-              </CustomButton>
-            </div>
+              </button>
+            )}
           </div>
 
           {/* Tabs */}
-          <div className="p-4">
-            <Tabs
-              tabs={tabs}
-              defaultTab={activeTab}
-              onChange={handleTabChange}
-              variant="underline"
-            />
-          </div>
+          <Tabs
+            tabs={tabs}
+            defaultTab={activeTab}
+            onChange={handleTabChange}
+            variant="underline"
+          />
         </section>
       </div>
     </CustomLayout>
