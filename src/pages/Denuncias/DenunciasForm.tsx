@@ -1622,8 +1622,8 @@ export const DenunciasForm: React.FC = () => {
       type: 'success',
       title: isDesdeHallazgo 
         ? '¡Hallazgo convertido a denuncia exitosamente!'
-        : '¡Denuncia registrada exitosamente!',
-      message: `La denuncia N° ${numeroDenuncia} ha sido registrada. El expediente digital ha sido generado.`,
+        : '¡Denuncia ingresada exitosamente!',
+      message: `La denuncia N° ${numeroDenuncia} ha sido ingresada. El expediente digital ha sido generado.`,
       duration: 5000,
     });
     
@@ -1692,7 +1692,7 @@ export const DenunciasForm: React.FC = () => {
             </h1>
             <p className="text-gray-600">
               {isDesdeHallazgo 
-                ? 'Revisión y formalización de denuncia desde hallazgo'
+                ? 'Revisión e ingreso de denuncia desde hallazgo'
                 : 'Registro de nueva denuncia aduanera'
               }
             </p>
@@ -1749,7 +1749,7 @@ export const DenunciasForm: React.FC = () => {
                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
                 >
                   <Icon name="Send" size={16} />
-                  {isDesdeHallazgo ? 'Confirmar y Crear Denuncia' : 'Enviar Denuncia'}
+                  {isDesdeHallazgo ? 'Confirmar e Ingresar Denuncia' : 'Ingresar Denuncia'}
                 </CustomButton>
               )}
             </div>
@@ -1762,10 +1762,10 @@ export const DenunciasForm: React.FC = () => {
         isOpen={showModalFormalizar}
         onClose={() => setShowModalFormalizar(false)}
         onConfirm={handleConfirmSubmit}
-        titulo="Confirmar Envío de Denuncia"
-        mensaje={`¿Está seguro que desea ${isDesdeHallazgo ? 'crear la denuncia desde el hallazgo' : 'enviar esta denuncia'}? Se generará el expediente digital y se iniciará el flujo de trabajo correspondiente.`}
+        titulo="Confirmar Ingreso de Denuncia"
+        mensaje={`¿Está seguro que desea ${isDesdeHallazgo ? 'crear e ingresar la denuncia desde el hallazgo' : 'ingresar esta denuncia'}? Se generará el expediente digital y se iniciará el flujo de trabajo correspondiente.`}
         tipo="info"
-        textoConfirmar={isDesdeHallazgo ? 'Crear Denuncia' : 'Enviar Denuncia'}
+        textoConfirmar={isDesdeHallazgo ? 'Crear e Ingresar' : 'Ingresar Denuncia'}
       >
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
@@ -1793,8 +1793,8 @@ export const DenunciasForm: React.FC = () => {
           navigate(ERoutePaths.DENUNCIAS);
         }}
         onConfirm={handleRegistrarAudiencia}
-        titulo="Denuncia Infraccional Registrada"
-        mensaje="La denuncia infraccional ha sido registrada exitosamente. El expediente digital ha sido generado y está disponible para su revisión."
+        titulo="Denuncia Infraccional Ingresada"
+        mensaje="La denuncia infraccional ha sido ingresada exitosamente. El expediente digital ha sido generado y está disponible para su revisión."
         tipo="success"
         textoConfirmar="Registrar Audiencia"
         textoCancelar="Continuar"
@@ -1828,7 +1828,7 @@ export const DenunciasForm: React.FC = () => {
           navigate(ERoutePaths.DENUNCIAS);
         }}
         onConfirm={handleDerivarMinisterioPublico}
-        titulo="Denuncia Penal Registrada"
+        titulo="Denuncia Penal Ingresada"
         mensaje="La denuncia ha sido clasificada como PENAL. ¿Desea derivarla al Ministerio Público?"
         tipo="warning"
         textoConfirmar="Derivar a Ministerio Público"

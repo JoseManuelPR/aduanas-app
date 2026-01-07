@@ -629,8 +629,8 @@ export const DenunciaDetalle: React.FC = () => {
           isOpen={showModalIngresar}
           onClose={() => setShowModalIngresar(false)}
           onConfirm={handleIngresar}
-          titulo="Confirmar Formalización"
-          mensaje={`¿Está seguro que desea formalizar la denuncia N° ${denuncia.numeroDenuncia}? Esta acción iniciará el flujo de trabajo correspondiente y se enviará a revisión.`}
+          titulo="Confirmar Ingreso de Denuncia"
+          mensaje={`¿Está seguro que desea ingresar la denuncia N° ${denuncia.numeroDenuncia}? Esta acción iniciará el flujo de trabajo correspondiente y se enviará a revisión.`}
           tipo="info"
           textoConfirmar="Ingresar"
         />
