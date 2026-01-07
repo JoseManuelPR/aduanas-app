@@ -322,7 +322,7 @@ export const CargoForm: React.FC = () => {
     switch (step) {
       case 0: // Datos generales
         if (!formData.codigoAduana) newErrors.codigoAduana = 'Seleccione una aduana';
-        if (!formData.fechaGeneracion) newErrors.fechaGeneracion = 'Ingrese fecha de emisión';
+        if (!formData.fechaGeneracion) newErrors.fechaGeneracion = 'Ingrese fecha de generación';
         if (!formData.rutDeudor) newErrors.rutDeudor = 'Ingrese RUT del deudor';
         if (!formData.nombreDeudor) newErrors.nombreDeudor = 'Ingrese nombre del deudor';
         break;
@@ -544,7 +544,7 @@ export const CargoForm: React.FC = () => {
                 />
                 
                 <InputField
-                  label="Fecha Emisión *"
+                  label="Fecha Generación *"
                   id="fechaGeneracion"
                   type="date"
                   value={formData.fechaGeneracion}
@@ -1037,7 +1037,7 @@ export const CargoForm: React.FC = () => {
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                     <p><span className="text-gray-500">Origen:</span> {formData.origen}</p>
                     <p><span className="text-gray-500">Aduana:</span> {aduanas.find(a => a.codigo === formData.codigoAduana)?.nombre || '-'}</p>
-                    <p><span className="text-gray-500">Fecha Emisión:</span> {formData.fechaGeneracion}</p>
+                    <p><span className="text-gray-500">Fecha Generación:</span> {formData.fechaGeneracion}</p>
                     <p><span className="text-gray-500">Deudor:</span> {formData.nombreDeudor} ({formData.rutDeudor})</p>
                   </div>
                 </div>
@@ -1113,7 +1113,7 @@ export const CargoForm: React.FC = () => {
                   disabled={formData.cuentas.length === 0 || formData.infractores.length === 0}
                 >
                   <Icon name="Send" size={16} />
-                  Emitir Cargo
+                  Generar Cargo
                 </CustomButton>
               </>
             )}
@@ -1129,7 +1129,7 @@ export const CargoForm: React.FC = () => {
         cuentaEditar={cuentaEditando}
       />
       
-      {/* Modal confirmación emisión */}
+      {/* Modal confirmación generación */}
       <ModalConfirmacion
         isOpen={showModalConfirm}
         onClose={() => setShowModalConfirm(false)}

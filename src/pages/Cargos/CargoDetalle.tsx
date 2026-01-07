@@ -123,7 +123,7 @@ export const CargoDetalle: React.FC = () => {
   const confirmarGeneracion = () => {
     // Aquí iría la lógica de emisión
     setShowModalGeneracion(false);
-    alert('Cargo emitido exitosamente');
+    alert('Cargo generado exitosamente');
     // navigate(ERoutePaths.CARGOS);
   };
   
