@@ -157,30 +157,34 @@ export const CargosList: React.FC = () => {
     return { variant: 'proceso', muted: true };
   };
 
-  const handleActions = (row: Cargo) => (
-    <div className="flex flex-col w-full gap-1.5">
-      <CustomButton 
-        variant="primary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(`/cargos/${row.id}/editar`)}
-      >
-        <Icon name="Edit" className="hidden md:block" size={12} />
-        <span>Editar Cargo</span>
-      </CustomButton>
-      {(row.estado === 'Emitido' || row.estado === 'Aprobado' || row.estado === 'Notificado') && (
+  const handleActions = (row: Cargo) => {
+    const puedeGenerarGiro = row.estado === 'Emitido' || row.estado === 'Aprobado' || row.estado === 'Notificado';
+    
+    return (
+      <div className="flex flex-col w-full gap-1.5">
         <CustomButton 
           variant="secondary" 
           className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-          onClick={() => navigate(`/giros/nuevo?cargoId=${row.id}`)}
+          onClick={() => navigate(`/cargos/${row.id}/editar`)}
         >
-          <Icon name="Receipt" className="hidden md:block" size={12} />
-          <span>Generar Giro</span>
+          <Icon name="Edit" size={12} />
+          <span>Editar</span>
         </CustomButton>
-      )}
-    </div>
-  );
+        {puedeGenerarGiro && (
+          <CustomButton 
+            variant="primary" 
+            className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
+            onClick={() => navigate(`/giros/nuevo?cargoId=${row.id}`)}
+          >
+            <Icon name="Receipt" size={12} />
+            <span>Giro</span>
+          </CustomButton>
+        )}
+      </div>
+    );
+  };
 
-  // Columnas para la tabla
+  // Columnas para la tabla - Estado+Plazo como anclas visuales
   const columnasCargos = [
     { 
       key: 'numeroCargo' as const, 
@@ -188,13 +192,39 @@ export const CargosList: React.FC = () => {
       sortable: true,
       sticky: true,
       render: (row: Cargo) => (
-        <button 
-          onClick={() => navigate(`/cargos/${row.id}`)}
-          className="font-semibold text-aduana-azul hover:underline"
-        >
-          {row.numeroCargo}
-        </button>
+        <div className="flex flex-col">
+          <button 
+            onClick={() => navigate(`/cargos/${row.id}`)}
+            className="font-semibold text-aduana-azul hover:underline text-left"
+          >
+            {row.numeroCargo}
+          </button>
+          <span className="text-[10px] text-gray-400">{row.fechaIngreso}</span>
+        </div>
       )
+    },
+    { 
+      key: 'estado' as const, 
+      label: 'Estado / Plazo', 
+      sortable: true,
+      sticky: true,
+      render: (row: Cargo) => {
+        const { variant, muted } = getEstadoVariant(row.estado);
+        const dias = row.diasVencimiento;
+        const plazoVariant = getDiasVencimientoBadgeVariant(dias);
+        const esVencido = dias < 0;
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge variant={variant} dot size="sm" className={muted ? 'opacity-80' : ''}>
+              {row.estado}
+            </Badge>
+            <Badge variant={plazoVariant} pulse={esVencido} size="sm">
+              {dias < 0 ? `${Math.abs(dias)}d vencido` : dias === 0 ? 'Hoy' : `${dias}d`}
+            </Badge>
+          </div>
+        );
+      }
     },
     { 
       key: 'origen' as const, 
@@ -212,79 +242,40 @@ export const CargosList: React.FC = () => {
         </span>
       )
     },
-    { key: 'fechaIngreso' as const, label: 'Fecha Ingreso', sortable: true },
-    { 
-      key: 'estado' as const, 
-      label: 'Estado', 
-      sortable: true,
-      sticky: true,
-      render: (row: Cargo) => {
-        const { variant, muted } = getEstadoVariant(row.estado);
-        return (
-          <Badge variant={variant} dot size="sm" className={muted ? 'opacity-80' : ''}>
-            {row.estado}
-          </Badge>
-        );
-      }
-    },
-    { key: 'aduana' as const, label: 'Aduana', sortable: true, sticky: true },
-    { key: 'rutDeudor' as const, label: 'ID Deudor', sortable: true },
+    { key: 'aduana' as const, label: 'Aduana', sortable: true },
     { 
       key: 'nombreDeudor' as const, 
       label: 'Deudor', 
       sortable: true,
       render: (row: Cargo) => (
-        <span className="truncate max-w-[150px] block" title={row.nombreDeudor}>
-          {row.nombreDeudor}
-        </span>
+        <div className="flex flex-col">
+          <span className="truncate max-w-[150px] text-sm" title={row.nombreDeudor}>
+            {row.nombreDeudor}
+          </span>
+          <span className="text-[10px] text-gray-400">{row.rutDeudor}</span>
+        </div>
       )
     },
     { 
       key: 'montoTotal' as const, 
-      label: 'Monto Total', 
+      label: 'Monto', 
       sortable: true,
       render: (row: Cargo) => (
-        <span className="font-semibold text-aduana-azul">{row.montoTotal}</span>
+        <span className="font-semibold text-aduana-azul whitespace-nowrap">{row.montoTotal}</span>
       )
     },
     { 
       key: 'denunciaNumero' as const, 
-      label: 'Denuncia', 
+      label: 'Ref.', 
       sortable: true,
       render: (row: Cargo) => row.denunciaNumero ? (
         <button 
           onClick={() => navigate(`/denuncias/${row.denunciaAsociada}`)}
-          className="text-blue-600 hover:underline text-sm"
+          className="text-blue-600 hover:underline text-xs"
         >
           {row.denunciaNumero}
         </button>
-      ) : '-'
-    },
-    { 
-      key: 'diasVencimiento' as const, 
-      label: 'Plazo', 
-      sortable: true,
-      render: (row: Cargo) => {
-        const dias = row.diasVencimiento;
-        const variant = getDiasVencimientoBadgeVariant(dias);
-        const tooltipText = dias < 0 
-          ? `Vencido hace ${Math.abs(dias)} días` 
-          : dias === 0 
-            ? 'Vence hoy - Acción urgente requerida'
-            : `Quedan ${dias} días de plazo`;
-        
-        return (
-          <div className="relative group">
-            <Badge variant={variant} pulse={dias < 0} size="sm">
-              {dias < 0 ? `${Math.abs(dias)}d venc.` : dias === 0 ? 'Hoy' : `${dias}d`}
-            </Badge>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-              {tooltipText}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-            </div>
-          </div>
-        );
-      }
+      ) : <span className="text-gray-300">—</span>
     },
   ];
 
@@ -294,13 +285,6 @@ export const CargosList: React.FC = () => {
     'Emitido', 'Aprobado', 'Rechazado', 'Notificado', 'Cerrado', 'Anulado'
   ];
 
-  // Chips de estado con prioridad visual
-  const estadosChips = [
-    { label: 'Total', count: conteoCargos.total, variant: 'neutral' as const },
-    { label: 'Pendientes', count: conteoCargos.pendientes, variant: 'warning' as const, critical: true },
-    { label: 'Vencidos', count: conteoCargos.vencidos, variant: 'danger' as const, critical: true },
-    { label: 'Emitidos', count: conteoCargos.aprobados, variant: 'success' as const },
-  ];
 
   return (
     <CustomLayout
@@ -347,7 +331,12 @@ export const CargosList: React.FC = () => {
 
         {/* Estadísticas - Prioridad visual solo en críticos */}
         <div className="flex flex-wrap items-center gap-2">
-          {estadosChips.map((chip) => (
+          {[
+            { label: 'Total', count: conteoCargos.total, variant: 'neutral' as const },
+            { label: 'Pendientes', count: conteoCargos.pendientes, variant: 'warning' as const, critical: true },
+            { label: 'Vencidos', count: conteoCargos.vencidos, variant: 'danger' as const, critical: true },
+            { label: 'Emitidos', count: conteoCargos.aprobados, variant: 'success' as const },
+          ].map((chip) => (
             <button
               key={chip.label}
               onClick={() => {
