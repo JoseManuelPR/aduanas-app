@@ -105,7 +105,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({ items, label = 'Acciones
               `}
               role="menuitem"
             >
-              {item.icon && <Icon name={item.icon} size={14} />}
+              {item.icon && <Icon name={item.icon as any} size={14} />}
               {item.label}
             </button>
           ))}
