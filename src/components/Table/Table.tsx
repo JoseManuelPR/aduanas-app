@@ -118,11 +118,11 @@ export function Table<T extends object>({
               {headers
                 .filter((h) => h.visible !== false)
                 .map((header) => (
-                  <td key={String(header.key)} className={`px-4 py-2 border border-gray-200/55`}>
+                  <td key={String(header.key)} className={`px-4 py-3 border border-gray-200/55`}>
                     {header.render ? header.render(row) : String((row as Record<string, unknown>)[header.key as string])}
                   </td>
                 ))}
-              {actions && <td className="px-4 py-2 flex gap-2 justify-center items-center">{actions(row)}</td>}
+              {actions && <td className="px-4 py-3 flex gap-2 justify-center items-center">{actions(row)}</td>}
             </tr>
           ))}
         </tbody>

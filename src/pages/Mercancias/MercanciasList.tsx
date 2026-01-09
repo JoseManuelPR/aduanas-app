@@ -11,8 +11,8 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge } from "../../components/UI";
-import type { BadgeVariant } from "../../components/UI";
+import { Badge, ActionMenu } from "../../components/UI";
+import type { BadgeVariant, ActionMenuItem } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -123,28 +123,26 @@ export const MercanciasList: React.FC = () => {
     return variantMap[estado] || { variant: 'default', muted: true };
   };
 
-  const handleActions = (row: Mercancia) => (
-    <div className="flex flex-col w-full gap-1.5">
-      <CustomButton 
-        variant="primary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(ERoutePaths.MERCANCIAS_DETALLE.replace(':id', row.id))}
-      >
-        <Icon name="Eye" className="hidden md:block" size={12} />
-        <span>Ver Detalle</span>
-      </CustomButton>
-      {row.denunciaId && (
-        <CustomButton 
-          variant="secondary" 
-          className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-          onClick={() => navigate(ERoutePaths.DENUNCIAS_DETALLE.replace(':id', row.denunciaId!))}
-        >
-          <Icon name="FileWarning" className="hidden md:block" size={12} />
-          <span>Ver Denuncia</span>
-        </CustomButton>
-      )}
-    </div>
-  );
+  // Menú contextual de acciones
+  const handleActions = (row: Mercancia) => {
+    const menuItems: ActionMenuItem[] = [
+      {
+        label: 'Ver Detalle',
+        icon: 'Eye',
+        onClick: () => navigate(ERoutePaths.MERCANCIAS_DETALLE.replace(':id', row.id)),
+      },
+    ];
+
+    if (row.denunciaId) {
+      menuItems.push({
+        label: 'Ver Denuncia',
+        icon: 'FileWarning',
+        onClick: () => navigate(ERoutePaths.DENUNCIAS_DETALLE.replace(':id', row.denunciaId!)),
+      });
+    }
+
+    return <ActionMenu items={menuItems} label={`Acciones para ${row.descripcion}`} />;
+  };
 
   // Columnas para la tabla
   const columnasMercancias = [
@@ -171,10 +169,10 @@ export const MercanciasList: React.FC = () => {
       label: 'Descripción', 
       sortable: true,
       render: (row: Mercancia) => (
-        <div className="max-w-xs">
-          <p className="font-medium truncate">{row.descripcion}</p>
+        <div className="max-w-xs text-left">
+          <p className="font-medium truncate text-left">{row.descripcion}</p>
           {row.partida && (
-            <p className="text-xs text-gray-500">Partida: {row.partida}</p>
+            <p className="text-xs text-gray-500 text-left">Partida: {row.partida}</p>
           )}
         </div>
       )
@@ -207,7 +205,7 @@ export const MercanciasList: React.FC = () => {
       render: (row: Mercancia) => {
         const { variant, muted } = getEstadoVariant(row.estado);
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Badge variant={variant} dot size="sm" className={muted ? 'opacity-80' : ''}>
               {row.estado}
             </Badge>

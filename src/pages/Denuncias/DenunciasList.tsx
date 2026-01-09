@@ -6,8 +6,8 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge, getDiasVencimientoBadgeVariant } from "../../components/UI";
-import type { BadgeVariant } from "../../components/UI";
+import { Badge, getDiasVencimientoBadgeVariant, ActionMenu } from "../../components/UI";
+import type { BadgeVariant, ActionMenuItem } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -141,26 +141,23 @@ export const DenunciasList: React.FC = () => {
     }
   };
 
-  const handleActions = (row: Denuncia) => (
-    <div className="flex flex-col w-full gap-1.5">
-      <CustomButton 
-        variant="primary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(`/denuncias/${row.id}`)}
-      >
-        <Icon name="Eye" className="hidden md:block" size={12} />
-        <span>Ver Detalle</span>
-      </CustomButton>
-      <CustomButton 
-        variant="secondary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(`/expediente/${row.id}`)}
-      >
-        <Icon name="FolderOpen" className="hidden md:block" size={12} />
-        <span>Expediente</span>
-      </CustomButton>
-    </div>
-  );
+  // Menú contextual de acciones
+  const handleActions = (row: Denuncia) => {
+    const menuItems: ActionMenuItem[] = [
+      {
+        label: 'Ver Detalle',
+        icon: 'Eye',
+        onClick: () => navigate(`/denuncias/${row.id}`),
+      },
+      {
+        label: 'Expediente',
+        icon: 'FolderOpen',
+        onClick: () => navigate(`/expediente/${row.id}`),
+      },
+    ];
+
+    return <ActionMenu items={menuItems} label={`Acciones para ${row.numeroDenuncia}`} />;
+  };
 
   // Función para obtener variant de estado - simplificada para reducir ruido visual
   const getEstadoVariant = (estado: string): { variant: BadgeVariant; muted: boolean } => {
@@ -224,28 +221,32 @@ export const DenunciasList: React.FC = () => {
       render: (row: Denuncia) => {
         const dias = row.diasVencimiento;
         const variant = getDiasVencimientoBadgeVariant(dias);
-        const isCritical = dias <= 0;
         
-        // Tooltip text
-        const tooltipText = dias < 0 
-          ? `Vencido hace ${Math.abs(dias)} días` 
-          : dias === 0 
-            ? 'Vence hoy - Acción urgente requerida'
-            : `Quedan ${dias} días de plazo`;
+        // Tooltip descriptivo con contexto claro
+        const tooltipText = dias === 0 
+          ? 'Sin días pendientes'
+          : dias < 0
+            ? `Vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
+            : `${dias} día${dias !== 1 ? 's' : ''} restante${dias !== 1 ? 's' : ''} de plazo`;
         
         return (
-          <div className="relative group">
-            <Badge 
-              variant={variant} 
-              pulse={dias < 0} 
-              size="sm"
-              className={isCritical ? 'font-bold' : ''}
-            >
-              {dias < 0 ? `${Math.abs(dias)}d venc.` : dias === 0 ? 'Hoy' : `${dias}d`}
+          <div className="relative group inline-flex justify-center">
+            <Badge variant={variant} pulse={dias < 0} size="sm" className="tabular-nums min-w-[48px] justify-center">
+              <span>{dias}</span>
+              <span className="text-[10px] opacity-70 ml-0.5">días</span>
             </Badge>
-            {/* Tooltip */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-              {tooltipText}
+            {/* Tooltip con información clara */}
+            <div className="
+              absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+              px-2.5 py-1.5 
+              bg-gray-900 text-white text-xs rounded-lg
+              whitespace-nowrap 
+              opacity-0 invisible group-hover:opacity-100 group-hover:visible 
+              transition-all duration-200 z-20
+              shadow-lg
+            ">
+              <span className="font-medium">{tooltipText}</span>
+              <div className="text-gray-400 text-[10px] mt-0.5">Días para vencimiento</div>
               <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
             </div>
           </div>

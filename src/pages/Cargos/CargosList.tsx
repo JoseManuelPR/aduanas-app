@@ -11,8 +11,8 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge, getDiasVencimientoBadgeVariant } from "../../components/UI";
-import type { BadgeVariant } from "../../components/UI";
+import { Badge, getDiasVencimientoBadgeVariant, ActionMenu } from "../../components/UI";
+import type { BadgeVariant, ActionMenuItem } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados
@@ -157,31 +157,32 @@ export const CargosList: React.FC = () => {
     return { variant: 'proceso', muted: true };
   };
 
+  // Menú contextual de acciones
   const handleActions = (row: Cargo) => {
     const puedeGenerarGiro = row.estado === 'Emitido' || row.estado === 'Aprobado' || row.estado === 'Notificado';
     
-    return (
-      <div className="flex flex-col w-full gap-1.5">
-        <CustomButton 
-          variant="secondary" 
-          className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-          onClick={() => navigate(`/cargos/${row.id}/editar`)}
-        >
-          <Icon name="Edit" size={12} />
-          <span>Editar</span>
-        </CustomButton>
-        {puedeGenerarGiro && (
-          <CustomButton 
-            variant="primary" 
-            className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-            onClick={() => navigate(`/giros/nuevo?cargoId=${row.id}`)}
-          >
-            <Icon name="Receipt" size={12} />
-            <span>Giro</span>
-          </CustomButton>
-        )}
-      </div>
-    );
+    const menuItems: ActionMenuItem[] = [
+      {
+        label: 'Ver Detalle',
+        icon: 'Eye',
+        onClick: () => navigate(`/cargos/${row.id}`),
+      },
+      {
+        label: 'Editar',
+        icon: 'Edit',
+        onClick: () => navigate(`/cargos/${row.id}/editar`),
+      },
+    ];
+
+    if (puedeGenerarGiro) {
+      menuItems.push({
+        label: 'Generar Giro',
+        icon: 'Receipt',
+        onClick: () => navigate(`/giros/nuevo?cargoId=${row.id}`),
+      });
+    }
+
+    return <ActionMenu items={menuItems} label={`Acciones para ${row.numeroCargo}`} />;
   };
 
   // Columnas para la tabla - Estado+Plazo como anclas visuales
@@ -192,14 +193,14 @@ export const CargosList: React.FC = () => {
       sortable: true,
       sticky: true,
       render: (row: Cargo) => (
-        <div className="flex flex-col">
+        <div className="flex flex-col items-start">
           <button 
             onClick={() => navigate(`/cargos/${row.id}`)}
-            className="font-semibold text-aduana-azul hover:underline text-left"
+            className="font-semibold text-aduana-azul hover:underline text-left whitespace-nowrap"
           >
             {row.numeroCargo}
           </button>
-          <span className="text-[10px] text-gray-400">{row.fechaIngreso}</span>
+          <span className="text-[10px] text-gray-400 whitespace-nowrap">{row.fechaIngreso}</span>
         </div>
       )
     },
@@ -212,16 +213,29 @@ export const CargosList: React.FC = () => {
         const { variant, muted } = getEstadoVariant(row.estado);
         const dias = row.diasVencimiento;
         const plazoVariant = getDiasVencimientoBadgeVariant(dias);
-        const esVencido = dias < 0;
+        
+        // Tooltip descriptivo
+        const tooltipText = dias === 0 
+          ? 'Sin días pendientes'
+          : dias < 0
+            ? `Vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
+            : `${dias} día${dias !== 1 ? 's' : ''} restante${dias !== 1 ? 's' : ''}`;
         
         return (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 items-center">
             <Badge variant={variant} dot size="sm" className={muted ? 'opacity-80' : ''}>
               {row.estado}
             </Badge>
-            <Badge variant={plazoVariant} pulse={esVencido} size="sm">
-              {dias < 0 ? `${Math.abs(dias)}d vencido` : dias === 0 ? 'Hoy' : `${dias}d`}
-            </Badge>
+            <div className="relative group w-fit">
+              <Badge variant={plazoVariant} pulse={dias < 0} size="sm" className="tabular-nums min-w-[48px] justify-center">
+                <span>{dias}</span>
+                <span className="text-[10px] opacity-70 ml-0.5">días</span>
+              </Badge>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 shadow-lg pointer-events-none">
+                {tooltipText}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
           </div>
         );
       }
@@ -231,15 +245,17 @@ export const CargosList: React.FC = () => {
       label: 'Origen', 
       sortable: true,
       render: (row: Cargo) => (
-        <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-          row.origen === 'DENUNCIA' 
-            ? 'bg-blue-50 text-blue-700' 
-            : row.origen === 'TRAMITE_ADUANERO'
-              ? 'bg-amber-50 text-amber-700'
-              : 'bg-gray-100 text-gray-600'
-        }`}>
-          {row.origen === 'DENUNCIA' ? 'Denuncia' : row.origen === 'TRAMITE_ADUANERO' ? 'Trámite' : 'Otro'}
-        </span>
+        <div className="flex justify-center">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded whitespace-nowrap ${
+            row.origen === 'DENUNCIA' 
+              ? 'bg-blue-50 text-blue-700' 
+              : row.origen === 'TRAMITE_ADUANERO'
+                ? 'bg-amber-50 text-amber-700'
+                : 'bg-gray-100 text-gray-600'
+          }`}>
+            {row.origen === 'DENUNCIA' ? 'Denuncia' : row.origen === 'TRAMITE_ADUANERO' ? 'Trámite' : 'Otro'}
+          </span>
+        </div>
       )
     },
     { key: 'aduana' as const, label: 'Aduana', sortable: true },
@@ -248,11 +264,11 @@ export const CargosList: React.FC = () => {
       label: 'Deudor', 
       sortable: true,
       render: (row: Cargo) => (
-        <div className="flex flex-col">
-          <span className="truncate max-w-[150px] text-sm" title={row.nombreDeudor}>
+        <div className="flex flex-col items-start min-w-[140px]">
+          <span className="truncate max-w-[200px] text-sm font-medium" title={row.nombreDeudor}>
             {row.nombreDeudor}
           </span>
-          <span className="text-[10px] text-gray-400">{row.rutDeudor}</span>
+          <span className="text-[10px] text-gray-400 whitespace-nowrap">{row.rutDeudor}</span>
         </div>
       )
     },

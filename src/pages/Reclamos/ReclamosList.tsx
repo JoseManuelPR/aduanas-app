@@ -11,8 +11,8 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge, getDiasVencimientoBadgeVariant } from "../../components/UI";
-import type { BadgeVariant } from "../../components/UI";
+import { Badge, getDiasVencimientoBadgeVariant, ActionMenu } from "../../components/UI";
+import type { BadgeVariant, ActionMenuItem } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 import {
   TIPOS_IDENTIFICACION_DTTA,
@@ -143,45 +143,50 @@ export const ReclamosList: React.FC = () => {
   };
 
   // Función para obtener variant de estado
+  // Semántica de colores:
+  // - Verde (resuelto/success): Resultados positivos finales (Acogido, Cerrado favorable)
+  // - Rojo (rechazado/danger): Resultados negativos (Rechazado)
+  // - Azul (proceso/info): Estados en trámite activo
+  // - Amarillo (pendiente/warning): Requiere atención
+  // - Gris (default): Estados neutrales o terminados sin valoración
   const getEstadoVariant = (estado: string): { variant: BadgeVariant; muted: boolean } => {
     const estadoMap: Record<string, { variant: BadgeVariant; muted: boolean }> = {
       'Ingresado': { variant: 'info', muted: true },
       'En Admisibilidad': { variant: 'pendiente', muted: false },
-      'Admitido': { variant: 'info', muted: true },
+      'Admitido': { variant: 'proceso', muted: false },
       'En Análisis': { variant: 'proceso', muted: true },
-      'En Tramitación': { variant: 'proceso', muted: true },
+      'En Tramitación': { variant: 'proceso', muted: false },
       'Pendiente Resolución': { variant: 'warning', muted: false },
       'Derivado a Tribunal': { variant: 'danger', muted: false },
-      'Fallado': { variant: 'resuelto', muted: true },
-      'Resuelto': { variant: 'resuelto', muted: true },
+      // Fallado = sentencia emitida, no es positivo ni negativo inherentemente
+      // Se usa color neutral/gris para no confundir con Acogido o Rechazado
+      'Fallado': { variant: 'default', muted: false },
+      'Resuelto': { variant: 'success', muted: true },
       'Rechazado': { variant: 'rechazado', muted: false },
-      'Acogido': { variant: 'resuelto', muted: true },
-      'Acogido Parcialmente': { variant: 'proceso', muted: true },
-      'Cerrado': { variant: 'resuelto', muted: true },
+      'Acogido': { variant: 'success', muted: false },
+      'Acogido Parcialmente': { variant: 'warning', muted: true },
+      'Cerrado': { variant: 'default', muted: true },
     };
     return estadoMap[estado] || { variant: 'info', muted: true };
   };
 
-  const handleActions = (row: Reclamo) => (
-    <div className="flex flex-col w-full gap-1.5">
-      <CustomButton 
-        variant="primary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(ERoutePaths.RECLAMOS_DETALLE.replace(':id', row.id))}
-      >
-        <Icon name="Eye" className="hidden md:block" size={12} />
-        <span>Ver Detalle</span>
-      </CustomButton>
-      <CustomButton 
-        variant="secondary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(ERoutePaths.RECLAMOS_EDITAR.replace(':id', row.id))}
-      >
-        <Icon name="Edit" className="hidden md:block" size={12} />
-        <span>Editar</span>
-      </CustomButton>
-    </div>
-  );
+  // Menú contextual de acciones - reduce ruido visual
+  const handleActions = (row: Reclamo) => {
+    const menuItems: ActionMenuItem[] = [
+      {
+        label: 'Ver Detalle',
+        icon: 'Eye',
+        onClick: () => navigate(ERoutePaths.RECLAMOS_DETALLE.replace(':id', row.id)),
+      },
+      {
+        label: 'Editar',
+        icon: 'Edit',
+        onClick: () => navigate(ERoutePaths.RECLAMOS_EDITAR.replace(':id', row.id)),
+      },
+    ];
+
+    return <ActionMenu items={menuItems} label={`Acciones para ${row.numeroReclamo}`} />;
+  };
 
   // Columnas para la tabla
   const columnasReclamos = [
@@ -233,9 +238,18 @@ export const ReclamosList: React.FC = () => {
       key: 'montoReclamado' as const, 
       label: 'Monto', 
       sortable: true,
-      render: (row: Reclamo) => row.montoReclamado 
-        ? `$${row.montoReclamado.toLocaleString('es-CL')}` 
-        : '-'
+      render: (row: Reclamo) => {
+        if (!row.montoReclamado) return <span className="text-gray-400">-</span>;
+        
+        // Formato CLP: $ + espacio + separador de miles con punto
+        const montoFormateado = row.montoReclamado.toLocaleString('es-CL');
+        
+        return (
+          <span className="font-mono text-right block tabular-nums text-gray-900">
+            $ {montoFormateado}
+          </span>
+        );
+      }
     },
     { 
       key: 'diasRespuesta' as const, 
@@ -244,19 +258,33 @@ export const ReclamosList: React.FC = () => {
       render: (row: Reclamo) => {
         const dias = row.diasRespuesta;
         const variant = getDiasVencimientoBadgeVariant(dias);
-        const tooltipText = dias === 0 
-          ? 'Plazo cumplido'
-          : dias < 0
-            ? `Vencido hace ${Math.abs(dias)} días`
-            : `Quedan ${dias} días de plazo`;
         
+        // Tooltip descriptivo con contexto claro
+        const tooltipText = dias === 0 
+          ? 'Sin días pendientes'
+          : dias < 0
+            ? `Vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
+            : `${dias} día${dias !== 1 ? 's' : ''} restante${dias !== 1 ? 's' : ''} de plazo`;
+        
+        // Mostrar siempre el número de días de forma consistente
         return (
-          <div className="relative group">
-            <Badge variant={variant} size="sm">
-              {dias === 0 ? '✓' : `${dias}d`}
+          <div className="relative group inline-flex justify-center">
+            <Badge variant={variant} size="sm" className="tabular-nums min-w-[48px] justify-center">
+              <span>{dias}</span>
+              <span className="text-[10px] opacity-70 ml-0.5">días</span>
             </Badge>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-              {tooltipText}
+            {/* Tooltip con información clara */}
+            <div className="
+              absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+              px-2.5 py-1.5 
+              bg-gray-900 text-white text-xs rounded-lg
+              whitespace-nowrap 
+              opacity-0 invisible group-hover:opacity-100 group-hover:visible 
+              transition-all duration-200 z-20
+              shadow-lg
+            ">
+              <span className="font-medium">{tooltipText}</span>
+              <div className="text-gray-400 text-[10px] mt-0.5">Días transcurridos desde ingreso</div>
               <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
             </div>
           </div>
@@ -317,43 +345,57 @@ export const ReclamosList: React.FC = () => {
           </CustomButton>
         </div>
 
-        {/* Estadísticas - Prioridad visual solo en críticos */}
-        <div className="flex flex-wrap items-center gap-2">
-          {estadosChips.map((chip) => (
-            <button
-              key={chip.label}
-              onClick={() => {
-                if (chip.label === 'Pendientes') handleFiltroChange('estado', 'Pendiente Resolución');
-                else if (chip.label === 'Derivados TTA') handleFiltroChange('estado', 'Derivado a Tribunal');
-                else if (chip.label === 'En análisis') handleFiltroChange('estado', 'En Análisis');
-                else if (chip.label === 'Resueltos') handleFiltroChange('estado', 'Resuelto');
-                else limpiarFiltros();
-              }}
-              className={`
-                px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                flex items-center gap-2 min-w-[44px] min-h-[44px]
-                ${chip.critical 
-                  ? chip.variant === 'danger'
-                    ? 'bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200 shadow-sm'
-                    : 'bg-amber-100 text-amber-800 border-2 border-amber-300 hover:bg-amber-200 shadow-sm'
-                  : chip.variant === 'neutral'
-                    ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
-                    : chip.variant === 'success'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                      : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
-                }
-              `}
-            >
-              {chip.critical && chip.count > 0 && (
-                <span className={`w-2 h-2 rounded-full ${chip.variant === 'danger' ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
-              )}
-              <span>{chip.label}:</span>
-              <strong className="tabular-nums">{chip.count}</strong>
-            </button>
-          ))}
-          <span className="px-3 py-2 rounded-lg bg-slate-50 text-aduana-azul border border-slate-200 text-sm">
-            Monto Total: <strong>{conteoReclamos.montoTotalFormateado}</strong>
-          </span>
+        {/* Estadísticas - Separación clara entre métricas de cantidad y financieras */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Métricas de cantidad (operativas) */}
+          <div className="flex flex-wrap items-center gap-2">
+            {estadosChips.map((chip) => (
+              <button
+                key={chip.label}
+                onClick={() => {
+                  if (chip.label === 'Pendientes') handleFiltroChange('estado', 'Pendiente Resolución');
+                  else if (chip.label === 'Derivados TTA') handleFiltroChange('estado', 'Derivado a Tribunal');
+                  else if (chip.label === 'En análisis') handleFiltroChange('estado', 'En Análisis');
+                  else if (chip.label === 'Resueltos') handleFiltroChange('estado', 'Resuelto');
+                  else limpiarFiltros();
+                }}
+                className={`
+                  px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                  flex items-center gap-2 min-w-[44px] min-h-[44px]
+                  ${chip.critical 
+                    ? chip.variant === 'danger'
+                      ? 'bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200 shadow-sm'
+                      : 'bg-amber-100 text-amber-800 border-2 border-amber-300 hover:bg-amber-200 shadow-sm'
+                    : chip.variant === 'neutral'
+                      ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+                      : chip.variant === 'success'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                  }
+                `}
+              >
+                {chip.critical && chip.count > 0 && (
+                  <span className={`w-2 h-2 rounded-full ${chip.variant === 'danger' ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
+                )}
+                <span>{chip.label}:</span>
+                <strong className="tabular-nums">{chip.count}</strong>
+              </button>
+            ))}
+          </div>
+
+          {/* Separador visual */}
+          <div className="hidden lg:block w-px bg-gray-200" />
+
+          {/* KPI Financiero - destacado visualmente */}
+          <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Icon name="DollarSign" size={18} className="text-slate-500" />
+              <span className="text-sm text-slate-600">Monto Total Reclamado:</span>
+            </div>
+            <span className="font-mono text-lg font-bold text-slate-900 tabular-nums">
+              {conteoReclamos.montoTotalFormateado}
+            </span>
+          </div>
         </div>
 
         {/* Info sobre tipos de reclamo */}

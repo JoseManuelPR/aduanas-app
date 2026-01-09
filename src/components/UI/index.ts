@@ -16,4 +16,6 @@ export { PriorityBadge } from './PriorityBadge';
 export { ProgressRing } from './ProgressRing';
 export { CollapsibleSection } from './CollapsibleSection';
 export { StatusHeader } from './StatusHeader';
+export { ActionMenu } from './ActionMenu';
+export type { ActionMenuItem } from './ActionMenu';
 

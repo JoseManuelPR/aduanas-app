@@ -11,8 +11,8 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Table } from "../../components/Table/Table";
-import { Badge } from "../../components/UI";
-import type { BadgeVariant } from "../../components/UI";
+import { Badge, ActionMenu } from "../../components/UI";
+import type { BadgeVariant, ActionMenuItem } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 import {
   TIPOS_IDENTIFICACION_DTTA,
@@ -138,26 +138,23 @@ export const InvolucradosList: React.FC = () => {
       : { variant: 'default', muted: true };
   };
 
-  const handleActions = (row: Involucrado) => (
-    <div className="flex flex-col w-full gap-1.5">
-      <CustomButton 
-        variant="primary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(ERoutePaths.INVOLUCRADOS_DETALLE.replace(':id', row.id))}
-      >
-        <Icon name="Eye" className="hidden md:block" size={12} />
-        <span>Ver Ficha</span>
-      </CustomButton>
-      <CustomButton 
-        variant="secondary" 
-        className="w-full !text-xs !py-1.5 flex items-center justify-center gap-1.5"
-        onClick={() => navigate(ERoutePaths.INVOLUCRADOS_EDITAR.replace(':id', row.id))}
-      >
-        <Icon name="Edit" className="hidden md:block" size={12} />
-        <span>Editar</span>
-      </CustomButton>
-    </div>
-  );
+  // Menú contextual de acciones
+  const handleActions = (row: Involucrado) => {
+    const menuItems: ActionMenuItem[] = [
+      {
+        label: 'Ver Ficha',
+        icon: 'Eye',
+        onClick: () => navigate(ERoutePaths.INVOLUCRADOS_DETALLE.replace(':id', row.id)),
+      },
+      {
+        label: 'Editar',
+        icon: 'Edit',
+        onClick: () => navigate(ERoutePaths.INVOLUCRADOS_EDITAR.replace(':id', row.id)),
+      },
+    ];
+
+    return <ActionMenu items={menuItems} label={`Acciones para ${row.nombreCompleto}`} />;
+  };
 
   const columnasInvolucrados = [
     { 
