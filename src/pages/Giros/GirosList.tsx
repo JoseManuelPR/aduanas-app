@@ -555,7 +555,7 @@ export const GirosList: React.FC = () => {
 
           {/* Barra de acciones */}
           <div className="flex flex-col gap-3 px-5 py-4 bg-white border-b border-gray-100">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-aduana-azul transition-colors min-h-[36px] px-2"
@@ -598,7 +598,7 @@ export const GirosList: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 <span className="font-semibold text-gray-900">{girosFiltrados.length}</span> resultados encontrados
               </div>

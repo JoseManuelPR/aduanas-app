@@ -412,7 +412,7 @@ export const MercanciasList: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 <span className="font-semibold text-gray-900">{mercanciasFiltradas.length}</span> resultados encontrados
               </div>
