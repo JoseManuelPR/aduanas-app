@@ -18,9 +18,13 @@ import {
   aduanas,
   getTodasLasNotificaciones,
   usuarioActual,
+  usuarios,
+  getAduanaPorNombre,
   type Reclamo,
   type TipoReclamoCompleto,
   type OrigenReclamo,
+  type AbogadoReclamo,
+  type TipoIdentificacion,
   formatMonto,
 } from '../../data';
 import { useToast } from '../../components/UI';
@@ -31,11 +35,26 @@ const tiposReclamo: { value: TipoReclamoCompleto; label: string }[] = [
   { value: 'TTA', label: 'Reclamo ante TTA' },
 ];
 
-// Nota: Giro removido porque un evento reclamado no puede generar un giro
-const origenesReclamo: { value: OrigenReclamo; label: string }[] = [
-  { value: 'DENUNCIA', label: 'Denuncia' },
+// Orígenes para Reclamo TTA (según DTTA - reclamo117)
+const origenesTTA: { value: OrigenReclamo; label: string }[] = [
   { value: 'CARGO', label: 'Cargo' },
-  { value: 'OTRO', label: 'Otro' },
+  { value: 'DENUNCIA', label: 'Denuncia' },
+  { value: 'OTRO', label: 'Destinación Aduanera' },
+];
+
+// Orígenes para Reposición Administrativa (según DTTA - reclamoReposicion)
+const origenesReposicion: { value: OrigenReclamo; label: string }[] = [
+  { value: 'CARGO', label: 'Cargo' },
+  { value: 'OTRO', label: 'Acto Administrativo (Multa, Declaración abandono, Aforo, etc.)' },
+  { value: 'DENUNCIA', label: 'Denuncia' },
+];
+
+// Tipos de identificación (según DTTA)
+const tiposIdentificacion: { value: TipoIdentificacion; label: string }[] = [
+  { value: 'RUT', label: 'RUT' },
+  { value: 'Pasaporte', label: 'Pasaporte' },
+  { value: 'DNI', label: 'DNI' },
+  { value: 'Otro', label: 'Otro' },
 ];
 
 const ReclamoForm: React.FC = () => {
@@ -53,21 +72,47 @@ const ReclamoForm: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   
-  // Form data
+  // Obtener código de aduana del usuario actual
+  const aduanaUsuario = getAduanaPorNombre(usuarioActual.aduana);
+  
+  // Administradores de Aduana disponibles (para Reposición)
+  const administradoresAduana = usuarios.filter(u => 
+    u.rol === 'Jefe de Sección' || u.rol === 'Administrador'
+  );
+  
+  // Form data - Aduana viene por defecto del usuario logueado
   const [formData, setFormData] = useState<Partial<Reclamo>>({
     tipoReclamo: 'Reposición',
-    origenReclamo: origenParam || 'DENUNCIA',
+    origenReclamo: origenParam || 'CARGO',
     reclamante: '',
     rutReclamante: '',
+    tipoIdentificacionReclamante: 'RUT',
     direccionReclamante: '',
     emailReclamante: '',
+    nacionalidadReclamante: '',
     representanteLegal: '',
     montoReclamado: 0,
     fundamentoReclamo: '',
     peticiones: '',
     descripcion: '',
     observaciones: '',
-    codigoAduana: '',
+    // Aduana por defecto del usuario logueado
+    codigoAduana: aduanaUsuario?.codigo || '',
+    aduana: usuarioActual.aduana,
+    // Fecha interposición (obligatorio en DTTA)
+    fechaInterposicion: new Date().toLocaleDateString('es-CL'),
+    // Acto Reclamado (para origen OTRO)
+    actoReclamado: {
+      numeroResolucion: '',
+      fechaResolucion: '',
+      fechaNotificacionActo: '',
+      documentoAduanero: '',
+      tieneDenunciaAsociada: false,
+    },
+    // Abogado
+    abogado: undefined,
+    // Administrador de Aduana a Cargo (para Reposición)
+    loginAdministradorAduana: '',
   });
   
   // Cargar datos de la entidad origen si viene pre-llenado
@@ -186,6 +231,20 @@ const ReclamoForm: React.FC = () => {
     if (step === 1) {
       if (!formData.tipoReclamo) newErrors.tipoReclamo = 'Seleccione el tipo de reclamo';
       if (!formData.origenReclamo) newErrors.origenReclamo = 'Seleccione el origen del reclamo';
+      if (!formData.fechaInterposicion?.trim()) newErrors.fechaInterposicion = 'Ingrese la fecha de interposición';
+      // Validación de Administrador de Aduana para Reposición
+      if (formData.tipoReclamo === 'Reposición' && !formData.loginAdministradorAduana) {
+        newErrors.loginAdministradorAduana = 'Seleccione el Administrador de Aduana a Cargo';
+      }
+      // Validación de Acto Reclamado cuando origen es OTRO
+      if (formData.origenReclamo === 'OTRO' && formData.tipoReclamo === 'Reposición') {
+        if (!formData.actoReclamado?.numeroResolucion?.trim()) {
+          newErrors.numeroResolucion = 'Ingrese el número de resolución del acto reclamado';
+        }
+        if (!formData.actoReclamado?.fechaNotificacionActo?.trim()) {
+          newErrors.fechaNotificacionActo = 'Ingrese la fecha de notificación del acto';
+        }
+      }
     }
     
     if (step === 2) {
@@ -193,7 +252,9 @@ const ReclamoForm: React.FC = () => {
       if (!formData.rutReclamante?.trim()) newErrors.rutReclamante = 'Ingrese el RUT del reclamante';
     }
     
-    if (step === 3) {
+    // Step 3 es Abogado - opcional
+    
+    if (step === 4) {
       if (!formData.fundamentoReclamo?.trim()) newErrors.fundamentoReclamo = 'Ingrese el fundamento del reclamo';
     }
     
@@ -203,7 +264,7 @@ const ReclamoForm: React.FC = () => {
   
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 5));
     }
   };
   
@@ -216,8 +277,14 @@ const ReclamoForm: React.FC = () => {
 
     setIsSaving(true);
     try {
+      // Incluir datos del abogado si se ingresaron
+      const datosCompletos: Partial<Reclamo> = {
+        ...formData,
+        abogado: abogadoData.numeroIdentificacion ? abogadoData : undefined,
+      };
+      
       if (isEditing && id) {
-        actualizarReclamo(id, formData);
+        actualizarReclamo(id, datosCompletos);
         showToast({
           type: 'success',
           title: 'Reclamo Actualizado',
@@ -225,7 +292,7 @@ const ReclamoForm: React.FC = () => {
           duration: 4000,
         });
       } else {
-        crearReclamo(formData);
+        crearReclamo(datosCompletos);
         showToast({
           type: 'success',
           title: 'Reclamo Creado',
@@ -239,11 +306,29 @@ const ReclamoForm: React.FC = () => {
     }
   };
   
+  // Estado para datos del abogado (sección separada según DTTA)
+  const [abogadoData, setAbogadoData] = useState<AbogadoReclamo>({
+    tipoIdentificacion: 'RUT',
+    numeroIdentificacion: '',
+    nombre: '',
+    apellidoPaterno: '',
+    apellidoMaterno: '',
+    email: '',
+    telefono: '',
+    nacionalidad: '',
+    direccion: '',
+    esRepresentanteLegal: false,
+  });
+  
+  // Orígenes de reclamo según tipo seleccionado
+  const origenesDisponibles = formData.tipoReclamo === 'TTA' ? origenesTTA : origenesReposicion;
+
   const steps: { number: number; title: string; icon: "FileText" | "User" | "AlignLeft" | "Check" }[] = [
     { number: 1, title: 'Tipo y Origen', icon: 'FileText' },
     { number: 2, title: 'Reclamante', icon: 'User' },
-    { number: 3, title: 'Fundamentos', icon: 'AlignLeft' },
-    { number: 4, title: 'Revisión', icon: 'Check' },
+    { number: 3, title: 'Abogado', icon: 'User' },
+    { number: 4, title: 'Fundamentos', icon: 'AlignLeft' },
+    { number: 5, title: 'Revisión', icon: 'Check' },
   ];
   
   const allNotifications = getTodasLasNotificaciones();
@@ -371,6 +456,20 @@ const ReclamoForm: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha Interposición *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.fechaInterposicion || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('fechaInterposicion', e.target.value)}
+                    placeholder="dd/mm/aaaa"
+                    className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent ${errors.fechaInterposicion ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.fechaInterposicion && <p className="text-sm text-red-500 mt-1">{errors.fechaInterposicion}</p>}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Origen del Reclamo *
                   </label>
                   <select
@@ -380,7 +479,7 @@ const ReclamoForm: React.FC = () => {
                     className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent disabled:bg-gray-100 ${errors.origenReclamo ? 'border-red-500' : 'border-gray-300'}`}
                   >
                     <option value="">Seleccione...</option>
-                    {origenesReclamo.map(o => (
+                    {origenesDisponibles.map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
@@ -393,7 +492,13 @@ const ReclamoForm: React.FC = () => {
                   </label>
                   <select
                     value={formData.codigoAduana || ''}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) => handleChange('codigoAduana', e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                      handleChange('codigoAduana', e.target.value);
+                      const aduanaSeleccionada = aduanas.find(a => a.codigo === e.target.value);
+                      if (aduanaSeleccionada) {
+                        handleChange('aduana', aduanaSeleccionada.nombre);
+                      }
+                    }}
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                   >
                     <option value="">Seleccione...</option>
@@ -401,7 +506,36 @@ const ReclamoForm: React.FC = () => {
                       <option key={a.codigo} value={a.codigo}>{a.nombre}</option>
                     ))}
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Por defecto: {usuarioActual.aduana}
+                  </p>
                 </div>
+                
+                {/* Administrador de Aduana a Cargo - Solo para Reposición (según DTTA) */}
+                {formData.tipoReclamo === 'Reposición' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Administrador de Aduana a Cargo *
+                    </label>
+                    <select
+                      value={formData.loginAdministradorAduana || ''}
+                      onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                        handleChange('loginAdministradorAduana', e.target.value);
+                        const admin = administradoresAduana.find(a => a.rut === e.target.value);
+                        if (admin) {
+                          handleChange('nombreAdministradorAduana', admin.nombre);
+                        }
+                      }}
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent ${errors.loginAdministradorAduana ? 'border-red-500' : 'border-gray-300'}`}
+                    >
+                      <option value="">Seleccione Administrador de Aduana</option>
+                      {administradoresAduana.map(admin => (
+                        <option key={admin.rut} value={admin.rut}>{admin.nombre}</option>
+                      ))}
+                    </select>
+                    {errors.loginAdministradorAduana && <p className="text-sm text-red-500 mt-1">{errors.loginAdministradorAduana}</p>}
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -418,18 +552,106 @@ const ReclamoForm: React.FC = () => {
                 </div>
               </div>
               
+              {/* Sección ACTO RECLAMADO - Solo cuando origen es OTRO y tipo es Reposición (según DTTA) */}
+              {formData.origenReclamo === 'OTRO' && formData.tipoReclamo === 'Reposición' && (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <Icon name="FileText" size={18} className="text-aduana-azul" />
+                    Acto Reclamado
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Número de Resolución *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.actoReclamado?.numeroResolucion || ''}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData(prev => ({
+                          ...prev,
+                          actoReclamado: { ...prev.actoReclamado, numeroResolucion: e.target.value }
+                        }))}
+                        placeholder="Número del acto reclamado"
+                        className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent ${errors.numeroResolucion ? 'border-red-500' : 'border-gray-300'}`}
+                      />
+                      {errors.numeroResolucion && <p className="text-sm text-red-500 mt-1">{errors.numeroResolucion}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Fecha Resolución
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.actoReclamado?.fechaResolucion || ''}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData(prev => ({
+                          ...prev,
+                          actoReclamado: { ...prev.actoReclamado, fechaResolucion: e.target.value }
+                        }))}
+                        placeholder="dd/mm/aaaa"
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Fecha Notificación del Acto *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.actoReclamado?.fechaNotificacionActo || ''}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData(prev => ({
+                          ...prev,
+                          actoReclamado: { ...prev.actoReclamado, fechaNotificacionActo: e.target.value }
+                        }))}
+                        placeholder="dd/mm/aaaa"
+                        className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent ${errors.fechaNotificacionActo ? 'border-red-500' : 'border-gray-300'}`}
+                      />
+                      {errors.fechaNotificacionActo && <p className="text-sm text-red-500 mt-1">{errors.fechaNotificacionActo}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Doc. Aduanero (DUS, DIN, etc.)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.actoReclamado?.documentoAduanero || ''}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData(prev => ({
+                          ...prev,
+                          actoReclamado: { ...prev.actoReclamado, documentoAduanero: e.target.value }
+                        }))}
+                        placeholder="Número documento aduanero"
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.actoReclamado?.tieneDenunciaAsociada || false}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            actoReclamado: { ...prev.actoReclamado, tieneDenunciaAsociada: e.target.checked }
+                          }))}
+                          className="w-4 h-4 text-aduana-azul border-gray-300 rounded focus:ring-aduana-azul"
+                        />
+                        <span className="text-sm text-gray-700">Tiene Denuncia Asociada</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {/* Info sobre tipo de reclamo */}
               <div className={`p-4 rounded-lg ${formData.tipoReclamo === 'TTA' ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
                 <div className="flex items-start gap-3">
                   <Icon name="Info" size={20} className={formData.tipoReclamo === 'TTA' ? 'text-red-500' : 'text-amber-500'} />
                   <div>
                     <p className={`font-medium ${formData.tipoReclamo === 'TTA' ? 'text-red-700' : 'text-amber-700'}`}>
-                      {formData.tipoReclamo === 'TTA' ? 'Reclamo ante Tribunal Tributario y Aduanero' : 'Recurso de Reposición'}
+                      {formData.tipoReclamo === 'TTA' ? 'Reclamo ante Tribunal Tributario y Aduanero' : 'Recurso de Reposición Administrativa'}
                     </p>
                     <p className={`text-sm mt-1 ${formData.tipoReclamo === 'TTA' ? 'text-red-600' : 'text-amber-600'}`}>
                       {formData.tipoReclamo === 'TTA' 
                         ? 'El reclamo será derivado al TTA correspondiente. Plazo de respuesta: 90 días.' 
-                        : 'Recurso administrativo ante la misma autoridad. Plazo de respuesta: 15 días.'}
+                        : 'Recurso administrativo ante la misma autoridad. Plazo de respuesta: 90 días hábiles.'}
                     </p>
                   </div>
                 </div>
@@ -437,15 +659,44 @@ const ReclamoForm: React.FC = () => {
             </div>
           )}
           
-          {/* Step 2: Reclamante */}
+          {/* Step 2: Reclamante/Reponente (según DTTA) */}
           {currentStep === 2 && (
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Icon name="User" size={24} className="text-aduana-azul" />
-                Datos del Reclamante
+                Datos del {formData.tipoReclamo === 'Reposición' ? 'Reponente' : 'Reclamante'}
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Identificación
+                  </label>
+                  <select
+                    value={formData.tipoIdentificacionReclamante || 'RUT'}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) => handleChange('tipoIdentificacionReclamante', e.target.value as TipoIdentificacion)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  >
+                    {tiposIdentificacion.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Documento Identificador *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.rutReclamante || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('rutReclamante', e.target.value)}
+                    placeholder={formData.tipoIdentificacionReclamante === 'RUT' ? '12.345.678-9' : 'Número de documento'}
+                    className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent ${errors.rutReclamante ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.rutReclamante && <p className="text-sm text-red-500 mt-1">{errors.rutReclamante}</p>}
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre/Razón Social *
@@ -462,40 +713,13 @@ const ReclamoForm: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    RUT *
+                    Nacionalidad
                   </label>
                   <input
                     type="text"
-                    value={formData.rutReclamante || ''}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('rutReclamante', e.target.value)}
-                    placeholder="12.345.678-9"
-                    className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent ${errors.rutReclamante ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.rutReclamante && <p className="text-sm text-red-500 mt-1">{errors.rutReclamante}</p>}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Representante Legal
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.representanteLegal || ''}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('representanteLegal', e.target.value)}
-                    placeholder="Nombre del representante (si aplica)"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Dirección
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.direccionReclamante || ''}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('direccionReclamante', e.target.value)}
-                    placeholder="Dirección del reclamante"
+                    value={formData.nacionalidadReclamante || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('nacionalidadReclamante', e.target.value)}
+                    placeholder="Ej: Chilena"
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                   />
                 </div>
@@ -525,31 +749,239 @@ const ReclamoForm: React.FC = () => {
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                   />
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Monto Reclamado
-                </label>
-                <div className="relative max-w-xs">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dirección
+                  </label>
                   <input
                     type="text"
-                    value={formData.montoReclamado ? formData.montoReclamado.toLocaleString('es-CL') : ''}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d]/g, '');
-                      handleChange('montoReclamado', value ? parseInt(value) : 0);
-                    }}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 pl-8 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
-                    placeholder="0"
+                    value={formData.direccionReclamante || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('direccionReclamante', e.target.value)}
+                    placeholder="Dirección completa del reclamante"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
                   />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Representante Legal
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.representanteLegal || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('representanteLegal', e.target.value)}
+                    placeholder="Nombre del representante (si aplica)"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Monto Reclamado
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <input
+                      type="text"
+                      value={formData.montoReclamado ? formData.montoReclamado.toLocaleString('es-CL') : ''}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d]/g, '');
+                        handleChange('montoReclamado', value ? parseInt(value) : 0);
+                      }}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 pl-8 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           )}
           
-          {/* Step 3: Fundamentos */}
+          {/* Step 3: Abogado (según DTTA) */}
           {currentStep === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Icon name="User" size={24} className="text-aduana-azul" />
+                Datos del Abogado
+              </h2>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Icon name="Info" size={20} className="text-blue-500" />
+                  <p className="text-sm text-blue-700">
+                    Complete los datos del abogado patrocinante (opcional). Si no cuenta con representación legal, puede continuar al siguiente paso.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Identificación
+                  </label>
+                  <select
+                    value={abogadoData.tipoIdentificacion || 'RUT'}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      tipoIdentificacion: e.target.value as TipoIdentificacion
+                    }))}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  >
+                    {tiposIdentificacion.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Documento Identificador
+                  </label>
+                  <input
+                    type="text"
+                    value={abogadoData.numeroIdentificacion || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      numeroIdentificacion: e.target.value
+                    }))}
+                    placeholder={abogadoData.tipoIdentificacion === 'RUT' ? '12.345.678-9' : 'Número de documento'}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    value={abogadoData.nombre || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      nombre: e.target.value
+                    }))}
+                    placeholder="Nombre del abogado"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Apellido Paterno
+                  </label>
+                  <input
+                    type="text"
+                    value={abogadoData.apellidoPaterno || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      apellidoPaterno: e.target.value
+                    }))}
+                    placeholder="Apellido paterno"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Apellido Materno
+                  </label>
+                  <input
+                    type="text"
+                    value={abogadoData.apellidoMaterno || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      apellidoMaterno: e.target.value
+                    }))}
+                    placeholder="Apellido materno"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={abogadoData.email || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      email: e.target.value
+                    }))}
+                    placeholder="correo@ejemplo.cl"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Teléfono
+                  </label>
+                  <input
+                    type="text"
+                    value={abogadoData.telefono || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      telefono: e.target.value
+                    }))}
+                    placeholder="+56 9 1234 5678"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nacionalidad
+                  </label>
+                  <input
+                    type="text"
+                    value={abogadoData.nacionalidad || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      nacionalidad: e.target.value
+                    }))}
+                    placeholder="Ej: Chilena"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dirección
+                  </label>
+                  <input
+                    type="text"
+                    value={abogadoData.direccion || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setAbogadoData(prev => ({
+                      ...prev,
+                      direccion: e.target.value
+                    }))}
+                    placeholder="Dirección del abogado"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-aduana-azul focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={abogadoData.esRepresentanteLegal || false}
+                      onChange={(e) => setAbogadoData(prev => ({
+                        ...prev,
+                        esRepresentanteLegal: e.target.checked
+                      }))}
+                      className="w-4 h-4 text-aduana-azul border-gray-300 rounded focus:ring-aduana-azul"
+                    />
+                    <span className="text-sm text-gray-700">Es Representante Legal</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Step 4: Fundamentos */}
+          {currentStep === 4 && (
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Icon name="AlignLeft" size={24} className="text-aduana-azul" />
@@ -613,8 +1045,8 @@ const ReclamoForm: React.FC = () => {
             </div>
           )}
           
-          {/* Step 4: Revisión */}
-          {currentStep === 4 && (
+          {/* Step 5: Revisión */}
+          {currentStep === 5 && (
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Icon name="Check" size={24} className="text-emerald-600" />
@@ -622,29 +1054,23 @@ const ReclamoForm: React.FC = () => {
               </h2>
               
               <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+                {/* Datos del Reclamo */}
+                <h3 className="font-semibold text-gray-800 border-b pb-2">Datos del Reclamo</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Tipo de Reclamo</p>
                     <Badge variant={formData.tipoReclamo === 'TTA' ? 'danger' : 'warning'}>
-                      {formData.tipoReclamo}
+                      {formData.tipoReclamo === 'TTA' ? 'Reclamo TTA' : 'Reposición Administrativa'}
                     </Badge>
                   </div>
                   <div>
+                    <p className="text-sm text-gray-500">Fecha Interposición</p>
+                    <p className="font-medium">{formData.fechaInterposicion || '-'}</p>
+                  </div>
+                  <div>
                     <p className="text-sm text-gray-500">Origen</p>
-                    <p className="font-medium">{formData.origenReclamo}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Reclamante</p>
-                    <p className="font-medium">{formData.reclamante || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">RUT</p>
-                    <p className="font-medium">{formData.rutReclamante || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Monto Reclamado</p>
-                    <p className="font-medium text-aduana-azul">
-                      {formData.montoReclamado ? formatMonto(formData.montoReclamado) : '-'}
+                    <p className="font-medium">
+                      {origenesDisponibles.find(o => o.value === formData.origenReclamo)?.label || formData.origenReclamo}
                     </p>
                   </div>
                   <div>
@@ -653,15 +1079,103 @@ const ReclamoForm: React.FC = () => {
                       {aduanas.find(a => a.codigo === formData.codigoAduana)?.nombre || '-'}
                     </p>
                   </div>
+                  {formData.tipoReclamo === 'Reposición' && formData.nombreAdministradorAduana && (
+                    <div>
+                      <p className="text-sm text-gray-500">Administrador de Aduana a Cargo</p>
+                      <p className="font-medium">{formData.nombreAdministradorAduana}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-500">N° Entidad Origen</p>
+                    <p className="font-medium">{formData.numeroEntidadOrigen || '-'}</p>
+                  </div>
                 </div>
                 
+                {/* Acto Reclamado (si aplica) */}
+                {formData.origenReclamo === 'OTRO' && formData.tipoReclamo === 'Reposición' && formData.actoReclamado?.numeroResolucion && (
+                  <>
+                    <h3 className="font-semibold text-gray-800 border-b pb-2 pt-4">Acto Reclamado</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">N° Resolución</p>
+                        <p className="font-medium">{formData.actoReclamado.numeroResolucion}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Fecha Resolución</p>
+                        <p className="font-medium">{formData.actoReclamado.fechaResolucion || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Fecha Notificación</p>
+                        <p className="font-medium">{formData.actoReclamado.fechaNotificacionActo || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Doc. Aduanero</p>
+                        <p className="font-medium">{formData.actoReclamado.documentoAduanero || '-'}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {/* Datos del Reclamante */}
+                <h3 className="font-semibold text-gray-800 border-b pb-2 pt-4">
+                  {formData.tipoReclamo === 'Reposición' ? 'Reponente' : 'Reclamante'}
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Nombre/Razón Social</p>
+                    <p className="font-medium">{formData.reclamante || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">{formData.tipoIdentificacionReclamante || 'RUT'}</p>
+                    <p className="font-medium">{formData.rutReclamante || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{formData.emailReclamante || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Monto Reclamado</p>
+                    <p className="font-medium text-aduana-azul">
+                      {formData.montoReclamado ? formatMonto(formData.montoReclamado) : '-'}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Datos del Abogado (si se ingresaron) */}
+                {abogadoData.numeroIdentificacion && (
+                  <>
+                    <h3 className="font-semibold text-gray-800 border-b pb-2 pt-4">Abogado</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Nombre</p>
+                        <p className="font-medium">
+                          {[abogadoData.nombre, abogadoData.apellidoPaterno, abogadoData.apellidoMaterno].filter(Boolean).join(' ') || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">{abogadoData.tipoIdentificacion}</p>
+                        <p className="font-medium">{abogadoData.numeroIdentificacion}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Email</p>
+                        <p className="font-medium">{abogadoData.email || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Es Representante Legal</p>
+                        <p className="font-medium">{abogadoData.esRepresentanteLegal ? 'Sí' : 'No'}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {/* Fundamentos */}
                 <div className="pt-4 border-t border-gray-200">
                   <p className="text-sm text-gray-500 mb-1">Descripción</p>
                   <p className="font-medium">{formData.descripcion || '-'}</p>
                 </div>
                 
                 <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-500 mb-1">Fundamento</p>
+                  <p className="text-sm text-gray-500 mb-1">Fundamento del Reclamo</p>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">
                     {formData.fundamentoReclamo || '-'}
                   </p>
@@ -685,7 +1199,9 @@ const ReclamoForm: React.FC = () => {
                       ¿Está seguro de {isEditing ? 'guardar los cambios' : 'crear el reclamo'}?
                     </p>
                     <p className="text-sm text-emerald-600 mt-1">
-                      Revise la información antes de confirmar.
+                      {formData.tipoReclamo === 'Reposición' 
+                        ? 'La reposición tendrá un plazo de 90 días hábiles para ser resuelta.'
+                        : 'El reclamo será derivado al TTA correspondiente.'}
                     </p>
                   </div>
                 </div>
@@ -706,7 +1222,7 @@ const ReclamoForm: React.FC = () => {
             {currentStep === 1 ? 'Cancelar' : 'Anterior'}
           </button>
           
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <button
               onClick={handleNext}
               className="px-6 py-2 bg-aduana-azul text-white rounded-lg hover:bg-aduana-azul-dark flex items-center gap-2"

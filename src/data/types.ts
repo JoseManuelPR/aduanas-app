@@ -671,6 +671,29 @@ export interface ReclamoTTA {
   observaciones?: string;
 }
 
+// Datos del Abogado del Reclamo (según DTTA)
+export interface AbogadoReclamo {
+  tipoIdentificacion: TipoIdentificacion;
+  numeroIdentificacion: string;
+  nombre: string;
+  apellidoPaterno?: string;
+  apellidoMaterno?: string;
+  email?: string;
+  telefono?: string;
+  nacionalidad?: string;
+  direccion?: string;
+  esRepresentanteLegal?: boolean;
+}
+
+// Datos del Acto Reclamado (según DTTA - para Reposición)
+export interface ActoReclamado {
+  numeroResolucion?: string;           // NRO_RESOLUCION
+  fechaResolucion?: string;            // FECHA_RESOLUCION
+  fechaNotificacionActo?: string;      // FECHA_NOTIFICACION_ACTO
+  documentoAduanero?: string;          // NRO_DUS u otro doc aduanero
+  tieneDenunciaAsociada?: boolean;     // Checkbox denuncia asociada
+}
+
 // Modelo completo de Reclamo
 export interface Reclamo {
   id: string;
@@ -679,6 +702,7 @@ export interface Reclamo {
   codigoProcesoReclamo?: CodigoProcesoReclamo;
   estado: EstadoReclamo;
   fechaIngreso: string;
+  fechaInterposicion?: string;         // FECHA_INTERPOSICION (obligatorio en DTTA)
   fechaPresentacion?: string;
   fechaAdmisibilidad?: string;
   fechaResolucion?: string;
@@ -688,12 +712,32 @@ export interface Reclamo {
   denunciaAsociada: string;
   cargoAsociado?: string;
   giroAsociado?: string;
+  
+  // Datos del Acto Reclamado (para Reposición con origen distinto a Cargo/Denuncia)
+  actoReclamado?: ActoReclamado;
+  
+  // Datos del Reclamante/Reponente
   reclamante: string;
   rutReclamante: string;
+  tipoIdentificacionReclamante?: TipoIdentificacion;  // Tipo de identificación
   direccionReclamante?: string;
   emailReclamante?: string;
   telefonoReclamante?: string;
+  nacionalidadReclamante?: string;     // Nacionalidad (DTTA)
   representanteLegal?: string;
+  
+  // Datos del Abogado (sección separada en DTTA)
+  abogado?: AbogadoReclamo;
+  
+  // Agente de Aduanas (DTTA)
+  codigoAgenteAduana?: string;
+  nombreAgenteAduana?: string;
+  agenteEsRepresentante?: boolean;
+  
+  // Administrador de Aduana a Cargo (para Reposición - DTTA)
+  loginAdministradorAduana?: string;
+  nombreAdministradorAduana?: string;
+  
   montoReclamado?: number;
   montoResuelto?: number;
   fundamentoReclamo?: string;
