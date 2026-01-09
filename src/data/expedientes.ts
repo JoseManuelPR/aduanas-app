@@ -92,11 +92,10 @@ export const documentosObligatorios: DocumentoObligatorioConfig[] = [
   },
   {
     tipo: 'GIRO',
-    categoria: 'Notificación',
-    nombre: 'Notificación de Giro',
-    descripcion: 'Comprobante de notificación del giro',
-    obligatorio: true,
-    plazoMaximoDias: 3,
+    categoria: 'Prueba/Evidencia',
+    nombre: 'Documentos de Respaldo',
+    descripcion: 'Documentos que respaldan la emisión del giro',
+    obligatorio: false,
   },
 ];
 

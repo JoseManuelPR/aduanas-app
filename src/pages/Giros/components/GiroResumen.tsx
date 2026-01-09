@@ -96,13 +96,6 @@ export const GiroResumen: React.FC<GiroResumenProps> = ({
             )}
           </div>
           
-          {giro.fechaNotificacion && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500 mb-1">Fecha Notificación</p>
-              <p className="font-medium">{giro.fechaNotificacion}</p>
-            </div>
-          )}
-          
           {giro.fechaPago && (
             <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
               <p className="text-sm text-emerald-700 mb-1">Fecha de Pago Completo</p>

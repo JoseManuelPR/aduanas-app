@@ -305,7 +305,6 @@ export const GiroDetalle: React.FC = () => {
       case 'Parcialmente Pagado': return 'warning';
       case 'Vencido': return 'error';
       case 'Anulado': return 'error';
-      case 'Notificado': return 'info';
       default: return 'proceso';
     }
   };
@@ -425,15 +424,6 @@ export const GiroDetalle: React.FC = () => {
               >
                 <Icon name="CreditCard" size={16} />
                 Registrar Pago
-              </CustomButton>
-            )}
-            {permisos?.puedeNotificar && giro.estado === 'Emitido' && (
-              <CustomButton 
-                variant="secondary"
-                onClick={() => alert('Funcionalidad de notificación')}
-              >
-                <Icon name="Bell" size={16} />
-                Notificar
               </CustomButton>
             )}
             {permisos?.puedeAnular && (

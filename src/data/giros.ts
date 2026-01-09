@@ -308,13 +308,12 @@ export const giros: Giro[] = [
     id: "g-008",
     numeroGiro: "F17-2024-000090",
     tipoGiro: "F17",
-    estado: "Notificado",
+    estado: "Emitido",
     origenGiro: "CARGO",
     entidadOrigenId: "c-007",
     numeroEntidadOrigen: "CAR-2024-005684",
     fechaEmision: "22-11-2025",
     fechaVencimiento: "22-12-2025",
-    fechaNotificacion: "24-11-2025",
     plazo: 30,
     emitidoA: "Importaciones del Sur Ltda.",
     rutDeudor: "78.456.789-0",
@@ -476,8 +475,8 @@ export const calcularSaldoPendiente = (giro: Giro): number => {
 export const puedeRegistrarPago = (giro: Giro): { valido: boolean; errores: string[] } => {
   const errores: string[] = [];
   
-  if (giro.estado !== 'Emitido' && giro.estado !== 'Notificado' && giro.estado !== 'Vencido' && giro.estado !== 'Parcialmente Pagado') {
-    errores.push('Solo se puede registrar pago en giros Emitidos, Notificados, Vencidos o Parcialmente Pagados.');
+  if (giro.estado !== 'Emitido' && giro.estado !== 'Vencido' && giro.estado !== 'Parcialmente Pagado') {
+    errores.push('Solo se puede registrar pago en giros Emitidos, Vencidos o Parcialmente Pagados.');
   }
   
   if (giro.saldoPendiente === 0) {
@@ -544,17 +543,11 @@ export const getPermisosGiro = (estado: EstadoGiro) => {
     puedeEditar: false,
     puedeAnular: false,
     puedeRegistrarPago: false,
-    puedeNotificar: false,
     puedeVerDetalle: true,
   };
   
   switch (estado) {
     case 'Emitido':
-      permisos.puedeAnular = true;
-      permisos.puedeRegistrarPago = true;
-      permisos.puedeNotificar = true;
-      break;
-    case 'Notificado':
       permisos.puedeAnular = true;
       permisos.puedeRegistrarPago = true;
       break;
@@ -586,7 +579,6 @@ export const getConteoGiros = () => {
     total: giros.length,
     porEstado: {
       emitido: giros.filter(g => g.estado === 'Emitido').length,
-      notificado: giros.filter(g => g.estado === 'Notificado').length,
       pagado: giros.filter(g => g.estado === 'Pagado').length,
       parcialmentePagado: giros.filter(g => g.estado === 'Parcialmente Pagado').length,
       vencido: giros.filter(g => g.estado === 'Vencido').length,
@@ -602,10 +594,10 @@ export const getConteoGiros = () => {
       denuncia: giros.filter(g => g.origenGiro === 'DENUNCIA').length,
       manual: giros.filter(g => g.origenGiro === 'MANUAL').length,
     },
-    emitidos: giros.filter(g => g.estado === 'Emitido' || g.estado === 'Notificado').length,
+    emitidos: giros.filter(g => g.estado === 'Emitido').length,
     pagados: giros.filter(g => g.estado === 'Pagado').length,
     vencidos: giros.filter(g => g.estado === 'Vencido').length,
-    pendientes: giros.filter(g => ['Emitido', 'Notificado', 'Parcialmente Pagado'].includes(g.estado)).length,
+    pendientes: giros.filter(g => ['Emitido', 'Parcialmente Pagado'].includes(g.estado)).length,
     montoRecaudado,
     montoPendiente,
     montoRecaudadoFormateado: '$' + montoRecaudado.toLocaleString('es-CL'),

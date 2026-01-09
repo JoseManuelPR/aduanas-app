@@ -10,8 +10,9 @@ import CONSTANTS_APP from '../../constants/sidebar-menu';
 import CustomLayout from '../../Layout/Layout';
 import { CustomButton } from '../../components/Button/Button';
 import InputField from '../../organisms/InputField/InputField';
-import { Badge } from '../../components/UI';
+import { Badge, Modal } from '../../components/UI';
 import { ERoutePaths } from '../../routes/routes';
+import { FileUploader, type UploadedFileInfo } from '../../components/FileUploader';
 import {
   TIPOS_IDENTIFICACION_DTTA,
   getPlaceholderPorTipoId,
@@ -31,7 +32,19 @@ import {
   type GiroCuenta,
   type TipoGiro,
   type OrigenGiro,
+  type CategoriaArchivoExpediente,
 } from '../../data';
+
+// Interfaz para archivos de respaldo
+interface ArchivoRespaldo {
+  id: string;
+  nombre: string;
+  tamanio: string;
+  tamanioBytes: number;
+  categoria: CategoriaArchivoExpediente;
+  descripcion?: string;
+  file: File;
+}
 
 // Interfaz para el formulario
 interface GiroFormData {
@@ -81,8 +94,45 @@ export const GiroForm: React.FC = () => {
   const [formData, setFormData] = useState<GiroFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [archivosRespaldo, setArchivosRespaldo] = useState<ArchivoRespaldo[]>([]);
+  const [showModalSubirArchivo, setShowModalSubirArchivo] = useState(false);
   
   const allNotifications = getTodasLasNotificaciones();
+
+  // Helper para formatear tamaño de archivo
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // Obtener icono según tipo de archivo
+  const getFileIcon = (fileName: string): string => {
+    const extension = '.' + (fileName.split('.').pop()?.toLowerCase() || '');
+    switch (extension) {
+      case '.pdf':
+        return 'FileText';
+      case '.xml':
+        return 'Code';
+      case '.doc':
+      case '.docx':
+        return 'FileText';
+      case '.xls':
+      case '.xlsx':
+        return 'FileSpreadsheet';
+      case '.jpg':
+      case '.jpeg':
+      case '.png':
+        return 'Image';
+      case '.zip':
+      case '.rar':
+        return 'FolderArchive';
+      default:
+        return 'File';
+    }
+  };
   
   // Precargar datos si viene de un cargo
   useEffect(() => {
@@ -254,6 +304,27 @@ export const GiroForm: React.FC = () => {
     if (validate()) {
       setShowConfirmModal(true);
     }
+  };
+
+  // Handler para agregar archivos de respaldo
+  const handleUploadComplete = (files: UploadedFileInfo[]) => {
+    const nuevosArchivos: ArchivoRespaldo[] = files.map((fileInfo, idx) => ({
+      id: `ar-${Date.now()}-${idx}`,
+      nombre: fileInfo.file.name,
+      tamanio: formatFileSize(fileInfo.file.size),
+      tamanioBytes: fileInfo.file.size,
+      categoria: fileInfo.categoria,
+      descripcion: fileInfo.descripcion,
+      file: fileInfo.file,
+    }));
+
+    setArchivosRespaldo(prev => [...prev, ...nuevosArchivos]);
+    setShowModalSubirArchivo(false);
+  };
+
+  // Handler para eliminar archivo de respaldo
+  const handleEliminarArchivo = (archivoId: string) => {
+    setArchivosRespaldo(prev => prev.filter(a => a.id !== archivoId));
   };
   
   const confirmarEmision = () => {
@@ -607,6 +678,100 @@ export const GiroForm: React.FC = () => {
               )}
             </div>
             
+            {/* Expediente Digital - Documentos de Respaldo */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Icon name="FolderOpen" size={20} className="text-aduana-azul" />
+                    Expediente Digital
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Documentos de respaldo para la emisión del giro
+                  </p>
+                </div>
+                <CustomButton 
+                  variant="secondary" 
+                  onClick={() => setShowModalSubirArchivo(true)}
+                >
+                  <Icon name="Upload" size={16} />
+                  Subir Documento
+                </CustomButton>
+              </div>
+
+              {archivosRespaldo.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                  <Icon name="FileText" size={40} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-500">No hay documentos de respaldo</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Suba los documentos que respaldan la emisión de este giro
+                  </p>
+                  <CustomButton 
+                    variant="secondary" 
+                    className="mt-3" 
+                    onClick={() => setShowModalSubirArchivo(true)}
+                  >
+                    <Icon name="Upload" size={16} />
+                    Subir documento
+                  </CustomButton>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {archivosRespaldo.map((archivo) => (
+                    <div 
+                      key={archivo.id} 
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-aduana-azul/10 rounded-lg">
+                          <Icon 
+                            name={getFileIcon(archivo.nombre) as any} 
+                            size={20} 
+                            className="text-aduana-azul" 
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{archivo.nombre}</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>{archivo.tamanio}</span>
+                            <span>•</span>
+                            <Badge variant="info" size="sm">{archivo.categoria}</Badge>
+                            {archivo.descripcion && (
+                              <>
+                                <span>•</span>
+                                <span className="truncate max-w-[200px]">{archivo.descripcion}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleEliminarArchivo(archivo.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Eliminar archivo"
+                      >
+                        <Icon name="Trash2" size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Resumen de archivos */}
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-200 mt-3">
+                    <span className="text-sm text-gray-600">
+                      {archivosRespaldo.length} documento(s) de respaldo
+                    </span>
+                    <button
+                      onClick={() => setShowModalSubirArchivo(true)}
+                      className="text-sm text-aduana-azul hover:underline flex items-center gap-1"
+                    >
+                      <Icon name="Plus" size={14} />
+                      Agregar más
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Observaciones */}
             <div className="card p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -659,6 +824,14 @@ export const GiroForm: React.FC = () => {
                   <span className="text-gray-600">Vencimiento</span>
                   <span className="font-medium">{formData.fechaVencimiento || '-'}</span>
                 </div>
+
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Documentos</span>
+                  <span className="font-medium flex items-center gap-1">
+                    <Icon name="Paperclip" size={14} className="text-gray-400" />
+                    {archivosRespaldo.length}
+                  </span>
+                </div>
                 
                 <div className="pt-4 border-t-2 border-aduana-azul">
                   <div className="flex justify-between items-center">
@@ -708,9 +881,20 @@ export const GiroForm: React.FC = () => {
                 <p className="text-gray-600 mb-4">
                   ¿Está seguro que desea emitir este giro por <strong>{formatMonto(totalCuentas)}</strong>?
                 </p>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                   El giro será emitido a nombre de <strong>{formData.emitidoA}</strong>
                 </p>
+                {archivosRespaldo.length > 0 && (
+                  <div className="bg-blue-50 rounded-lg p-3 mb-4 text-left">
+                    <div className="flex items-center gap-2 text-sm text-blue-700">
+                      <Icon name="Paperclip" size={14} />
+                      <span className="font-medium">{archivosRespaldo.length} documento(s) de respaldo</span>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Los documentos se adjuntarán al expediente digital del giro
+                    </p>
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <CustomButton 
                     variant="secondary" 
@@ -732,6 +916,20 @@ export const GiroForm: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal para subir archivos de respaldo */}
+      <Modal
+        isOpen={showModalSubirArchivo}
+        onClose={() => setShowModalSubirArchivo(false)}
+        size="lg"
+        showCloseButton={false}
+      >
+        <FileUploader
+          expedienteId={`giro-nuevo-${Date.now()}`}
+          onUploadComplete={handleUploadComplete}
+          onClose={() => setShowModalSubirArchivo(false)}
+        />
+      </Modal>
     </CustomLayout>
   );
 };

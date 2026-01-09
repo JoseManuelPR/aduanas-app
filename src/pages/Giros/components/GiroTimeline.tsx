@@ -36,15 +36,6 @@ export const GiroTimeline: React.FC<GiroTimelineProps> = ({
       icon: 'Link' as const,
       color: 'blue' as const,
     }] : []),
-    ...(giro.fechaNotificacion ? [{
-      id: 'notificacion',
-      title: 'Giro Notificado',
-      date: giro.fechaNotificacion,
-      status: 'completed' as const,
-      description: `Notificación enviada a ${giro.emitidoA}`,
-      icon: 'Bell' as const,
-      color: 'blue' as const,
-    }] : []),
     ...(giro.pagos || []).map((pago, idx) => ({
       id: `pago-${pago.id}`,
       title: `Pago #${idx + 1} Registrado`,
@@ -82,16 +73,6 @@ export const GiroTimeline: React.FC<GiroTimelineProps> = ({
       icon: 'XCircle' as const,
       color: 'red' as const,
       user: giro.usuarioModificacion,
-    }] : []),
-    // Agregar eventos pendientes según estado
-    ...(giro.estado === 'Emitido' ? [{
-      id: 'pending-notif',
-      title: 'Pendiente Notificación',
-      date: '',
-      status: 'pending' as const,
-      description: 'El giro debe ser notificado al deudor',
-      icon: 'Clock' as const,
-      color: 'gray' as const,
     }] : []),
     ...(giro.estado !== 'Pagado' && giro.estado !== 'Anulado' ? [{
       id: 'pending-pago',

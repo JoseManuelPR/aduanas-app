@@ -508,7 +508,7 @@ export interface FundamentoCatalogo {
 // ============================================
 
 export type TipoGiro = 'F09' | 'F16' | 'F17';
-export type EstadoGiro = 'Emitido' | 'Notificado' | 'Pagado' | 'Parcialmente Pagado' | 'Vencido' | 'Anulado';
+export type EstadoGiro = 'Emitido' | 'Pagado' | 'Parcialmente Pagado' | 'Vencido' | 'Anulado';
 export type OrigenGiro = 'CARGO' | 'DENUNCIA' | 'MANUAL';
 export type FormaPago = 'Transferencia' | 'Depósito' | 'Efectivo' | 'Cheque' | 'Vale Vista' | 'Otro';
 
@@ -555,7 +555,6 @@ export interface Giro {
   // Fechas
   fechaEmision: string;                  // FECHA_EMISION
   fechaVencimiento: string;              // FECHA_VENCIMIENTO
-  fechaNotificacion?: string;
   fechaPago?: string;                    // FECHA_PAGO (último pago completo)
   
   // Plazo y cálculo de vencimiento

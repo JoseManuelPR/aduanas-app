@@ -142,14 +142,13 @@ export const GirosList: React.FC = () => {
       case 'Parcialmente Pagado': return { variant: 'warning', muted: false };
       case 'Vencido': return { variant: 'vencido', muted: false };
       case 'Anulado': return { variant: 'rechazado', muted: true };
-      case 'Notificado': return { variant: 'info', muted: true };
       default: return { variant: 'proceso', muted: true };
     }
   };
 
   // Menú contextual de acciones
   const handleActions = (row: Giro) => {
-    const puedeRegistrarPago = row.estado === 'Emitido' || row.estado === 'Notificado' || row.estado === 'Vencido' || row.estado === 'Parcialmente Pagado';
+    const puedeRegistrarPago = row.estado === 'Emitido' || row.estado === 'Vencido' || row.estado === 'Parcialmente Pagado';
     
     const menuItems: ActionMenuItem[] = [
       {
@@ -320,7 +319,7 @@ export const GirosList: React.FC = () => {
 
   // Estados para el filtro
   const estadosGiro: EstadoGiro[] = [
-    'Emitido', 'Notificado', 'Pagado', 'Parcialmente Pagado', 'Vencido', 'Anulado'
+    'Emitido', 'Pagado', 'Parcialmente Pagado', 'Vencido', 'Anulado'
   ];
 
   // Chips de estado con prioridad visual
