@@ -148,7 +148,9 @@ export const GirosList: React.FC = () => {
 
   // Menú contextual de acciones
   const handleActions = (row: Giro) => {
-    const puedeRegistrarPago = row.estado === 'Emitido' || row.estado === 'Vencido' || row.estado === 'Parcialmente Pagado';
+    // Los giros F-09 no permiten registro manual de pagos
+    const puedeRegistrarPago = row.tipoGiro !== 'F09' && 
+      (row.estado === 'Emitido' || row.estado === 'Vencido' || row.estado === 'Parcialmente Pagado');
     
     const menuItems: ActionMenuItem[] = [
       {

@@ -475,6 +475,11 @@ export const calcularSaldoPendiente = (giro: Giro): number => {
 export const puedeRegistrarPago = (giro: Giro): { valido: boolean; errores: string[] } => {
   const errores: string[] = [];
   
+  // Los giros F-09 no permiten registro manual de pagos
+  if (giro.tipoGiro === 'F09') {
+    errores.push('Los giros F-09 no permiten registro manual de pagos.');
+  }
+  
   if (giro.estado !== 'Emitido' && giro.estado !== 'Vencido' && giro.estado !== 'Parcialmente Pagado') {
     errores.push('Solo se puede registrar pago en giros Emitidos, Vencidos o Parcialmente Pagados.');
   }
@@ -538,7 +543,7 @@ export const puedeAnularGiro = (giro: Giro): { valido: boolean; errores: string[
 };
 
 // Obtener permisos según estado del giro
-export const getPermisosGiro = (estado: EstadoGiro) => {
+export const getPermisosGiro = (estado: EstadoGiro, tipoGiro?: TipoGiro) => {
   const permisos = {
     puedeEditar: false,
     puedeAnular: false,
@@ -546,16 +551,19 @@ export const getPermisosGiro = (estado: EstadoGiro) => {
     puedeVerDetalle: true,
   };
   
+  // Los giros F-09 no permiten registro manual de pagos
+  const puedeRegistrarPagoManual = tipoGiro !== 'F09';
+  
   switch (estado) {
     case 'Emitido':
       permisos.puedeAnular = true;
-      permisos.puedeRegistrarPago = true;
+      permisos.puedeRegistrarPago = puedeRegistrarPagoManual;
       break;
     case 'Parcialmente Pagado':
-      permisos.puedeRegistrarPago = true;
+      permisos.puedeRegistrarPago = puedeRegistrarPagoManual;
       break;
     case 'Vencido':
-      permisos.puedeRegistrarPago = true;
+      permisos.puedeRegistrarPago = puedeRegistrarPagoManual;
       break;
     case 'Pagado':
     case 'Anulado':

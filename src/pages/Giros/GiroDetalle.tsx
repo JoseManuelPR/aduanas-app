@@ -140,7 +140,7 @@ export const GiroDetalle: React.FC = () => {
   // Obtener permisos según estado
   const permisos = useMemo(() => {
     if (!giro) return null;
-    return getPermisosGiro(giro.estado);
+    return getPermisosGiro(giro.estado, giro.tipoGiro);
   }, [giro]);
   
   // Validación para registrar pago
