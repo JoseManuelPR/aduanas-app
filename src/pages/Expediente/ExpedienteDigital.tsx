@@ -366,6 +366,19 @@ export const ExpedienteDigital: React.FC = () => {
             </div>
           ) : (
           <div className="card overflow-hidden">
+            {/* Leyenda de origen de archivos */}
+            <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center gap-4 text-xs text-gray-600">
+              <span className="font-medium">Origen:</span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span> Sistema (automático)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Usuario (manual)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-purple-500"></span> Importado
+              </span>
+            </div>
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -373,13 +386,20 @@ export const ExpedienteDigital: React.FC = () => {
                     Archivo
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Categoría
+                    <div className="flex items-center gap-1 group relative">
+                      Categoría
+                      <Icon name="HelpCircle" size={12} className="text-gray-400" />
+                      <div className="absolute left-0 top-full mt-1 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        Las categorías son un catálogo fijo definido por el sistema según normativa aduanera.
+                        <div className="absolute -top-1 left-2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                      </div>
+                    </div>
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Fecha
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Usuario
+                    Subido por
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Tamaño
@@ -392,19 +412,51 @@ export const ExpedienteDigital: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {expediente.archivos.map((archivo) => {
                   const permisosArchivo = getPermisosArchivo(archivo, usuarioActual.role);
+                  // Determinar color del indicador de origen
+                  const origenColor = archivo.origen === 'Sistema' || archivo.origen === 'Notificación' 
+                    ? 'bg-blue-500' 
+                    : archivo.origen === 'Importado' 
+                      ? 'bg-purple-500' 
+                      : 'bg-emerald-500';
+                  // Nombre descriptivo vs técnico
+                  const nombreDescriptivo = archivo.nombreOriginal || archivo.descripcion || archivo.nombre;
+                  const nombreTecnico = archivo.nombre;
+                  
                   return (
                     <tr key={archivo.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <Icon
-                            name={archivo.tipo === 'PDF' ? 'FileText' : 'File'}
-                            size={18}
-                            className="text-aduana-azul"
-                          />
-                          <div>
-                            <span className="font-medium text-gray-900">{archivo.nombre}</span>
-                            {archivo.descripcion && (
+                          {/* Indicador visual de origen */}
+                          <div className="relative">
+                            <Icon
+                              name={archivo.tipo === 'PDF' ? 'FileText' : archivo.tipo === 'XML' ? 'Code' : 'File'}
+                              size={18}
+                              className="text-aduana-azul"
+                            />
+                            <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${origenColor} ring-2 ring-white`}></span>
+                          </div>
+                          <div className="group relative">
+                            {/* Nombre descriptivo */}
+                            <span className="font-medium text-gray-900 cursor-help">
+                              {nombreDescriptivo !== nombreTecnico ? nombreDescriptivo : nombreTecnico}
+                            </span>
+                            {/* Tooltip con nombre técnico */}
+                            {nombreDescriptivo !== nombreTecnico && (
+                              <div className="absolute left-0 top-full mt-1 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                <p className="font-semibold mb-1">Nombre técnico:</p>
+                                <p className="text-gray-300 break-all">{nombreTecnico}</p>
+                                <div className="absolute -top-1 left-2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                              </div>
+                            )}
+                            {archivo.descripcion && nombreDescriptivo === archivo.nombreOriginal && (
                               <p className="text-xs text-gray-500">{archivo.descripcion}</p>
+                            )}
+                            {/* Badge de origen automático */}
+                            {(archivo.origen === 'Sistema' || archivo.origen === 'Notificación') && (
+                              <span className="inline-flex items-center gap-1 text-xs text-blue-600 mt-0.5">
+                                <Icon name="Cpu" size={10} />
+                                Generado automáticamente
+                              </span>
                             )}
                           </div>
                         </div>
@@ -414,42 +466,83 @@ export const ExpedienteDigital: React.FC = () => {
                           {archivo.categoria}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{archivo.fechaSubida}</td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {archivo.nombreUsuarioSubida || archivo.usuarioSubida}
+                      <td className="px-4 py-3 text-gray-600 text-sm">{archivo.fechaSubida}</td>
+                      <td className="px-4 py-3 text-gray-600 text-sm">
+                        <div className="flex items-center gap-1">
+                          {archivo.origen === 'Sistema' || archivo.origen === 'Notificación' ? (
+                            <span className="flex items-center gap-1 text-blue-600">
+                              <Icon name="Bot" size={14} />
+                              {archivo.nombreUsuarioSubida || 'Sistema'}
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Icon name="User" size={14} className="text-gray-400" />
+                              {archivo.nombreUsuarioSubida || archivo.usuarioSubida}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{archivo.tamanio}</td>
+                      <td className="px-4 py-3 text-gray-600 text-sm">{archivo.tamanio}</td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-center gap-2">
-                          {permisosArchivo.puedeVisualizar && (
+                        <div className="flex justify-center gap-1">
+                          {/* Botón Ver - siempre visible pero puede estar deshabilitado */}
+                          <div className="relative group">
                             <button
-                              className="p-1 text-gray-500 hover:text-aduana-azul"
-                              title="Ver archivo"
-                              onClick={() =>
-                                setModalVisualizarArchivo({ isOpen: true, archivoId: archivo.id })
-                              }
+                              className={`p-1.5 rounded transition-colors ${
+                                permisosArchivo.puedeVisualizar 
+                                  ? 'text-gray-500 hover:text-aduana-azul hover:bg-blue-50' 
+                                  : 'text-gray-300 cursor-not-allowed'
+                              }`}
+                              onClick={() => permisosArchivo.puedeVisualizar && setModalVisualizarArchivo({ isOpen: true, archivoId: archivo.id })}
+                              disabled={!permisosArchivo.puedeVisualizar}
                             >
                               <Icon name="Eye" size={16} />
                             </button>
-                          )}
-                          {permisosArchivo.puedeDescargar && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                              {permisosArchivo.puedeVisualizar ? 'Ver archivo' : 'Sin permiso para ver'}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45 -mt-1"></div>
+                            </div>
+                          </div>
+                          
+                          {/* Botón Descargar */}
+                          <div className="relative group">
                             <button
-                              className="p-1 text-gray-500 hover:text-emerald-600"
-                              onClick={() => handleDescargarArchivo(archivo.id)}
-                              title="Descargar"
+                              className={`p-1.5 rounded transition-colors ${
+                                permisosArchivo.puedeDescargar 
+                                  ? 'text-gray-500 hover:text-emerald-600 hover:bg-emerald-50' 
+                                  : 'text-gray-300 cursor-not-allowed'
+                              }`}
+                              onClick={() => permisosArchivo.puedeDescargar && handleDescargarArchivo(archivo.id)}
+                              disabled={!permisosArchivo.puedeDescargar}
                             >
                               <Icon name="Download" size={16} />
                             </button>
-                          )}
-                          {permisosArchivo.puedeEliminar && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                              {permisosArchivo.puedeDescargar ? 'Descargar archivo' : 'Sin permiso para descargar'}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45 -mt-1"></div>
+                            </div>
+                          </div>
+                          
+                          {/* Botón Eliminar - siempre visible pero deshabilitado si no tiene permiso */}
+                          <div className="relative group">
                             <button
-                              className="p-1 text-gray-500 hover:text-red-600"
-                              onClick={() => handleEliminarArchivo(archivo.id)}
-                              title="Eliminar"
+                              className={`p-1.5 rounded transition-colors ${
+                                permisosArchivo.puedeEliminar 
+                                  ? 'text-gray-500 hover:text-red-600 hover:bg-red-50' 
+                                  : 'text-gray-300 cursor-not-allowed'
+                              }`}
+                              onClick={() => permisosArchivo.puedeEliminar && handleEliminarArchivo(archivo.id)}
+                              disabled={!permisosArchivo.puedeEliminar}
                             >
                               <Icon name="Trash2" size={16} />
                             </button>
-                          )}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 max-w-[200px] text-center">
+                              {permisosArchivo.puedeEliminar 
+                                ? 'Eliminar archivo' 
+                                : permisosArchivo.motivoNoEliminar || 'Sin permiso para eliminar'}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45 -mt-1"></div>
+                            </div>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -599,10 +692,30 @@ export const ExpedienteDigital: React.FC = () => {
           {/* Checklist de completitud */}
           <div className="card p-4 lg:col-span-2">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <div className="flex items-center gap-2 group relative">
                 <Icon name="CheckSquare" size={18} className="text-gray-400" />
-                Completitud del expediente
-              </h3>
+                <h3 className="font-semibold text-gray-900">Completitud del expediente</h3>
+                <button className="text-gray-400 hover:text-aduana-azul transition-colors">
+                  <Icon name="HelpCircle" size={16} />
+                </button>
+                {/* Tooltip explicativo del criterio de completitud */}
+                <div className="absolute left-0 top-full mt-2 w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <p className="font-semibold mb-2">¿Cómo se calcula?</p>
+                  <p className="mb-2">
+                    El porcentaje representa el cumplimiento de los <strong>documentos obligatorios</strong> definidos 
+                    para este tipo de expediente según normativa vigente.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-300">
+                    <li>Registro creado en sistema</li>
+                    <li>Denuncia/Cargo ingresado</li>
+                    <li>Documento aduanero asociado (DIN/DUS)</li>
+                  </ul>
+                  <p className="mt-2 text-gray-400 italic">
+                    Los documentos opcionales no afectan el porcentaje.
+                  </p>
+                  <div className="absolute -top-1.5 left-4 w-3 h-3 bg-gray-900 rotate-45"></div>
+                </div>
+              </div>
               <span className={`text-sm font-bold ${
                 completitud === 100 ? 'text-emerald-600' : 
                 completitud >= 50 ? 'text-blue-600' : 'text-amber-600'
@@ -627,13 +740,14 @@ export const ExpedienteDigital: React.FC = () => {
               {requisitosCompletados.map((req) => (
                 <div 
                   key={req.id}
-                  className={`flex items-center gap-2 text-sm p-2 rounded-lg ${
+                  className={`flex items-center gap-2 text-sm p-2 rounded-lg group relative ${
                     req.completado 
                       ? 'bg-emerald-50 text-emerald-700' 
                       : req.obligatorio 
                         ? 'bg-amber-50 text-amber-700' 
                         : 'bg-gray-50 text-gray-500'
                   }`}
+                  title={req.descripcion}
                 >
                   {req.completado ? (
                     <Icon name="CheckCircle" size={16} className="text-emerald-500 flex-shrink-0" />

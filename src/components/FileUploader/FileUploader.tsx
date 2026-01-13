@@ -17,19 +17,20 @@ export interface UploadedFileInfo {
   descripcion?: string;
 }
 
-const categorias: CategoriaArchivoExpediente[] = [
-  'Documento Aduanero',
-  'Denuncia/Cargo',
-  'Notificación',
-  'Resolución',
-  'Prueba/Evidencia',
-  'Fotografía',
-  'Informe Técnico',
-  'Comunicación',
-  'Reclamo/Recurso',
-  'Sentencia',
-  'Comprobante de Pago',
-  'Otro',
+// Categorías del catálogo fijo del sistema (definidas en normativa aduanera)
+const categorias: { value: CategoriaArchivoExpediente; label: string; obligatoria: boolean; descripcion: string }[] = [
+  { value: 'Documento Aduanero', label: 'Documento Aduanero', obligatoria: true, descripcion: 'DIN, DUS, BL, facturas comerciales' },
+  { value: 'Denuncia/Cargo', label: 'Denuncia/Cargo', obligatoria: true, descripcion: 'Documento oficial de denuncia o cargo' },
+  { value: 'Notificación', label: 'Notificación', obligatoria: true, descripcion: 'Notificaciones legales' },
+  { value: 'Resolución', label: 'Resolución', obligatoria: false, descripcion: 'Resoluciones administrativas' },
+  { value: 'Prueba/Evidencia', label: 'Prueba/Evidencia', obligatoria: false, descripcion: 'Material probatorio' },
+  { value: 'Fotografía', label: 'Fotografía', obligatoria: false, descripcion: 'Registro fotográfico de mercancías' },
+  { value: 'Informe Técnico', label: 'Informe Técnico', obligatoria: false, descripcion: 'Informes de aforo, peritajes' },
+  { value: 'Comunicación', label: 'Comunicación', obligatoria: false, descripcion: 'Correos, oficios, memorándums' },
+  { value: 'Reclamo/Recurso', label: 'Reclamo/Recurso', obligatoria: false, descripcion: 'Recursos administrativos' },
+  { value: 'Sentencia', label: 'Sentencia', obligatoria: false, descripcion: 'Fallos judiciales' },
+  { value: 'Comprobante de Pago', label: 'Comprobante de Pago', obligatoria: false, descripcion: 'Vouchers, recibos' },
+  { value: 'Otro', label: 'Otro', obligatoria: false, descripcion: 'Documentos no clasificados' },
 ];
 
 const tiposArchivo: { extension: string; tipo: TipoArchivoExpediente; icon: string }[] = [
@@ -93,9 +94,18 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     Array.from(files).forEach(file => {
       const validation = validateFile(file);
       if (validation.valid) {
+        // Inferir categoría según extensión del archivo
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        let categoriaInicial: CategoriaArchivoExpediente = 'Otro';
+        if (extension === 'xml' || extension === 'pdf') {
+          categoriaInicial = 'Documento Aduanero';
+        } else if (['jpg', 'jpeg', 'png'].includes(extension || '')) {
+          categoriaInicial = 'Fotografía';
+        }
+        
         newFiles.push({
           file,
-          categoria: 'Otro',
+          categoria: categoriaInicial,
           descripcion: '',
         });
       } else {
@@ -192,6 +202,23 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
+        {/* Información de impacto en completitud */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Icon name="Info" size={20} className="text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-blue-900 mb-1">Impacto en la completitud del expediente</p>
+              <p className="text-sm text-blue-700">
+                Los archivos que suba afectarán el porcentaje de completitud <strong>solo si corresponden a categorías obligatorias</strong> como 
+                "Documento Aduanero" o "Denuncia/Cargo". Los documentos de respaldo opcionales (fotografías, informes adicionales) 
+                no modifican el porcentaje pero quedan registrados en el expediente.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Drop Zone */}
         <div
           onDrop={handleDrop}
@@ -226,13 +253,48 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 </button>
               </p>
               <p className="text-sm text-gray-500 mt-2">
-                Tamaño máximo: {maxFileSize} MB por archivo
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Tipos permitidos: PDF, XML, DOC, DOCX, XLS, XLSX, JPG, PNG, ZIP, RAR
+                Tamaño máximo: <strong>{maxFileSize} MB</strong> por archivo
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Información detallada de formatos */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+            <Icon name="FileCheck" size={16} className="text-gray-500" />
+            Formatos permitidos
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Icon name="FileText" size={16} className="text-red-500" />
+              <span>PDF</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Icon name="Code" size={16} className="text-orange-500" />
+              <span>XML</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Icon name="FileText" size={16} className="text-blue-500" />
+              <span>DOC, DOCX</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Icon name="FileSpreadsheet" size={16} className="text-green-500" />
+              <span>XLS, XLSX</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Icon name="Image" size={16} className="text-purple-500" />
+              <span>JPG, PNG</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Icon name="FolderArchive" size={16} className="text-amber-500" />
+              <span>ZIP, RAR</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
+            <Icon name="AlertCircle" size={12} />
+            Archivos ejecutables (.exe, .bat, .sh) no están permitidos por seguridad.
+          </p>
         </div>
 
         {/* Lista de archivos seleccionados */}
@@ -257,16 +319,38 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Categoría <span className="text-red-500">*</span>
+                            <span className="font-normal text-gray-500 text-xs ml-1">(catálogo fijo del sistema)</span>
                           </label>
                           <select
                             value={fileInfo.categoria}
                             onChange={(e) => updateFileCategory(index, e.target.value as CategoriaArchivoExpediente)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aduana-azul focus:border-transparent text-sm"
                           >
-                            {categorias.map(cat => (
-                              <option key={cat} value={cat}>{cat}</option>
-                            ))}
+                            <optgroup label="📋 Categorías obligatorias (afectan completitud)">
+                              {categorias.filter(cat => cat.obligatoria).map(cat => (
+                                <option key={cat.value} value={cat.value}>
+                                  {cat.label}
+                                </option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="📎 Categorías opcionales">
+                              {categorias.filter(cat => !cat.obligatoria).map(cat => (
+                                <option key={cat.value} value={cat.value}>
+                                  {cat.label}
+                                </option>
+                              ))}
+                            </optgroup>
                           </select>
+                          {/* Mostrar descripción de la categoría seleccionada */}
+                          {(() => {
+                            const catInfo = categorias.find(c => c.value === fileInfo.categoria);
+                            return catInfo && (
+                              <p className={`text-xs mt-1 ${catInfo.obligatoria ? 'text-blue-600' : 'text-gray-500'}`}>
+                                {catInfo.obligatoria && <span className="font-medium">✓ Afecta completitud • </span>}
+                                {catInfo.descripcion}
+                              </p>
+                            );
+                          })()}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
