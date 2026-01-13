@@ -5,8 +5,10 @@ interface ProgressBarProps {
   max?: number;
   label?: string;
   showPercentage?: boolean;
+  /** Mostrar valor absoluto junto al porcentaje */
+  showAbsoluteValue?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  colorScheme?: 'azul' | 'rojo' | 'verde' | 'amarillo' | 'auto';
+  colorScheme?: 'azul' | 'rojo' | 'verde' | 'amarillo' | 'amarillo-soft' | 'auto';
   className?: string;
 }
 
@@ -21,6 +23,7 @@ const colorClasses = {
   rojo: 'bg-aduana-rojo',
   verde: 'bg-emerald-500',
   amarillo: 'bg-amber-500',
+  'amarillo-soft': 'bg-amber-300', // Versión menos saturada para estados pendientes
 };
 
 const getAutoColor = (percentage: number): string => {
@@ -35,6 +38,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   max = 100,
   label,
   showPercentage = true,
+  showAbsoluteValue = false,
   size = 'md',
   colorScheme = 'azul',
   className = '',
@@ -44,16 +48,23 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <div className={`w-full ${className}`}>
-      {(label || showPercentage) && (
+      {(label || showPercentage || showAbsoluteValue) && (
         <div className="flex justify-between items-center mb-1.5">
           {label && (
             <span className="text-sm font-medium text-gray-700">{label}</span>
           )}
-          {showPercentage && (
-            <span className="text-sm font-semibold text-gray-600">
-              {percentage.toFixed(1)}%
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {showAbsoluteValue && (
+              <span className="text-sm text-gray-500">
+                {value.toLocaleString('es-CL')} / {max.toLocaleString('es-CL')}
+              </span>
+            )}
+            {showPercentage && (
+              <span className="text-sm font-semibold text-gray-600">
+                {percentage.toFixed(1)}%
+              </span>
+            )}
+          </div>
         </div>
       )}
       <div className={`progress-bar ${sizeClasses[size]} bg-gray-200 rounded-full overflow-hidden`}>

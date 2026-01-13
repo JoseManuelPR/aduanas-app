@@ -19,6 +19,10 @@ interface StatCardProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
+  /** Tooltip explicativo del indicador */
+  tooltip?: string;
+  /** Si es true, se destaca visualmente como KPI estratégico */
+  highlighted?: boolean;
 }
 
 const accentConfig: Record<CardAccent, {
@@ -88,6 +92,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   className = '',
   size = 'md',
   loading = false,
+  tooltip,
+  highlighted = false,
 }) => {
   const aConfig = accentConfig[accent];
   const sConfig = sizeConfig[size];
@@ -100,15 +106,36 @@ export const StatCard: React.FC<StatCardProps> = ({
         transition-all duration-200
         ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''}
         ${sConfig.padding}
+        ${highlighted ? 'ring-2 ring-aduana-azul/20 shadow-md relative' : ''}
         ${className}
       `}
       onClick={onClick}
     >
+      {/* Badge de KPI estratégico */}
+      {highlighted && (
+        <div className="absolute -top-2 -right-2 bg-aduana-azul text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+          KPI
+        </div>
+      )}
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className={`${sConfig.titleSize} font-medium text-gray-500 uppercase tracking-wide`}>
-            {title}
-          </p>
+          <div className="flex items-center gap-1.5 group relative">
+            <p className={`${sConfig.titleSize} font-medium text-gray-500 uppercase tracking-wide`}>
+              {title}
+            </p>
+            {/* Ícono de ayuda con tooltip */}
+            {tooltip && (
+              <>
+                <button className="text-gray-400 hover:text-aduana-azul transition-colors">
+                  <Icon name="HelpCircle" size={14} />
+                </button>
+                <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <p className="leading-relaxed">{tooltip}</p>
+                  <div className="absolute -top-1.5 left-3 w-3 h-3 bg-gray-900 rotate-45"></div>
+                </div>
+              </>
+            )}
+          </div>
           
           {loading ? (
             <div className="mt-2 h-9 w-20 bg-gray-200 rounded animate-pulse" />

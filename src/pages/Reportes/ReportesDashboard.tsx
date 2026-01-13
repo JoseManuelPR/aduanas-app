@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
@@ -14,12 +14,64 @@ import {
   usuarioActual,
 } from '../../data';
 
+// Tipo para ordenamiento de columnas
+type SortColumn = 'aduana' | 'denuncias' | 'cargos' | 'giros' | 'recaudacion' | 'eficiencia';
+type SortDirection = 'asc' | 'desc';
+
 export const ReportesDashboard: React.FC = () => {
   const navigate = useNavigate();
+  
+  // Estado para ordenamiento de tabla
+  const [sortColumn, setSortColumn] = useState<SortColumn>('recaudacion');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   // Obtener datos centralizados
   const allNotifications = getTodasLasNotificaciones();
   const KPI_DASHBOARD = getKPIs();
+  
+  // Datos de la tabla con valores numéricos para ordenamiento
+  const datosAduanas = [
+    { aduana: 'Valparaíso', denuncias: 45, cargos: 32, giros: 78, recaudacion: 456, eficiencia: 92 },
+    { aduana: 'Santiago', denuncias: 38, cargos: 28, giros: 65, recaudacion: 389, eficiencia: 88 },
+    { aduana: 'Antofagasta', denuncias: 22, cargos: 15, giros: 34, recaudacion: 178, eficiencia: 85 },
+    { aduana: 'Iquique', denuncias: 28, cargos: 18, giros: 42, recaudacion: 234, eficiencia: 90 },
+    { aduana: 'Los Andes', denuncias: 23, cargos: 16, giros: 38, recaudacion: 156, eficiencia: 87 },
+  ];
+  
+  // Función para ordenar datos
+  const sortedData = [...datosAduanas].sort((a, b) => {
+    const aVal = a[sortColumn];
+    const bVal = b[sortColumn];
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    return sortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+  });
+  
+  // Función para manejar click en columna
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+  
+  // Componente de encabezado ordenable
+  const SortableHeader = ({ column, label }: { column: SortColumn; label: string }) => (
+    <th 
+      className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center justify-center gap-1">
+        {label}
+        <span className={`transition-opacity ${sortColumn === column ? 'opacity-100' : 'opacity-30'}`}>
+          {sortColumn === column && sortDirection === 'asc' ? '↑' : '↓'}
+        </span>
+      </div>
+    </th>
+  );
 
   // Reportes disponibles
   const reportesDisponibles = [
@@ -90,83 +142,106 @@ export const ReportesDashboard: React.FC = () => {
               accent="blue"
               icon="FileCheck"
               trend={{ value: 8.5, period: 'vs mes anterior', sentiment: 'positive' }}
+              highlighted={true}
+              tooltip="Total de denuncias que han sido tramitadas (ingresadas, en proceso, resueltas) durante el período actual."
             />
             <StatCard
               title="Recaudación Total"
               value={KPI_DASHBOARD.giros.montoRecaudado}
-              subtitle="Año fiscal"
+              subtitle="Año fiscal (millones CLP)"
               accent="green"
               icon="Wallet"
               trend={{ value: 12.3, period: 'vs año anterior', sentiment: 'positive' }}
+              highlighted={true}
+              tooltip="Suma de todos los giros pagados durante el año fiscal vigente. Incluye multas, derechos e impuestos recaudados."
             />
             <StatCard
               title="Tasa de Notificación"
               value={`${KPI_DASHBOARD.notificaciones.tasaExito}%`}
-              subtitle="Exitosas"
+              subtitle="Exitosas sobre enviadas"
               accent="amber"
               icon="Send"
+              tooltip={`Porcentaje de notificaciones electrónicas exitosas sobre el total de notificaciones enviadas. Base: ${KPI_DASHBOARD.notificaciones.enviadas} notificaciones enviadas este período.`}
             />
             <StatCard
               title="Tiempo Prom. Resolución"
               value={`${KPI_DASHBOARD.reclamos.tiempoPromedioRespuesta} días`}
-              subtitle="Reclamos"
+              subtitle="Reclamos administrativos"
               accent="blue"
               icon="Clock"
+              tooltip="Tiempo promedio en días hábiles desde el ingreso de un reclamo administrativo (Reposición o TTA) hasta su resolución final. No incluye denuncias."
             />
           </div>
 
           {/* Gráficos de progreso */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card p-6">
-              <h4 className="font-semibold text-gray-900 mb-4">Estado de Denuncias</h4>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-900">Estado de Denuncias</h4>
+                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  Total: <strong>{KPI_DASHBOARD.denuncias.total}</strong> denuncias
+                </span>
+              </div>
               <div className="space-y-4">
                 <ProgressBar
                   label="Resueltas"
                   value={KPI_DASHBOARD.denuncias.resueltas}
                   max={KPI_DASHBOARD.denuncias.total}
                   colorScheme="verde"
+                  showAbsoluteValue
                 />
                 <ProgressBar
                   label="En Proceso"
                   value={KPI_DASHBOARD.denuncias.enProceso}
                   max={KPI_DASHBOARD.denuncias.total}
                   colorScheme="azul"
+                  showAbsoluteValue
                 />
                 <ProgressBar
                   label="Pendientes"
                   value={KPI_DASHBOARD.denuncias.pendientes}
                   max={KPI_DASHBOARD.denuncias.total}
-                  colorScheme="amarillo"
+                  colorScheme="amarillo-soft"
+                  showAbsoluteValue
                 />
                 <ProgressBar
                   label="Vencidas"
                   value={KPI_DASHBOARD.denuncias.vencidas}
                   max={KPI_DASHBOARD.denuncias.total}
                   colorScheme="rojo"
+                  showAbsoluteValue
                 />
               </div>
             </div>
 
             <div className="card p-6">
-              <h4 className="font-semibold text-gray-900 mb-4">Cargos por Estado</h4>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-900">Cargos por Estado</h4>
+                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  Total: <strong>{KPI_DASHBOARD.cargos.total}</strong> cargos
+                </span>
+              </div>
               <div className="space-y-4">
                 <ProgressBar
                   label="Aprobados"
                   value={KPI_DASHBOARD.cargos.aprobados}
                   max={KPI_DASHBOARD.cargos.total}
                   colorScheme="verde"
+                  showAbsoluteValue
                 />
                 <ProgressBar
                   label="Pendientes"
                   value={KPI_DASHBOARD.cargos.pendientes}
                   max={KPI_DASHBOARD.cargos.total}
-                  colorScheme="amarillo"
+                  colorScheme="amarillo-soft"
+                  showAbsoluteValue
                 />
                 <ProgressBar
                   label="Rechazados"
                   value={KPI_DASHBOARD.cargos.rechazados}
                   max={KPI_DASHBOARD.cargos.total}
                   colorScheme="rojo"
+                  showAbsoluteValue
                 />
               </div>
             </div>
@@ -174,33 +249,59 @@ export const ReportesDashboard: React.FC = () => {
 
           {/* Métricas por Aduana */}
           <div className="card p-6">
-            <h4 className="font-semibold text-gray-900 mb-4">Métricas por Aduana</h4>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-semibold text-gray-900">Métricas por Aduana</h4>
+              <span className="text-xs text-gray-500">
+                Click en columnas para ordenar
+              </span>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aduana</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Denuncias</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cargos</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Giros</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Recaudación</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Eficiencia</th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('aduana')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Aduana
+                        <span className={`transition-opacity ${sortColumn === 'aduana' ? 'opacity-100' : 'opacity-30'}`}>
+                          {sortColumn === 'aduana' && sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      </div>
+                    </th>
+                    <SortableHeader column="denuncias" label="Denuncias" />
+                    <SortableHeader column="cargos" label="Cargos" />
+                    <SortableHeader column="giros" label="Giros" />
+                    <th 
+                      className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort('recaudacion')}
+                    >
+                      <div className="flex items-center justify-center gap-1 group relative">
+                        <span>Recaudación</span>
+                        <span className={`transition-opacity ${sortColumn === 'recaudacion' ? 'opacity-100' : 'opacity-30'}`}>
+                          {sortColumn === 'recaudacion' && sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                        <Icon name="HelpCircle" size={12} className="text-gray-400 ml-1" />
+                        <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 w-40 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 normal-case font-normal">
+                          Valores en millones de pesos chilenos (CLP)
+                          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                        </div>
+                      </div>
+                    </th>
+                    <SortableHeader column="eficiencia" label="Eficiencia" />
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {[
-                    { aduana: 'Valparaíso', denuncias: 45, cargos: 32, giros: 78, recaudacion: '$456M', eficiencia: 92 },
-                    { aduana: 'Santiago', denuncias: 38, cargos: 28, giros: 65, recaudacion: '$389M', eficiencia: 88 },
-                    { aduana: 'Antofagasta', denuncias: 22, cargos: 15, giros: 34, recaudacion: '$178M', eficiencia: 85 },
-                    { aduana: 'Iquique', denuncias: 28, cargos: 18, giros: 42, recaudacion: '$234M', eficiencia: 90 },
-                    { aduana: 'Los Andes', denuncias: 23, cargos: 16, giros: 38, recaudacion: '$156M', eficiencia: 87 },
-                  ].map((row, idx) => (
+                  {sortedData.map((row, idx) => (
                     <tr key={idx} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-900">{row.aduana}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{row.denuncias}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{row.cargos}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{row.giros}</td>
-                      <td className="px-4 py-3 text-center font-semibold text-emerald-600">{row.recaudacion}</td>
+                      <td className="px-4 py-3 text-center font-semibold text-emerald-600">
+                        ${row.recaudacion}M
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           row.eficiencia >= 90 ? 'bg-emerald-100 text-emerald-700' :
@@ -213,6 +314,27 @@ export const ReportesDashboard: React.FC = () => {
                     </tr>
                   ))}
                 </tbody>
+                {/* Total de recaudación */}
+                <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                  <tr>
+                    <td className="px-4 py-3 font-bold text-gray-900">Total</td>
+                    <td className="px-4 py-3 text-center font-semibold text-gray-700">
+                      {datosAduanas.reduce((acc, row) => acc + row.denuncias, 0)}
+                    </td>
+                    <td className="px-4 py-3 text-center font-semibold text-gray-700">
+                      {datosAduanas.reduce((acc, row) => acc + row.cargos, 0)}
+                    </td>
+                    <td className="px-4 py-3 text-center font-semibold text-gray-700">
+                      {datosAduanas.reduce((acc, row) => acc + row.giros, 0)}
+                    </td>
+                    <td className="px-4 py-3 text-center font-bold text-emerald-700">
+                      ${datosAduanas.reduce((acc, row) => acc + row.recaudacion, 0).toLocaleString('es-CL')}M
+                    </td>
+                    <td className="px-4 py-3 text-center font-semibold text-gray-700">
+                      {Math.round(datosAduanas.reduce((acc, row) => acc + row.eficiencia, 0) / datosAduanas.length)}%
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>
@@ -397,13 +519,23 @@ export const ReportesDashboard: React.FC = () => {
               Análisis, métricas y generación de reportes del sistema
             </p>
           </div>
-          <CustomButton 
-            className="btn-primary flex items-center gap-2"
-            onClick={() => {}}
-          >
-            <Icon name="RefreshCw" size={18} />
-            Actualizar Datos
-          </CustomButton>
+          <div className="relative group">
+            <CustomButton 
+              className="btn-primary flex items-center gap-2"
+              onClick={() => {}}
+            >
+              <Icon name="RefreshCw" size={18} />
+              Actualizar Datos
+            </CustomButton>
+            {/* Tooltip explicativo */}
+            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              <p className="font-semibold mb-1">Recarga de datos</p>
+              <p className="text-gray-300">
+                Reconsulta los indicadores y métricas desde la base de datos para mostrar la información más reciente.
+              </p>
+              <div className="absolute -top-1.5 right-6 w-3 h-3 bg-gray-900 rotate-45"></div>
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}
