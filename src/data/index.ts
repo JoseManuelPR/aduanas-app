@@ -287,6 +287,27 @@ export {
   ejemploPayloadExterno,
 } from './hallazgosExternos';
 
+// Jefes Revisores (CU-005: Asignación del jefe revisor)
+export {
+  jefesRevisores,
+  historialAsignaciones,
+  getJefesRevisoresActivos,
+  getJefesRevisoresPorAduana,
+  getJefesRevisoresDisponibles,
+  getJefesRevisoresDisponiblesPorAduana,
+  getJefeRevisorPorId,
+  verificarDisponibilidad,
+  getColorDisponibilidad,
+  calcularCargaTrabajo,
+  getColorCargaTrabajo,
+  registrarAsignacion,
+  getHistorialAsignacionesPorDenuncia,
+  getEstadisticasJefesRevisores,
+  type JefeRevisor,
+  type AsignacionJefeRevisor,
+  type DisponibilidadJefeRevisor,
+} from './jefesRevisores';
+
 // Catálogos Externos (Mapeo con Sistema PFI)
 export {
   // Aduanas

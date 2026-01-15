@@ -4,6 +4,7 @@ import type { BadgeVariant } from "../../../components/UI";
 import type { Denuncia, Articulo, PermisosEstado } from '../../../data/types';
 import { useNavigate } from "react-router-dom";
 import { ERoutePaths } from "../../../routes/routes";
+import { getHistorialAsignacionesPorDenuncia, getJefeRevisorPorId } from "../../../data";
 
 interface DenunciaResumenProps {
   denuncia: Denuncia;
@@ -353,39 +354,147 @@ export const DenunciaResumen: React.FC<DenunciaResumenProps> = ({
       </CollapsibleSection>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          SECCIÓN 8: ASIGNACIÓN
-          Prioridad: BAJA - Información de referencia
+          SECCIÓN 8: ASIGNACIÓN Y JEFE REVISOR (CU-005)
+          Prioridad: ALTA si hay jefe revisor asignado
       ═══════════════════════════════════════════════════════════════════ */}
-      <CollapsibleSection 
-        title="Asignación y Responsables" 
-        iconName="UserCheck"
-        defaultExpanded={false}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="info-grid-item">
-            <span className="info-grid-label">Funcionario</span>
-            <span className="info-grid-value flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-aduana-azul-100 flex items-center justify-center">
-                <Icon name="User" size={14} className="text-aduana-azul" />
+      {(() => {
+        const historialAsignaciones = getHistorialAsignacionesPorDenuncia(denuncia.id);
+        const ultimaAsignacion = historialAsignaciones.length > 0 
+          ? historialAsignaciones[historialAsignaciones.length - 1] 
+          : null;
+        const jefeRevisor = ultimaAsignacion 
+          ? getJefeRevisorPorId(ultimaAsignacion.jefeRevisorId) 
+          : null;
+        
+        return (
+          <CollapsibleSection 
+            title="Asignación y Responsables" 
+            iconName="UserCheck"
+            defaultExpanded={jefeRevisor !== null}
+            badge={
+              jefeRevisor ? (
+                <Badge variant="success" size="sm">Jefe Revisor Asignado</Badge>
+              ) : null
+            }
+          >
+            <div className="space-y-6">
+              {/* CU-005: Jefe Revisor Asignado - Destacado */}
+              {jefeRevisor && ultimaAsignacion && (
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-200">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-full bg-emerald-600 flex items-center justify-center shadow-lg">
+                      <Icon name="UserCheck" size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-emerald-900">Jefe Revisor Asignado</h4>
+                        <Badge variant="success" size="sm">Activo</Badge>
+                      </div>
+                      <p className="text-lg font-bold text-gray-900">{jefeRevisor.nombreCompleto}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {jefeRevisor.cargo} • {jefeRevisor.seccion}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Icon name="Mail" size={14} />
+                          {jefeRevisor.email}
+                        </span>
+                        {jefeRevisor.telefono && (
+                          <span className="flex items-center gap-1">
+                            <Icon name="Phone" size={14} />
+                            {jefeRevisor.telefono}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Datos de auditoría de la asignación */}
+                      <div className="mt-4 pt-4 border-t border-emerald-200">
+                        <p className="text-xs text-emerald-700 font-medium mb-2">Datos de Asignación</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          <div>
+                            <span className="text-gray-500 block">Fecha</span>
+                            <span className="text-gray-900 font-medium">
+                              {ultimaAsignacion.fechaAsignacion}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Hora</span>
+                            <span className="text-gray-900 font-medium">
+                              {ultimaAsignacion.horaAsignacion}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Asignado por</span>
+                            <span className="text-gray-900 font-medium">
+                              {ultimaAsignacion.usuarioAsigna}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Rol</span>
+                            <span className="text-gray-900 font-medium">
+                              {ultimaAsignacion.rolUsuarioAsigna}
+                            </span>
+                          </div>
+                        </div>
+                        {ultimaAsignacion.observaciones && (
+                          <div className="mt-3">
+                            <span className="text-gray-500 block text-xs">Observaciones</span>
+                            <p className="text-gray-700 text-sm mt-1">
+                              {ultimaAsignacion.observaciones}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Mensaje cuando no hay jefe revisor asignado */}
+              {!jefeRevisor && denuncia.estado === 'Borrador' && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <Icon name="AlertTriangle" size={20} className="text-amber-500" />
+                    <div>
+                      <p className="font-medium text-amber-800">Pendiente de asignación</p>
+                      <p className="text-sm text-amber-600 mt-1">
+                        Esta denuncia aún no tiene un Jefe Revisor asignado. 
+                        Use el botón "Asignar Jefe Revisor" para continuar con el flujo.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Otros responsables */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="info-grid-item">
+                  <span className="info-grid-label">Funcionario</span>
+                  <span className="info-grid-value flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-aduana-azul-100 flex items-center justify-center">
+                      <Icon name="User" size={14} className="text-aduana-azul" />
+                    </div>
+                    {denuncia.loginFuncionario || '-'}
+                  </span>
+                </div>
+                <div className="info-grid-item">
+                  <span className="info-grid-label">Fiscalizador</span>
+                  <span className="info-grid-value flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                      <Icon name="UserCheck" size={14} className="text-amber-600" />
+                    </div>
+                    {denuncia.loginFiscalizador || '-'}
+                  </span>
+                </div>
+                <div className="info-grid-item">
+                  <span className="info-grid-label">Usuario Creación</span>
+                  <span className="info-grid-value">{denuncia.usuarioCreacion || '-'}</span>
+                </div>
               </div>
-              {denuncia.loginFuncionario || '-'}
-            </span>
-          </div>
-          <div className="info-grid-item">
-            <span className="info-grid-label">Fiscalizador</span>
-            <span className="info-grid-value flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                <Icon name="UserCheck" size={14} className="text-amber-600" />
-              </div>
-              {denuncia.loginFiscalizador || '-'}
-            </span>
-          </div>
-          <div className="info-grid-item">
-            <span className="info-grid-label">Usuario Creación</span>
-            <span className="info-grid-value">{denuncia.usuarioCreacion || '-'}</span>
-          </div>
-        </div>
-      </CollapsibleSection>
+            </div>
+          </CollapsibleSection>
+        );
+      })()}
     </div>
   );
 };

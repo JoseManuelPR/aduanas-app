@@ -11,4 +11,4 @@ export { DenunciaGiros } from './DenunciaGiros';
 export { DenunciaReclamos } from './DenunciaReclamos';
 export { DenunciaTrazabilidad } from './DenunciaTrazabilidad';
 export { ModalConfirmacion } from './ModalConfirmacion';
-
+export { ModalAsignarJefeRevisor } from './ModalAsignarJefeRevisor';

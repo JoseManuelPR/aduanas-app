@@ -112,8 +112,15 @@ const calcularMultaEstimada = (montoEstimado: string, codigoArticulo: string): n
   return multaCalculada || articulo.multaMinima || 0;
 };
 
-// Modal de confirmación
+// Modales
 import { ModalConfirmacion } from './components/ModalConfirmacion';
+import { ModalAsignarJefeRevisor } from './components/ModalAsignarJefeRevisor';
+
+// Datos de Jefes Revisores (CU-005)
+import {
+  registrarAsignacion,
+  getJefeRevisorPorId,
+} from '../../data';
 
 // Tipo para los datos del formulario
 interface FormularioDenunciaData {
@@ -252,6 +259,17 @@ export const DenunciasForm: React.FC = () => {
   // Modales para acciones después de crear denuncia
   const [showModalInfraccional, setShowModalInfraccional] = useState(false);
   const [showModalPenal, setShowModalPenal] = useState(false);
+  
+  // CU-005: Modal para asignar Jefe Revisor
+  const [showModalAsignarJefeRevisor, setShowModalAsignarJefeRevisor] = useState(false);
+  const [denunciaCreada, setDenunciaCreada] = useState<{
+    id: string;
+    numeroDenuncia: string;
+    tipoDenuncia: string;
+    aduana: string;
+    tipoInfraccion: string;
+    diasVencimiento: number;
+  } | null>(null);
   
   // Artículo seleccionado
   const articuloSeleccionado = useMemo(() => {
@@ -1617,26 +1635,102 @@ export const DenunciasForm: React.FC = () => {
 
   const handleConfirmSubmit = () => {
     const numeroDenuncia = generarNumeroDenuncia();
+    const denunciaId = `d-new-${Date.now()}`;
+    
+    // Guardar datos de la denuncia creada para usar en asignación
+    setDenunciaCreada({
+      id: denunciaId,
+      numeroDenuncia,
+      tipoDenuncia: formData.tipoDenuncia || 'Infraccional',
+      aduana: formData.aduanaOrigen,
+      tipoInfraccion: formData.tipoInfraccion,
+      diasVencimiento: 30, // Plazo por defecto
+    });
     
     showToast({
       type: 'success',
       title: isDesdeHallazgo 
         ? '¡Hallazgo convertido a denuncia exitosamente!'
-        : '¡Denuncia ingresada exitosamente!',
-      message: `La denuncia N° ${numeroDenuncia} ha sido ingresada. El expediente digital ha sido generado.`,
+        : '¡Denuncia creada exitosamente!',
+      message: `La denuncia N° ${numeroDenuncia} ha sido creada. Ahora debe asignar un Jefe Revisor.`,
       duration: 5000,
     });
     
     setShowModalFormalizar(false);
     
-    // Mostrar modal según tipo de denuncia
-    if (formData.tipoDenuncia === 'Infraccional') {
-      setShowModalInfraccional(true);
-    } else if (formData.tipoDenuncia === 'Penal') {
-      setShowModalPenal(true);
-    } else {
-      setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
+    // CU-005: Mostrar modal de asignación de Jefe Revisor
+    setShowModalAsignarJefeRevisor(true);
+  };
+  
+  // CU-005: Handler para asignar Jefe Revisor desde el formulario de nueva denuncia
+  const handleAsignarJefeRevisorNuevaDenuncia = (jefeRevisorId: string, observaciones?: string) => {
+    if (!denunciaCreada) return;
+    
+    const jefeRevisor = getJefeRevisorPorId(jefeRevisorId);
+    
+    if (!jefeRevisor) {
+      showToast({
+        type: 'error',
+        title: 'Error en asignación',
+        message: 'No se pudo encontrar el Jefe Revisor seleccionado.',
+        duration: 4000,
+      });
+      return;
     }
+
+    // Registrar la asignación (mock)
+    const asignacion = registrarAsignacion(
+      denunciaCreada.id,
+      denunciaCreada.numeroDenuncia,
+      jefeRevisorId,
+      usuarioActual.login,
+      usuarioActual.role,
+      observaciones
+    );
+
+    if (asignacion) {
+      showToast({
+        type: 'success',
+        title: 'Denuncia Asignada e Ingresada',
+        message: `La denuncia N° ${denunciaCreada.numeroDenuncia} ha sido asignada a ${jefeRevisor.nombreCompleto} y su estado cambió a "Ingresada / Asignada a Jefe Revisor".`,
+        duration: 5000,
+      });
+      
+      setShowModalAsignarJefeRevisor(false);
+      
+      // Mostrar modal según tipo de denuncia después de asignar
+      if (denunciaCreada.tipoDenuncia === 'Infraccional') {
+        setShowModalInfraccional(true);
+      } else if (denunciaCreada.tipoDenuncia === 'Penal') {
+        setShowModalPenal(true);
+      } else {
+        setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
+      }
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Error en asignación',
+        message: 'No se pudo completar la asignación. Por favor, intente nuevamente.',
+        duration: 4000,
+      });
+    }
+  };
+  
+  // Handler para omitir asignación (para demo)
+  const handleOmitirAsignacion = () => {
+    setShowModalAsignarJefeRevisor(false);
+    
+    if (denunciaCreada) {
+      showToast({
+        type: 'warning',
+        title: 'Asignación omitida',
+        message: `La denuncia N° ${denunciaCreada.numeroDenuncia} quedó pendiente de asignación.`,
+        duration: 4000,
+      });
+    }
+    
+    // Navegar al listado
+    setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1000);
   };
 
   // Handlers para acciones post-creación
@@ -1854,6 +1948,29 @@ export const DenunciasForm: React.FC = () => {
           </div>
         </div>
       </ModalConfirmacion>
+
+      {/* CU-005: Modal de Asignación de Jefe Revisor */}
+      {denunciaCreada && (
+        <ModalAsignarJefeRevisor
+          isOpen={showModalAsignarJefeRevisor}
+          onClose={handleOmitirAsignacion}
+          onConfirm={handleAsignarJefeRevisorNuevaDenuncia}
+          denuncia={{
+            id: denunciaCreada.id,
+            numeroDenuncia: denunciaCreada.numeroDenuncia,
+            numeroInterno: '',
+            fechaIngreso: new Date().toLocaleDateString('es-CL'),
+            estado: 'Borrador',
+            tipoDenuncia: denunciaCreada.tipoDenuncia as 'Infraccional' | 'Penal',
+            aduana: denunciaCreada.aduana,
+            rutDeudor: formData.numeroIdDenunciado,
+            nombreDeudor: formData.nombreDenunciado,
+            tipoInfraccion: denunciaCreada.tipoInfraccion,
+            montoEstimado: formData.montoEstimado,
+            diasVencimiento: denunciaCreada.diasVencimiento,
+          }}
+        />
+      )}
     </CustomLayout>
   );
 };

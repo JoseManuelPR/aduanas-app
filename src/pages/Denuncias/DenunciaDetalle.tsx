@@ -28,8 +28,15 @@ import { DenunciaGiros } from './components/DenunciaGiros';
 import { DenunciaReclamos } from './components/DenunciaReclamos';
 import { DenunciaTrazabilidad } from './components/DenunciaTrazabilidad';
 
-// Modal de confirmación
+// Modales
 import { ModalConfirmacion } from './components/ModalConfirmacion';
+import { ModalAsignarJefeRevisor } from './components/ModalAsignarJefeRevisor';
+
+// Datos de Jefes Revisores
+import { 
+  registrarAsignacion, 
+  getJefeRevisorPorId 
+} from '../../data';
 
 export const DenunciaDetalle: React.FC = () => {
   const navigate = useNavigate();
@@ -39,6 +46,8 @@ export const DenunciaDetalle: React.FC = () => {
   // Estados
   const [showModalIngresar, setShowModalIngresar] = useState(false);
   const [showModalGenerarCargo, setShowModalGenerarCargo] = useState(false);
+  const [showModalAsignarJefeRevisor, setShowModalAsignarJefeRevisor] = useState(false);
+  const [jefeRevisorAsignado, setJefeRevisorAsignado] = useState<string | null>(null);
   
   // Obtener notificaciones para el header
   const allNotifications = getTodasLasNotificaciones();
@@ -229,6 +238,50 @@ export const DenunciaDetalle: React.FC = () => {
     setShowModalIngresar(false);
   };
   
+  // CU-005: Handler para asignación de Jefe Revisor
+  const handleAsignarJefeRevisor = (jefeRevisorId: string, observaciones?: string) => {
+    const jefeRevisor = getJefeRevisorPorId(jefeRevisorId);
+    
+    if (!jefeRevisor) {
+      showToast({
+        type: 'error',
+        title: 'Error en asignación',
+        message: 'No se pudo encontrar el Jefe Revisor seleccionado.',
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Registrar la asignación (mock)
+    const asignacion = registrarAsignacion(
+      denuncia.id,
+      denuncia.numeroDenuncia,
+      jefeRevisorId,
+      usuarioActual.login,
+      usuarioActual.role,
+      observaciones
+    );
+
+    if (asignacion) {
+      setJefeRevisorAsignado(jefeRevisor.nombreCompleto);
+      showToast({
+        type: 'success',
+        title: 'Denuncia Asignada e Ingresada',
+        message: `La denuncia N° ${denuncia.numeroDenuncia} ha sido asignada a ${jefeRevisor.nombreCompleto} y su estado cambió a "Ingresada / Asignada a Jefe Revisor".`,
+        duration: 5000,
+      });
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Error en asignación',
+        message: 'No se pudo completar la asignación. Por favor, intente nuevamente.',
+        duration: 4000,
+      });
+    }
+
+    setShowModalAsignarJefeRevisor(false);
+  };
+  
   const handleGenerarCargo = () => {
     setShowModalGenerarCargo(false);
     navigate(`${ERoutePaths.CARGOS_NUEVO}?denunciaId=${denuncia.id}`);
@@ -385,7 +438,16 @@ export const DenunciaDetalle: React.FC = () => {
   const accionesPrincipales = useMemo(() => {
     const acciones = [];
     
-    if (permisos.puedeFormalizar) {
+    // CU-005: Para denuncias en Borrador, mostrar "Asignar Jefe Revisor" como acción principal
+    if (permisos.puedeFormalizar && denuncia.estado === 'Borrador') {
+      acciones.push({
+        label: 'Asignar Jefe Revisor',
+        icon: 'UserCheck',
+        onClick: () => setShowModalAsignarJefeRevisor(true),
+        variant: 'success' as const,
+      });
+    } else if (permisos.puedeFormalizar) {
+      // Para otros estados que permiten formalizar, mantener "Ingresar"
       acciones.push({
         label: 'Ingresar',
         icon: 'CheckCircle',
@@ -404,7 +466,7 @@ export const DenunciaDetalle: React.FC = () => {
     }
     
     return acciones;
-  }, [permisos]);
+  }, [permisos, denuncia.estado]);
   
   const accionesSecundarias = useMemo(() => {
     const acciones = [];
@@ -643,6 +705,14 @@ export const DenunciaDetalle: React.FC = () => {
           mensaje={`¿Desea generar un cargo para la denuncia N° ${denuncia.numeroDenuncia}? Se abrirá el formulario de cargo con los datos pre-llenados.`}
           tipo="info"
           textoConfirmar="Generar Cargo"
+        />
+        
+        {/* CU-005: Modal de Asignación de Jefe Revisor */}
+        <ModalAsignarJefeRevisor
+          isOpen={showModalAsignarJefeRevisor}
+          onClose={() => setShowModalAsignarJefeRevisor(false)}
+          onConfirm={handleAsignarJefeRevisor}
+          denuncia={denuncia}
         />
       </div>
     </CustomLayout>
