@@ -47,7 +47,6 @@ export const DenunciaDetalle: React.FC = () => {
   const [showModalIngresar, setShowModalIngresar] = useState(false);
   const [showModalGenerarCargo, setShowModalGenerarCargo] = useState(false);
   const [showModalAsignarJefeRevisor, setShowModalAsignarJefeRevisor] = useState(false);
-  const [jefeRevisorAsignado, setJefeRevisorAsignado] = useState<string | null>(null);
   
   // Obtener notificaciones para el header
   const allNotifications = getTodasLasNotificaciones();
@@ -263,7 +262,6 @@ export const DenunciaDetalle: React.FC = () => {
     );
 
     if (asignacion) {
-      setJefeRevisorAsignado(jefeRevisor.nombreCompleto);
       showToast({
         type: 'success',
         title: 'Denuncia Asignada e Ingresada',
