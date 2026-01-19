@@ -262,7 +262,7 @@ export const MercanciasList: React.FC = () => {
               <Icon name="ChevronRight" size={14} />
               <span className="text-gray-900 font-medium">Mercancías</span>
             </nav>
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Mercancías</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Consulta de Mercancías</h1>
             <p className="text-gray-500 mt-1">
               Visualización de mercancías recibidas desde sistemas externos
             </p>

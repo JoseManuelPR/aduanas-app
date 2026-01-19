@@ -62,7 +62,7 @@ enum ERoutePaths {
   NOTIFICACIONES = '/notificaciones',
   NOTIFICACIONES_DETALLE = '/notificaciones/:id',
   
-  // Gestión de Mercancías (solo lectura - datos de sistemas externos)
+  // Consulta de Mercancías (solo lectura - datos de sistemas externos)
   MERCANCIAS = '/mercancias',
   MERCANCIAS_DETALLE = '/mercancias/:id',
   

@@ -76,7 +76,7 @@ function App() {
       <Route path={ERoutePaths.NOTIFICACIONES} element={<NotificacionesList />} />
       <Route path={ERoutePaths.NOTIFICACIONES_DETALLE} element={<NotificacionesList />} />
       
-      {/* Gestión de Mercancías (solo lectura - datos de sistemas externos) */}
+      {/* Consulta de Mercancías (solo lectura - datos de sistemas externos) */}
       <Route path={ERoutePaths.MERCANCIAS} element={<MercanciasList />} />
       <Route path={ERoutePaths.MERCANCIAS_DETALLE} element={<MercanciaDetalle />} />
       
