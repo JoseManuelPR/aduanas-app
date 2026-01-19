@@ -136,6 +136,8 @@ export type EstadoDenuncia =
   | 'En Proceso'
   | 'Observada'
   | 'Allanada'
+  | 'Multada'    // Estado cuando se emite acta con multa
+  | 'Absuelta'   // Estado cuando se emite acta de absolución
   | 'Reclamada'
   | 'Cerrada'
   | 'Archivada';

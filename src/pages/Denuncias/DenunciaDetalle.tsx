@@ -17,6 +17,9 @@ import {
   giros,
   reclamos,
   getArticuloPorCodigo,
+  // Audiencias para emitir acta
+  getAudienciasPorDenuncia,
+  puedeEmitirActa,
 } from '../../data';
 
 // Componentes de las secciones
@@ -463,8 +466,35 @@ export const DenunciaDetalle: React.FC = () => {
       });
     }
     
+    // Registrar Audiencia disponible para denuncias infraccionales en ciertos estados
+    if (denuncia.tipoDenuncia === 'Infraccional' && 
+        ['Ingresada', 'En Revisión', 'Formulada', 'Notificada', 'En Proceso'].includes(denuncia.estado)) {
+      acciones.push({
+        label: 'Registrar Audiencia',
+        icon: 'Users',
+        onClick: () => navigate(ERoutePaths.AUDIENCIAS_REGISTRAR.replace(':denunciaId', denuncia.id)),
+        variant: 'secondary' as const,
+      });
+    }
+    
+    // Emitir Acta de Audiencia disponible cuando hay audiencia finalizada
+    const audienciasDenuncia = getAudienciasPorDenuncia(denuncia.id);
+    const audienciaParaActa = audienciasDenuncia.find(a => {
+      const verificacion = puedeEmitirActa(a.id);
+      return verificacion.puede;
+    });
+    
+    if (audienciaParaActa) {
+      acciones.push({
+        label: 'Emitir Acta',
+        icon: 'FileCheck',
+        onClick: () => navigate(ERoutePaths.AUDIENCIAS_EMITIR_ACTA.replace(':audienciaId', audienciaParaActa.id)),
+        variant: 'success' as const,
+      });
+    }
+    
     return acciones;
-  }, [permisos, denuncia.estado]);
+  }, [permisos, denuncia.estado, denuncia.id, navigate]);
   
   const accionesSecundarias = useMemo(() => {
     const acciones = [];

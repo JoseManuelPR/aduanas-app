@@ -308,6 +308,52 @@ export {
   type DisponibilidadJefeRevisor,
 } from './jefesRevisores';
 
+// Audiencias
+export {
+  audiencias,
+  salasAudiencia,
+  getAudienciaPorId,
+  getAudienciaPorNumero,
+  getAudienciasPorDenuncia,
+  getAudienciasPorNumeroDenuncia,
+  getAudienciasPorEstado,
+  getAudienciasPorResultado,
+  getAudienciasProgramadas,
+  getAudienciasHoy,
+  getAudienciasPorJuez,
+  getConteoAudiencias,
+  generarNumeroAudiencia,
+  generarNumeroActa,
+  calcularMultaAtenuada,
+  getPermisosAudiencia,
+  crearAudiencia,
+  actualizarAudiencia,
+  iniciarAudiencia,
+  finalizarAudiencia,
+  generarActaAudiencia,
+  agregarDeclaracion,
+  agregarAntecedente,
+  getSalaPorCodigo,
+  getSalasPorAduana,
+  // Emitir Acta de Audiencia y Resultado
+  actasAudienciaEmitidas,
+  emitirActaAudiencia,
+  getActaPorAudiencia,
+  getActasPorDenuncia,
+  puedeEmitirActa,
+  getAudienciasPendientesActa,
+  getConteoActasEmitidas,
+  type Audiencia,
+  type DeclaracionAudiencia,
+  type DocumentoAudiencia,
+  type TipoResultadoAudiencia,
+  type EstadoAudiencia,
+  type CalculoMultaAtenuada,
+  type PermisosAudiencia,
+  type ResultadoActaAudiencia,
+  type ActaAudienciaEmitida,
+} from './audiencias';
+
 // Catálogos Externos (Mapeo con Sistema PFI)
 export {
   // Aduanas

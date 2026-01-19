@@ -1742,8 +1742,12 @@ export const DenunciasForm: React.FC = () => {
       message: 'Redirigiendo a registro de audiencia...',
       duration: 2000,
     });
-    // TODO: Navegar a formulario de audiencia
-    setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
+    // Navegar a formulario de audiencia
+    if (denunciaCreada) {
+      setTimeout(() => navigate(ERoutePaths.AUDIENCIAS_REGISTRAR.replace(':denunciaId', denunciaCreada.id)), 1500);
+    } else {
+      setTimeout(() => navigate(ERoutePaths.DENUNCIAS), 1500);
+    }
   };
 
   const handleDerivarMinisterioPublico = () => {

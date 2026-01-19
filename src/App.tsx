@@ -11,6 +11,7 @@ import { HallazgosList, HallazgoDetalle } from './pages/Hallazgos';
 import { CargosList, CargoDetalle, CargoForm } from './pages/Cargos';
 import { GirosList, GiroDetalle, GiroForm } from './pages/Giros';
 import { ReclamosList, ReclamoDetalle, ReclamoForm } from './pages/Reclamos';
+import { AudienciaForm, EmitirActaAudiencia } from './pages/Audiencias';
 import { MercanciasList, MercanciaDetalle } from './pages/Mercancias';
 import { InvolucradosList, InvolucradoDetalle, InvolucradoForm } from './pages/Involucrados';
 import { ReportesDashboard } from './pages/Reportes';
@@ -57,6 +58,14 @@ function App() {
       <Route path={ERoutePaths.RECLAMOS_NUEVO} element={<ReclamoForm />} />
       <Route path={ERoutePaths.RECLAMOS_DETALLE} element={<ReclamoDetalle />} />
       <Route path={ERoutePaths.RECLAMOS_EDITAR} element={<ReclamoForm />} />
+      
+      {/* Audiencias */}
+      <Route path={ERoutePaths.AUDIENCIAS_REGISTRAR} element={<AudienciaForm />} />
+      <Route path={ERoutePaths.AUDIENCIAS_NUEVA} element={<AudienciaForm />} />
+      <Route path={ERoutePaths.AUDIENCIAS_DETALLE} element={<AudienciaForm />} />
+      <Route path={ERoutePaths.AUDIENCIAS_EDITAR} element={<AudienciaForm />} />
+      {/* Emitir Acta de Audiencia y Resultado */}
+      <Route path={ERoutePaths.AUDIENCIAS_EMITIR_ACTA} element={<EmitirActaAudiencia />} />
       
       {/* Hallazgos (PFI) */}
       <Route path={ERoutePaths.HALLAZGOS} element={<HallazgosList />} />

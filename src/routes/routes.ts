@@ -44,6 +44,15 @@ enum ERoutePaths {
   RECLAMOS_DETALLE = '/reclamos/:id',
   RECLAMOS_EDITAR = '/reclamos/:id/editar',
   
+  // Módulo de Audiencias
+  AUDIENCIAS = '/audiencias',
+  AUDIENCIAS_NUEVA = '/audiencias/nueva',
+  AUDIENCIAS_REGISTRAR = '/denuncias/:denunciaId/audiencia',
+  AUDIENCIAS_DETALLE = '/audiencias/:id',
+  AUDIENCIAS_EDITAR = '/audiencias/:id/editar',
+  // Emitir Acta de Audiencia y Resultado
+  AUDIENCIAS_EMITIR_ACTA = '/audiencias/:audienciaId/emitir-acta',
+  
   // Hallazgos (PFI)
   HALLAZGOS = '/hallazgos',
   HALLAZGOS_DETALLE = '/hallazgos/:id/detalle',
