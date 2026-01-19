@@ -18,7 +18,6 @@ import CustomLayout from "../../Layout/Layout";
 import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
 import { Badge, Stepper, useToast } from "../../components/UI";
-import type { BadgeVariant } from "../../components/UI";
 import { FileUploader } from '../../components/FileUploader';
 import { ERoutePaths } from "../../routes/routes";
 
@@ -34,7 +33,6 @@ import {
   generarActaAudiencia,
   calcularMultaAtenuada,
   getAudienciaPorId,
-  getAudienciasPorDenuncia,
   type Audiencia,
   type TipoResultadoAudiencia,
   type DeclaracionAudiencia,
@@ -100,7 +98,6 @@ export const AudienciaForm: React.FC = () => {
   // Estado del formulario
   const [formData, setFormData] = useState<FormularioAudienciaData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
   
   // Audiencia y denuncia
   const [audiencia, setAudiencia] = useState<Audiencia | null>(null);
@@ -476,20 +473,22 @@ export const AudienciaForm: React.FC = () => {
             {/* Datos de la Audiencia */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputField
+                id="fechaProgramada"
                 label="Fecha de Audiencia"
                 type="date"
                 value={formData.fechaProgramada}
                 onChange={(e) => handleInputChange('fechaProgramada', e.target.value)}
-                error={errors.fechaProgramada}
+                errorMessage={errors.fechaProgramada}
                 required
               />
               
               <InputField
+                id="horaProgramada"
                 label="Hora de Audiencia"
                 type="time"
                 value={formData.horaProgramada}
                 onChange={(e) => handleInputChange('horaProgramada', e.target.value)}
-                error={errors.horaProgramada}
+                errorMessage={errors.horaProgramada}
                 required
               />
             </div>
@@ -533,6 +532,7 @@ export const AudienciaForm: React.FC = () => {
             </div>
             
             <InputField
+              id="direccion"
               label="Dirección"
               type="text"
               value={formData.direccion}
@@ -627,12 +627,13 @@ export const AudienciaForm: React.FC = () => {
             {formData.infractorComparecio && (
               <div className="space-y-4">
                 <InputField
+                  id="representanteLegal"
                   label="Nombre de quien compareció"
                   type="text"
                   value={formData.representanteLegal}
                   onChange={(e) => handleInputChange('representanteLegal', e.target.value)}
                   placeholder="Ej: Juan Pérez (Representante Legal)"
-                  error={errors.representanteLegal}
+                  errorMessage={errors.representanteLegal}
                   required
                 />
                 
@@ -696,10 +697,13 @@ export const AudienciaForm: React.FC = () => {
               </h3>
               
               <FileUploader
-                onFilesSelected={handleFilesUploaded}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                multiple
-                maxSize={10}
+                expedienteId={denuncia?.id || 'temp'}
+                onUploadComplete={(files) => {
+                  const fileList = files.map(f => f.file);
+                  handleFilesUploaded(fileList);
+                }}
+                maxFileSize={10}
+                allowedTypes={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
               />
             </div>
             
@@ -773,6 +777,7 @@ export const AudienciaForm: React.FC = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InputField
+                        id="declarante"
                         label="Nombre del Declarante"
                         type="text"
                         value={nuevaDeclaracion.declarante}
@@ -1200,7 +1205,7 @@ export const AudienciaForm: React.FC = () => {
                         Declaraciones Registradas ({declaraciones.length})
                       </h4>
                       <div className="space-y-2">
-                        {declaraciones.map((dec, i) => (
+                        {declaraciones.map((dec) => (
                           <div key={dec.id} className="p-3 bg-gray-50 rounded-lg text-sm">
                             <p className="font-medium">{dec.declarante} ({dec.tipoDeclarante})</p>
                             <p className="text-gray-600 mt-1">{dec.contenido.substring(0, 150)}...</p>
@@ -1322,7 +1327,7 @@ export const AudienciaForm: React.FC = () => {
   };
   
   // Si no hay denuncia, mostrar error
-  if (!denuncia && !isLoading) {
+  if (!denuncia) {
     return (
       <CustomLayout
         platformName="Sistema de Tramitación de Denuncias"

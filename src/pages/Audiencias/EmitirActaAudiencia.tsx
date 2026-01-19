@@ -24,9 +24,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from "he-button-custom-library";
 import CONSTANTS_APP from "../../constants/sidebar-menu";
 import CustomLayout from "../../Layout/Layout";
-import InputField from "../../organisms/InputField/InputField";
 import { CustomButton } from "../../components/Button/Button";
-import { Badge, Stepper, useToast, Modal, Timeline } from "../../components/UI";
+import { Badge, Stepper, useToast, Modal } from "../../components/UI";
 import { ERoutePaths } from "../../routes/routes";
 
 // Datos centralizados

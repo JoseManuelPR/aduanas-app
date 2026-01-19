@@ -499,11 +499,6 @@ export const CargoForm: React.FC = () => {
                 Desde Denuncia: {denunciaAsociada.numeroDenuncia}
               </p>
             )}
-            {denunciaAsociada && (
-              <p className="text-xs text-gray-500 ml-7">
-                ID denuncia: {denunciaAsociada.id}
-              </p>
-            )}
           </div>
           
           {/* Card resumen total */}
