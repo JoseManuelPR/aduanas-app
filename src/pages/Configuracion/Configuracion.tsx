@@ -37,6 +37,11 @@ const CARDS: ConfigCard[] = [
     description:
       'Personaliza cada formulario según las necesidades, permitiendo una gestión más precisa y detallada de los datos recolectados.',
   },
+  {
+    title: 'Reglas del Sistema',
+    description:
+      'Crea, modifica y publica reglas parametrizables para validaciones normativas, automatización de flujos, cálculo de multas, alertas por plazos y reglas tributarias, sin intervención de desarrollo.',
+  },
 ];
 
 export const Configuracion: React.FC = () => {
