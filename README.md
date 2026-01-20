@@ -1,4 +1,45 @@
-# React + TypeScript + Vite
+# Aduana App 2
+
+Aplicación React + TypeScript + Vite para el sistema de denuncias de aduana.
+
+## 🚀 Cómo ejecutar el proyecto
+
+### Prerrequisitos
+
+- Node.js (versión 18 o superior)
+- npm o yarn
+
+### Instalación y ejecución
+
+1. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
+
+2. **Ejecutar en modo desarrollo:**
+   ```bash
+   npm run dev
+   ```
+   Esto iniciará el servidor de desarrollo en `http://localhost:5173`
+
+### Otros comandos disponibles
+
+- **Construir para producción:**
+  ```bash
+  npm run build
+  ```
+
+- **Vista previa del build:**
+  ```bash
+  npm run preview
+  ```
+
+- **Ejecutar linter:**
+  ```bash
+  npm run lint
+  ```
+
+## 📋 Información técnica
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
